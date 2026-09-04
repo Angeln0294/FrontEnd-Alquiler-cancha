@@ -1,4 +1,3 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import type { SubmitHandler } from 'react-hook-form'; // REGLA STRICT: Importación explícita de tipo
 

@@ -1,14 +1,21 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar'; 
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import Registro from './components/Registro';
+
+// 🛠️ Un Navbar temporal y simple para que compile la rama sin depender de la otra
+const NavbarMock = () => (
+  <nav className="p-4 bg-slate-900 border-b border-slate-800 text-white flex gap-4">
+    <Link to="/" className="text-green-400 font-bold">Canchas Ya</Link>
+    <Link to="/registro" className="text-slate-300 hover:text-white">Registrarse</Link>
+  </nav>
+);
 
 export default function App(): React.JSX.Element {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-[#0b132b]">
-        {/* Manteniendo tu Navbar en la cabecera */}
-        <Navbar />
+        {/* Usamos el componente temporal para que TypeScript compile feliz */}
+        <NavbarMock />
         
         <Routes>
           {/* Ruta base del inicio */}
@@ -27,4 +34,3 @@ export default function App(): React.JSX.Element {
     </BrowserRouter>
   );
 }
-

@@ -7,6 +7,13 @@ const NavbarMock = () => (
   <nav className="p-4 bg-slate-900 border-b border-slate-800 text-white flex gap-4">
     <Link to="/" className="text-green-400 font-bold">Canchas Ya</Link>
     <Link to="/login" className="text-slate-300 hover:text-white">Iniciar Sesión</Link>
+import Registro from './components/Registro';
+
+// 🛠️ Un Navbar temporal y simple para que compile la rama sin depender de la otra
+const NavbarMock = () => (
+  <nav className="p-4 bg-slate-900 border-b border-slate-800 text-white flex gap-4">
+    <Link to="/" className="text-green-400 font-bold">Canchas Ya</Link>
+    <Link to="/registro" className="text-slate-300 hover:text-white">Registrarse</Link>
   </nav>
 );
 
@@ -15,6 +22,7 @@ export default function App(): React.JSX.Element {
     <BrowserRouter>
       <div className="min-h-screen bg-[#0b132b]">
         {/* Usamos el componente temporal para evitar errores de importación */}
+        {/* Usamos el componente temporal para que TypeScript compile feliz */}
         <NavbarMock />
         
         <Routes>
@@ -29,6 +37,8 @@ export default function App(): React.JSX.Element {
 
           {/* Única ruta oficial de Login en esta rama */}
           <Route path="/login" element={<Login />} /> 
+          {/* Única ruta oficial de Registro dada de alta en TS */}
+          <Route path="/registro" element={<Registro />} /> 
         </Routes>
       </div>
     </BrowserRouter>

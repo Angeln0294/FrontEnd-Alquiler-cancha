@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
 import VerificarEmail from "./components/VerificarEmail";
+import PanelAdmin from "./components/PanelAdmin";
 
 const NavbarMock = () => (
   <nav className="p-4 bg-slate-900 border-b border-slate-800 text-white flex gap-4">
@@ -45,6 +46,7 @@ export default function App(): React.JSX.Element {
 
           <Route path="/registro" element={<Registro />} />
           <Route path="/verificar-email" element={<VerificarEmail />} />
+          <Route path="/admin" element={<PanelAdmin />} />
         </Routes>
       </div>
     </BrowserRouter>

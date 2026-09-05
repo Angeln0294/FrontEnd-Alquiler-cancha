@@ -1,19 +1,22 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import Login from './components/Login'; // Tu componente de login refactorizado
+import React from "react";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import Login from "./components/Login";
+import Registro from "./components/Registro";
+import VerificarEmail from "./components/VerificarEmail";
 
-// 🛠️ Navbar temporal para que compile la rama felizmente de forma aislada
 const NavbarMock = () => (
   <nav className="p-4 bg-slate-900 border-b border-slate-800 text-white flex gap-4">
-    <Link to="/" className="text-green-400 font-bold">Canchas Ya</Link>
-    <Link to="/login" className="text-slate-300 hover:text-white">Iniciar Sesión</Link>
-import Registro from './components/Registro';
+    <Link to="/" className="text-green-400 font-bold">
+      Canchas Ya
+    </Link>
 
-// 🛠️ Un Navbar temporal y simple para que compile la rama sin depender de la otra
-const NavbarMock = () => (
-  <nav className="p-4 bg-slate-900 border-b border-slate-800 text-white flex gap-4">
-    <Link to="/" className="text-green-400 font-bold">Canchas Ya</Link>
-    <Link to="/registro" className="text-slate-300 hover:text-white">Registrarse</Link>
+    <Link to="/login" className="text-slate-300 hover:text-white">
+      Iniciar Sesión
+    </Link>
+
+    <Link to="/registro" className="text-slate-300 hover:text-white">
+      Registrarse
+    </Link>
   </nav>
 );
 
@@ -21,24 +24,27 @@ export default function App(): React.JSX.Element {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-[#0b132b]">
-        {/* Usamos el componente temporal para evitar errores de importación */}
-        {/* Usamos el componente temporal para que TypeScript compile feliz */}
         <NavbarMock />
-        
-        <Routes>
-          {/* Ruta base del inicio */}
-          <Route path="/" element={
-            <main className="flex flex-col items-center justify-center text-white py-20 px-4">
-              <h1 className="text-3xl md:text-5xl font-black text-center tracking-tight uppercase">
-                RESERVA TU CANCHA <span className="text-green-400 block md:inline">FÁCILMENTE</span>
-              </h1>
-            </main>
-          } />
 
-          {/* Única ruta oficial de Login en esta rama */}
-          <Route path="/login" element={<Login />} /> 
-          {/* Única ruta oficial de Registro dada de alta en TS */}
-          <Route path="/registro" element={<Registro />} /> 
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <main className="flex flex-col items-center justify-center text-white py-20 px-4">
+                <h1 className="text-3xl md:text-5xl font-black text-center tracking-tight uppercase">
+                  RESERVA TU CANCHA{" "}
+                  <span className="text-green-400 block md:inline">
+                    FÁCILMENTE
+                  </span>
+                </h1>
+              </main>
+            }
+          />
+
+          <Route path="/login" element={<Login />} />
+
+          <Route path="/registro" element={<Registro />} />
+          <Route path="/verificar-email" element={<VerificarEmail />} />
         </Routes>
       </div>
     </BrowserRouter>

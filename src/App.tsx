@@ -1,36 +1,20 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar"; 
+import Footer from "./components/Footer"; 
 import Login from "./components/Login";
 import Registro from "./components/Registro";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
-import Footer from "./components/Footer";
 
 
-const NavbarMock = () => (
-  <nav className="p-4 bg-slate-900 border-b border-slate-800 text-white flex gap-4">
-    <Link to="/" className="text-green-400 font-bold">
-      Canchas Ya
-    </Link>
-
-    <Link to="/login" className="text-slate-300 hover:text-white">
-      Iniciar Sesión
-    </Link>
-
-    <Link to="/registro" className="text-slate-300 hover:text-white">
-      Registrarse
-    </Link>
-  </nav>
-);
-
-export default function App(): React.JSX.Element {
+export default function App() {
   return (
     <BrowserRouter>
-      {/* 1. PADRE: Debe tener 'flex flex-col' obligatoriamente para que funcione lo de abajo */}
-      <div className="min-h-screen bg-[#0b132b] flex flex-col">
-        <NavbarMock />
+      
+      <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
+        
+        <Navbar />
 
-        {/* 2. HIJO: Con 'flex-grow' se estira y empuja al Footer al fondo sin advertencias amarillas */}
         <div className="grow">
           <Routes>
             <Route
@@ -54,7 +38,7 @@ export default function App(): React.JSX.Element {
           </Routes>
         </div>
 
-        {/* 3. El Footer se queda firme abajo de todo */}
+       
         <Footer />
       </div>
     </BrowserRouter>

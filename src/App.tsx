@@ -1,24 +1,23 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// 🚀 Importamos tus componentes reales integrados en dev
+// 🚀 UNIÓN DE IMPORTS: Navbar, Footer reales de 'dev' + tu nuevo Contacto
 import Navbar from "./components/Navbar"; 
 import Footer from "./components/Footer"; 
 import Login from "./components/Login";
 import Registro from "./components/Registro";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
-// ✉️ Importamos tu nueva página de Contacto
 import Contacto from "./components/Contacto"; 
 
 export default function App() {
   return (
     <BrowserRouter>
-      {/* 1. PADRE: Mantiene 'flex flex-col' para ordenar el flujo vertical */}
+      {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
       <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
         
-        {/* 🟢 NAVBAR REAL interactivo para todas las páginas */}
+        {/* 🟢 NAVBAR REAL interactivo para todo el sitio */}
         <Navbar />
 
-        {/* 2. HIJO: Con 'grow' se estira y empuja al Footer al fondo impecablemente */}
+        {/* 2. HIJO: Con 'grow' se estira ocupando el espacio del medio */}
         <div className="grow">
           <Routes>
             <Route
@@ -39,13 +38,11 @@ export default function App() {
             <Route path="/registro" element={<Registro />} />
             <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/admin" element={<PanelAdmin />} />
-            
-            {/* 🚀 Agregamos la ruta real para tu componente de Contacto */}
             <Route path="/contacto" element={<Contacto />} />
           </Routes>
         </div>
 
-        {/* 3. Tu Footer real firme abajo de todo */}
+        
         <Footer />
       </div>
     </BrowserRouter>

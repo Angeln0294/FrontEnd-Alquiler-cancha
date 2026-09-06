@@ -25,7 +25,7 @@ export default function Navbar(): React.JSX.Element {
         </svg>
       </button>
 
-      {/* Links de Navegación del Menú */}
+      {/* Links de Navegación del Menú  */}
       <div className={`${isOpen ? 'block' : 'hidden'} w-full md:flex md:items-center md:w-auto mt-4 md:mt-0 transition-all duration-300`}>
         <ul className="flex flex-col md:flex-row gap-6 text-sm font-medium text-gray-300 md:items-center m-0 p-0 list-none">
           <li><Link to="/" className="hover:text-green-400 transition-colors no-underline text-gray-300">Inicio</Link></li>

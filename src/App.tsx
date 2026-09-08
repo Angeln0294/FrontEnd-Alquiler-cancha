@@ -9,51 +9,60 @@ import PanelAdmin from "./components/PanelAdmin";
 import Contacto from "./components/Contacto";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MiPerfil from "./components/MiPerfil";
 
 export default function App() {
   return (
-     <AuthProvider>
-    <BrowserRouter>
-      {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
-      <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
-        {/* 🟢 NAVBAR REAL interactivo para todo el sitio */}
-        <Navbar />
+    <AuthProvider>
+      <BrowserRouter>
+        {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
+        <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
+          {/* 🟢 NAVBAR REAL interactivo para todo el sitio */}
+          <Navbar />
 
-        {/* 2. HIJO: Con 'grow' se estira ocupando el espacio del medio */}
-        <div className="grow">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <main className="flex flex-col items-center justify-center text-white py-20 px-4">
-                  <h1 className="text-3xl md:text-5xl font-black text-center tracking-tight uppercase">
-                    RESERVA TU CANCHA{" "}
-                    <span className="text-green-400 block md:inline">
-                      FÁCILMENTE
-                    </span>
-                  </h1>
-                </main>
-              }
-            />
+          {/* 2. HIJO: Con 'grow' se estira ocupando el espacio del medio */}
+          <div className="grow">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <main className="flex flex-col items-center justify-center text-white py-20 px-4">
+                    <h1 className="text-3xl md:text-5xl font-black text-center tracking-tight uppercase">
+                      RESERVA TU CANCHA{" "}
+                      <span className="text-green-400 block md:inline">
+                        FÁCILMENTE
+                      </span>
+                    </h1>
+                  </main>
+                }
+              />
 
-            <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Registro />} />
-            <Route path="/verificar-email" element={<VerificarEmail />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute adminOnly>
-                  <PanelAdmin />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/contacto" element={<Contacto />} />
-          </Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/registro" element={<Registro />} />
+              <Route path="/verificar-email" element={<VerificarEmail />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <PanelAdmin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/perfil"
+                element={
+                  <ProtectedRoute>
+                    <MiPerfil />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/contacto" element={<Contacto />} />
+            </Routes>
+          </div>
+
+          <Footer />
         </div>
-
-        <Footer />
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

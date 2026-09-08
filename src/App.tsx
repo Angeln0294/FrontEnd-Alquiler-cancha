@@ -6,7 +6,8 @@ import Login from "./components/Login";
 import Registro from "./components/Registro";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
-import Contacto from "./components/Contacto"; 
+import Contacto from "./components/Contacto";
+import Tienda from "./components/Tienda";
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/admin" element={<PanelAdmin />} />
             <Route path="/contacto" element={<Contacto />} />
+            <Route path="/tienda" element={<Tienda />} />
           </Routes>
         </div>
 

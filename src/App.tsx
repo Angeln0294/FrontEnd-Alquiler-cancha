@@ -1,19 +1,21 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 // 🚀 UNIÓN DE IMPORTS: Navbar, Footer reales de 'dev' + tu nuevo Contacto
-import Navbar from "./components/Navbar"; 
-import Footer from "./components/Footer"; 
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
-import Contacto from "./components/Contacto"; 
+import Contacto from "./components/Contacto";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
+     <AuthProvider>
     <BrowserRouter>
       {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
       <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
-        
         {/* 🟢 NAVBAR REAL interactivo para todo el sitio */}
         <Navbar />
 
@@ -37,14 +39,21 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/verificar-email" element={<VerificarEmail />} />
-            <Route path="/admin" element={<PanelAdmin />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly>
+                  <PanelAdmin />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/contacto" element={<Contacto />} />
           </Routes>
         </div>
 
-        
         <Footer />
       </div>
     </BrowserRouter>
+    </AuthProvider>
   );
 }

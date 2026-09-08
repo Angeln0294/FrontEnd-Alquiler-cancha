@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// 🚀 UNIÓN DE IMPORTS: Navbar, Footer reales de 'dev' + tu nuevo Contacto
 import Navbar from "./components/Navbar"; 
 import Footer from "./components/Footer"; 
 import Login from "./components/Login";

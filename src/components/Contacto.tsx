@@ -23,7 +23,7 @@ export default function Contacto() {
     }
   });
 
-  // 🚀 Manejador de envío tipado correctamente
+  
   const onSubmit: SubmitHandler<ContactInputs> = (data) => {
     // Aquí conectarás la lógica de envío o API más adelante
     alert(`¡Gracias por tu mensaje, ${data.nombre}! Nos comunicaremos pronto.`);

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+// 🚀 UNIÓN DE IMPORTS: Navbar, Footer reales de 'dev' + tu nuevo Contacto
 import Navbar from "./components/Navbar"; 
 import Footer from "./components/Footer"; 
 import Login from "./components/Login";
@@ -10,13 +11,13 @@ import Contacto from "./components/Contacto";
 export default function App() {
   return (
     <BrowserRouter>
-      
+      {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
       <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
         
-        
+        {/* 🟢 NAVBAR REAL interactivo para todo el sitio */}
         <Navbar />
 
-        
+        {/* 2. HIJO: Con 'grow' se estira ocupando el espacio del medio */}
         <div className="grow">
           <Routes>
             <Route

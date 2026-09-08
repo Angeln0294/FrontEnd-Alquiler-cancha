@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form"; // REGLA STRICT: Importación explícita de tipo
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { useAuth } from "../context/AuthContext";
 
 // 1. Estructura fuertemente tipada de los campos de inicio de sesión
 interface LoginValores {
@@ -11,7 +12,7 @@ interface LoginValores {
 
 export default function Login() {
   const navigate = useNavigate();
-
+const { cargarUsuario } = useAuth();
   // 2. Pasamos la interfaz LoginValores como tipo genérico a useForm
   const {
     register,
@@ -66,7 +67,8 @@ export default function Login() {
         iconColor: "#22c55e",
       });
 
-      navigate("/");
+     await cargarUsuario();
+navigate("/");
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
 

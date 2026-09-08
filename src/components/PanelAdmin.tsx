@@ -136,16 +136,6 @@ export default function PanelAdmin() {
           </button>
         </nav>
 
-        {/* Cerrar sesión */}
-        <div className="absolute bottom-0 left-0 w-full p-4 border-t border-slate-800">
-          <button
-            type="button"
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition"
-          >
-            <span>🚪</span>
-            Cerrar sesión
-          </button>
-        </div>
       </aside>
 
       {/* CONTENIDO PRINCIPAL */}

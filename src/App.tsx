@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
+import Contacto from "./components/Contacto";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
 import Error404 from "./components/Error404";
@@ -54,7 +55,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              
+              <Route path="/contacto" element={<Contacto />} />
               {/* 🚨 RUTA COMODÍN: Es obligatorio que path="*" esté último en esta lista */}
               <Route path="*" element={<Error404 />} />
             </Routes>

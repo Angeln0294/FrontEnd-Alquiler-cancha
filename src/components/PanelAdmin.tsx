@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import AdminUsuarios from "./AdminUsuarios";
 import AdminCanchas from "./AdminCanchas";
+import AdminReservas from "./AdminReservas";
 
 type Seccion =
   | "dashboard"
@@ -125,13 +126,19 @@ export default function PanelAdmin() {
 
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
           {/* SECCIÓN USUARIOS */}
-          {seccionActiva === "usuarios" && <AdminUsuarios />}
+          {/* SECCIÓN USUARIOS */}
+{seccionActiva === "usuarios" && <AdminUsuarios />}
 
+{/* SECCIÓN CANCHAS */}
 {seccionActiva === "canchas" && <AdminCanchas />}
+
+{/* SECCIÓN RESERVAS */}
+{seccionActiva === "reservas" && <AdminReservas />}
 
 {seccionActiva !== "dashboard" &&
   seccionActiva !== "usuarios" &&
-  seccionActiva !== "canchas" && (
+  seccionActiva !== "canchas" &&
+  seccionActiva !== "reservas" && (
             <div className="bg-linear-to-br from-slate-900/80 to-[#0b0f19] border border-slate-800/80 rounded-3xl p-8 shadow-2xl">
               <h1 className="text-3xl font-extrabold capitalize mb-2 tracking-tight">
                 Gestión de {seccionActiva}

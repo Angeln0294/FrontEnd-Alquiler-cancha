@@ -1,12 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// 🚀 UNIÓN DE IMPORTS: Navbar, Footer reales de 'dev' + tu nuevo Contacto
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
-import Contacto from "./components/Contacto";
+import Error404 from "./components/Error404";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MiPerfil from "./components/MiPerfil";
@@ -36,7 +35,6 @@ export default function App() {
                   </main>
                 }
               />
-
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
               <Route path="/verificar-email" element={<VerificarEmail />} />
@@ -56,7 +54,9 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/contacto" element={<Contacto />} />
+              
+              {/* 🚨 RUTA COMODÍN: Es obligatorio que path="*" esté último en esta lista */}
+              <Route path="*" element={<Error404 />} />
             </Routes>
           </div>
 

@@ -40,7 +40,8 @@ export default function App() {
             <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/admin" element={<PanelAdmin />} />
             <Route path="/contacto" element={<Contacto />} />
-             <Route path="*" element={<Error404 />} />
+            {/* es olbligatorio que path="*" este ultimo en esta lista*/}
+            <Route path="*" element={<Error404 />} />
           </Routes>
         </div>
 

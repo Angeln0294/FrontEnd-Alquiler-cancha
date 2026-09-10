@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import AdminUsuarios from "./AdminUsuarios";
 import AdminCanchas from "./AdminCanchas";
 import AdminReservas from "./AdminReservas";
+import AdminCategorias from "./AdminCategorias";
+import { CategoriaProvider } from "../context/CategoriaContext";
+import AdminProductos from "./AdminProductos";
 
 type Seccion =
   | "dashboard"
@@ -132,12 +135,22 @@ export default function PanelAdmin() {
 {/* SECCIÓN CANCHAS */}
 {seccionActiva === "canchas" && <AdminCanchas />}
 
+{seccionActiva === "categorias" && (
+  <CategoriaProvider>
+    <AdminCategorias />
+  </CategoriaProvider>
+)}
+
+{/* SECCIÓN PRODUCTOS */}
+{seccionActiva === "productos" && <AdminProductos />}
+
 {/* SECCIÓN RESERVAS */}
 {seccionActiva === "reservas" && <AdminReservas />}
 
 {seccionActiva !== "dashboard" &&
   seccionActiva !== "usuarios" &&
   seccionActiva !== "canchas" &&
+  seccionActiva !== "productos" &&
   seccionActiva !== "reservas" && (
             <div className="bg-linear-to-br from-slate-900/80 to-[#0b0f19] border border-slate-800/80 rounded-3xl p-8 shadow-2xl">
               <h1 className="text-3xl font-extrabold capitalize mb-2 tracking-tight">

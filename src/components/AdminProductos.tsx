@@ -18,6 +18,14 @@ export default function AdminProductos() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
 
+  const [nombreProducto, setNombreProducto] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [precio, setPrecio] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [imagen, setImagen] = useState<File | null>(null);
+
+  const [cargando, setCargando] = useState(false);
+
   useEffect(() => {
     obtenerProductos();
     obtenerCategorias();
@@ -51,7 +59,95 @@ export default function AdminProductos() {
     }
   };
 
-    };
+  const crearProducto = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      setCargando(true);
+
+      const formData = new FormData();
+
+      formData.append("nombreProducto", nombreProducto);
+      formData.append("descripcion", descripcion);
+      formData.append("precio", precio);
+      formData.append("categoria", categoria);
+
+      if (imagen) {
+        formData.append("imagen", imagen);
+      }
+
+      const respuesta = await fetch(
+        "http://localhost:3003/api/producto",
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
+
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(data.message || data.mensaje || "Error al crear producto");
+      }
+
+      alert("Producto creado correctamente");
+
+      setNombreProducto("");
+      setDescripcion("");
+      setPrecio("");
+      setCategoria("");
+      setImagen(null);
+
+      await obtenerProductos();
+
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof Error) {
+        alert(error.message);
+      }
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const eliminarProducto = async (id: string) => {
+    const confirmar = window.confirm(
+      "¿Estás seguro de que querés eliminar este producto?"
+    );
+
+    if (!confirmar) return;
+
+    try {
+      const respuesta = await fetch(
+        `http://localhost:3003/api/producto/${id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          data.message || data.mensaje || "No se pudo eliminar el producto"
+        );
+      }
+
+      alert("Producto eliminado correctamente");
+
+      await obtenerProductos();
+
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof Error) {
+        alert(error.message);
+      }
+    }
+  };
 
   return (
     <div className="space-y-8">

@@ -11,7 +11,8 @@ import Error404 from "./components/Error404";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MiPerfil from "./components/MiPerfil";
-// 🏠 Importamos tu nueva página de Inicio corregida con mayúscula
+import NuestrasCanchas from "./components/NuestrasCanchas";
+
 
 
 export default function App() {
@@ -51,6 +52,8 @@ export default function App() {
               />
               
               <Route path="/contacto" element={<Contacto />} />
+              <Route path="/reservas" element={<NuestrasCanchas />} />
+              <Route path="/canchas" element={<NuestrasCanchas />} />
               {/* 🚨 RUTA COMODÍN: Es obligatorio que path="*" esté último en esta lista */}
               <Route path="*" element={<Error404 />} />
             </Routes>

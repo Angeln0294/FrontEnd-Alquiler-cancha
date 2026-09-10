@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // 📋 Interfaces estrictas para el tipado de TypeScript
 interface Anuncio {
@@ -27,6 +28,7 @@ interface ProductoDestacado {
 }
 
 export default function Inicio() {
+  const navigate = useNavigate();
   // 🔘 Estado para controlar el carrusel de anuncios publicitarios
   const [currentSlide, setCurrentSlide] = useState<number>(0);
 
@@ -128,12 +130,13 @@ const productosDestacados: ProductoDestacado[] = [
                     <p className="text-xl font-black text-green-400">{cancha.precioHora}</p>
                   </div>
                   <button 
-                    type="button" 
-                    onClick={() => alert(`Iniciando flujo de reserva para: "${cancha.nombre}"`)}
-                    className="bg-green-500 hover:bg-green-600 text-[#0b132b] font-black px-4 py-2.5 rounded-xl transition-all text-xs tracking-wide shadow-md shadow-green-500/10 cursor-pointer"
-                  >
-                    RESERVAR AHORA
-                  </button>
+  type="button" 
+  /* 🟢 Ahora sí viaja a /reservas llevando el nombre de la cancha como parámetro */
+  onClick={() => navigate(`/reservas?cancha=${encodeURIComponent(cancha.nombre)}`)}
+  className="bg-green-500 hover:bg-green-600 text-[#0b132b] font-black px-4 py-2.5 rounded-xl transition-all text-xs tracking-wide shadow-md shadow-green-500/10 cursor-pointer"
+>
+  RESERVAR AHORA
+</button>
                 </div>
               </div>
 

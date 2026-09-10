@@ -8,7 +8,6 @@ export default function AdminProductos() {
     modalAbierto,
     abrirCrear,
     abrirEditar,
-    cerrarModal,
     eliminarProducto,
   } = useProductos();
 
@@ -48,14 +47,14 @@ export default function AdminProductos() {
         <button
           type="button"
           onClick={abrirCrear}
-          className="px-5 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-slate-950 font-bold text-sm hover:scale-105 transition-transform shadow-lg shadow-green-500/20"
+          className="px-5 py-3 rounded-xl bg-linear-to-r from-green-500 to-emerald-500 text-slate-950 font-bold text-sm hover:scale-105 transition-transform shadow-lg shadow-green-500/20"
         >
           + Agregar producto
         </button>
       </div>
 
       {/* TABLA */}
-      <div className="bg-gradient-to-b from-slate-900/90 to-[#0b0f19] border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl">
+      <div className="bg-linear-to-b from-slate-900/90 to-[#0b0f19] border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl">
 
         {cargando ? (
           <div className="p-10 text-center text-slate-400">

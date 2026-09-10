@@ -307,7 +307,7 @@ export default function FormularioProductoAdmin() {
             <button
               type="submit"
               disabled={guardando}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-slate-950 font-bold hover:scale-[1.02] transition disabled:opacity-50 disabled:hover:scale-100"
+              className="px-6 py-3 rounded-xl bg-linear-to-r from-green-500 to-emerald-500 text-slate-950 font-bold hover:scale-[1.02] transition disabled:opacity-50 disabled:hover:scale-100"
             >
 
               {guardando

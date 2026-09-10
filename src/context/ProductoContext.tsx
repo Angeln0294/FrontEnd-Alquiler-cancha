@@ -90,7 +90,7 @@ export function ProductoProvider({
   const cargarCategorias = async () => {
     try {
       const respuesta = await fetch(
-        "http://localhost:3000/api/categorias"
+        "http://localhost:3003/api/categorias"
       );
 
       if (!respuesta.ok) {

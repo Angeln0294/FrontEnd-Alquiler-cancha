@@ -8,12 +8,14 @@ import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
 import Error404 from "./components/Error404";
 import { AuthProvider } from "./context/AuthContext";
+import { ProductoProvider } from "./context/ProductoContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MiPerfil from "./components/MiPerfil";
 
 export default function App() {
   return (
     <AuthProvider>
+      <ProductoProvider>
       <BrowserRouter>
         {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
         <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
@@ -64,6 +66,7 @@ export default function App() {
           <Footer />
         </div>
       </BrowserRouter>
+      </ProductoProvider>
     </AuthProvider>
   );
 }

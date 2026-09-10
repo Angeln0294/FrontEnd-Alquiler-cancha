@@ -18,6 +18,14 @@ interface Cancha {
   imagen: string;
 }
 
+interface ProductoDestacado {
+  id: number;
+  nombre: string;
+  categoria: string;
+  precio: string;
+  imagen: string;
+}
+
 export default function Inicio() {
   // 🔘 Estado para controlar el carrusel de anuncios publicitarios
   const [currentSlide, setCurrentSlide] = useState<number>(0);
@@ -34,6 +42,12 @@ export default function Inicio() {
     { id: 1, nombre: "Camp Nou Tucumano", tipo: "Fútbol 5", superficie: "Césped Sintético", precioHora: "$12.000", imagen: "https://unsplash.com" },
     { id: 2, nombre: "La Bombonerita", tipo: "Fútbol 5", superficie: "Parquet Techado", precioHora: "$14.000", imagen: "https://unsplash.com" },
     { id: 3, nombre: "Predio Maracaná", tipo: "Fútbol 7", superficie: "Césped Natural", precioHora: "$18.000", imagen: "https://unsplash.com" }
+  ];
+
+const productosDestacados: ProductoDestacado[] = [
+    { id: 1, nombre: "Botines Sintéticos Elite", categoria: "Calzado", precio: "$45.000", imagen: "https://unsplash.com" },
+    { id: 2, nombre: "Pelota de Fútbol F5 Pro", categoria: "Accesorios", precio: "$15.000", imagen: "https://unsplash.com" },
+    { id: 3, nombre: "Guantes de Arquero GripMax", categoria: "Protección", precio: "$25.000", imagen: "https://unsplash.com" }
   ];
 
   // 🔄 Efecto para rotar la publicidad automáticamente cada 5 segundos
@@ -123,6 +137,46 @@ export default function Inicio() {
                 </div>
               </div>
 
+            </div>
+          ))}
+        </div>
+      </section>
+           {/* 🛍️ 3. NUEVA SECCIÓN: PRODUCTOS DESTACADOS DE LA TIENDA (3 UNIDADES) */}
+      <section className="w-full px-6 md:px-12 pt-20 max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+            Equipamiento <span className="text-green-400">Destacado</span>
+          </h2>
+          <p className="text-gray-400 text-sm mt-3">Todo lo que necesitás para tu partido, directo a la cancha.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {productosDestacados.map((producto) => (
+            <div 
+              key={producto.id} 
+              className="bg-[#1e293b] rounded-2xl p-6 border border-gray-800 flex flex-col justify-between items-center text-center shadow-lg hover:scale-[1.02] transition-transform duration-300"
+            >
+              <div className="w-full h-44 flex items-center justify-center overflow-hidden bg-gray-900/40 rounded-xl mb-4 p-4">
+                <img src={producto.imagen} alt={producto.nombre} className="max-h-full max-w-full object-cover rounded-lg" />
+              </div>
+              
+              <div className="w-full mb-6">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full">
+                  {producto.categoria}
+                </span>
+                <h3 className="text-lg font-bold text-white mt-3 mb-1 truncate">
+                  {producto.nombre}
+                </h3>
+                <p className="text-xl font-black text-gray-200">{producto.precio}</p>
+              </div>
+              
+              <button 
+                type="button" 
+                onClick={() => alert(`Añadiste "${producto.nombre}" al carrito rápido`)} 
+                className="w-full bg-green-500 hover:bg-green-600 text-[#0b132b] font-black py-2.5 rounded-xl transition-colors text-sm tracking-wide shadow-md shadow-green-500/10 cursor-pointer"
+              >
+                COMPRAR AHORA
+              </button>
             </div>
           ))}
         </div>

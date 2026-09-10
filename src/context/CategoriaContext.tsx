@@ -48,7 +48,7 @@ export function CategoriaProvider({
       setCargando(true);
 
       const respuesta = await fetch(
-        "http://localhost:3000/api/categorias"
+        "http://localhost:3003/api/categorias"
       );
 
       if (!respuesta.ok) {
@@ -98,7 +98,7 @@ export function CategoriaProvider({
       // EDITAR
       if (categoriaSeleccionada) {
         respuesta = await fetch(
-          `http://localhost:3000/api/categorias/${categoriaSeleccionada._id}`,
+          `http://localhost:3003/api/categorias/${categoriaSeleccionada._id}`,
           {
             method: "PUT",
             headers: {
@@ -113,7 +113,7 @@ export function CategoriaProvider({
       // CREAR
       else {
         respuesta = await fetch(
-          "http://localhost:3000/api/categorias",
+          "http://localhost:3003/api/categorias",
           {
             method: "POST",
             headers: {
@@ -164,7 +164,7 @@ export function CategoriaProvider({
 
     try {
       const respuesta = await fetch(
-        `http://localhost:3000/api/categorias/${id}`,
+        `http://localhost:3003/api/categorias/${id}`,
         {
           method: "DELETE",
         }

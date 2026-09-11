@@ -12,6 +12,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MiPerfil from "./components/MiPerfil";
 import NuestrasCanchas from "./components/NuestrasCanchas";
+import ReservarTurnos from "./components/ReservarTurnos"; 
 
 
 
@@ -54,6 +55,8 @@ export default function App() {
               <Route path="/contacto" element={<Contacto />} />
               <Route path="/reservas" element={<NuestrasCanchas />} />
               <Route path="/canchas" element={<NuestrasCanchas />} />
+              <Route path="/nuestras-canchas" element={<NuestrasCanchas />} />
+              <Route path="/reservar-turnos" element={<ReservarTurnos />} />
               {/* 🚨 RUTA COMODÍN: Es obligatorio que path="*" esté último en esta lista */}
               <Route path="*" element={<Error404 />} />
             </Routes>

@@ -129,14 +129,13 @@ const productosDestacados: ProductoDestacado[] = [
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Precio por Hora</p>
                     <p className="text-xl font-black text-green-400">{cancha.precioHora}</p>
                   </div>
-                  <button 
-  type="button" 
-  /* 🟢 Ahora sí viaja a /reservas llevando el nombre de la cancha como parámetro */
-  onClick={() => navigate(`/reservas?cancha=${encodeURIComponent(cancha.nombre)}`)}
-  className="bg-green-500 hover:bg-green-600 text-[#0b132b] font-black px-4 py-2.5 rounded-xl transition-all text-xs tracking-wide shadow-md shadow-green-500/10 cursor-pointer"
->
-  RESERVAR AHORA
-</button>
+                <button 
+                  type="button" 
+                  onClick={() => navigate(`/reservar-turnos?cancha=${encodeURIComponent(cancha.nombre)}&precio=${encodeURIComponent(cancha.precioHora)}`)}
+                  className="bg-green-500 hover:bg-green-600 text-[#0b132b] font-black px-4 py-2.5 rounded-xl transition-all text-xs tracking-wide shadow-md shadow-green-500/10 cursor-pointer"
+                  >
+                    RESERVAR AHORA
+                </button>
                 </div>
               </div>
 

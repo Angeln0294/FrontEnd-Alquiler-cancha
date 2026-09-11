@@ -1,6 +1,6 @@
 // src/pages/NuestrasCanchas.tsx
 import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate} from 'react-router-dom';
 
 export interface CanchaDetalle {
   id: number;
@@ -14,6 +14,7 @@ export interface CanchaDetalle {
 
 export default function NuestrasCanchas() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const canchas: CanchaDetalle[] = [
     { id: 1, nombre: "Camp Nou Tucumano", tipo: "Fútbol 5", superficie: "Césped Sintético", precioHora: "$12.000", imagen: "https://unsplash.com", descripcion: "Césped sintético premium con iluminación LED profesional." },
@@ -34,9 +35,11 @@ export default function NuestrasCanchas() {
     }
   }, [searchParams]);
 
-  const handleReservar = (nombreCancha: string) => {
-    alert(`Redirigiendo al flujo de reserva para: ${nombreCancha}`);
-  };
+ // Dentro de src/components/NuestrasCanchas.tsx
+const handleReservar = (nombreCancha: string, precio: string) => {
+  // 🚀 Ahora mandamos el nombre Y el precio por la URL
+  navigate(`/reservar-turnos?cancha=${encodeURIComponent(nombreCancha)}&precio=${encodeURIComponent(precio)}`);
+};
 
   return (
     <div className="w-full bg-[#0b132b] text-white min-h-screen py-12 px-6 md:px-12 font-sans">
@@ -65,7 +68,7 @@ export default function NuestrasCanchas() {
                   </div>
                   <button 
                     type="button" 
-                    onClick={() => handleReservar(cancha.nombre)}
+                    onClick={() => handleReservar(cancha.nombre, cancha.precioHora)}
                     className="font-black px-5 py-2.5 rounded-xl text-xs bg-gray-800 text-gray-300 hover:bg-green-500 hover:text-[#0b132b] cursor-pointer transition-colors"
                   >
                     RESERVAR CANCHA

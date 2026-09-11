@@ -36,7 +36,15 @@ interface ProductoContextType {
   cargando: boolean;
   guardando: boolean;
 
-  cargarProductos: () => Promise<void>;
+  cantidadProductos: number;
+  paginaActual: number;
+  limiteProductos: number;
+  
+  cargarProductos: (
+    pagina?: number,
+    termino?: string,
+    limite?: number
+  ) => Promise<void>;
 
   abrirCrear: () => void;
   abrirEditar: (producto: Producto) => void;
@@ -65,13 +73,27 @@ export function ProductoProvider({
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  const cargarProductos = async () => {
+  const [cantidadProductos, setCantidadProductos] = useState(0);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [limiteProductos] = useState(8);
+
+  const cargarProductos = async (
+    pagina = 1,
+    termino = "",
+    limite = limiteProductos,) => {
+    
     try {
       setCargando(true);
+     let url =
+        `http://localhost:3003/api/producto` +
+        `?pagina=${pagina}` +
+        `&limite=${limite}`;
 
-      const respuesta = await fetch(
-        "http://localhost:3003/api/producto"
-      );
+      if (termino.trim() !== "") {
+        url += `&termino=${encodeURIComponent(termino)}`;
+      }
+
+      const respuesta = await fetch(url);
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener los productos");
@@ -80,8 +102,13 @@ export function ProductoProvider({
       const datos = await respuesta.json();
 
       setProductos(datos.productos);
+      setCantidadProductos(datos.cantidadProductos);
+      setPaginaActual(pagina);
+
     } catch (error) {
       console.error("Error al cargar productos:", error);
+      setProductos([]);
+      setCantidadProductos(0);
     } finally {
       setCargando(false);
     }
@@ -253,6 +280,10 @@ export function ProductoProvider({
         modalAbierto,
         cargando,
         guardando,
+
+        cantidadProductos,
+        paginaActual,
+        limiteProductos,
 
         cargarProductos,
 

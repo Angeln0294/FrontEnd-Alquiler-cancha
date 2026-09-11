@@ -13,12 +13,18 @@ import { ProductoProvider } from "./context/ProductoContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MiPerfil from "./components/MiPerfil";
 import Tienda from "./components/Tienda";
+import NuestrasCanchas from "./components/NuestrasCanchas";
+import ReservarTurnos from "./components/ReservarTurnos";
+import ScrollToTop from "./components/ScrollToTop";
+
+
 
 export default function App() {
   return (
     <AuthProvider>|
       <ProductoProvider>
       <BrowserRouter>
+        <ScrollToTop />
         {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
         <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
           {/* 🟢 NAVBAR REAL interactivo para todo el sitio */}
@@ -54,6 +60,10 @@ export default function App() {
               
               <Route path="/contacto" element={<Contacto />} />
             
+              <Route path="/reservas" element={<NuestrasCanchas />} />
+              <Route path="/canchas" element={<NuestrasCanchas />} />
+              <Route path="/nuestras-canchas" element={<NuestrasCanchas />} />
+              <Route path="/reservar-turnos" element={<ReservarTurnos />} />
               {/* 🚨 RUTA COMODÍN: Es obligatorio que path="*" esté último en esta lista */}
               <Route path="*" element={<Error404 />} />
             </Routes>

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
@@ -17,7 +16,7 @@ interface FormularioCancha {
   nombre: string;
   descripcion: string;
   precio: number;
-  imagen: string;
+  imagen: FileList;
   tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
   disponible: boolean;
 }
@@ -30,6 +29,7 @@ export default function AdminCanchas() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [editando, setEditando] = useState<Cancha | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
 
   const {
     register,
@@ -41,7 +41,7 @@ export default function AdminCanchas() {
       nombre: "",
       descripcion: "",
       precio: 0,
-      imagen: "",
+      imagen: undefined,
       tipo: "Fútbol 5",
       disponible: true,
     },
@@ -89,20 +89,20 @@ export default function AdminCanchas() {
   // NUEVA CANCHA
   // ================================
   const abrirFormularioNueva = () => {
-    setEditando(null);
+  setEditando(null);
+  setVistaPrevia(null);
 
-    reset({
-      nombre: "",
-      descripcion: "",
-      precio: 0,
-      imagen: "",
-      tipo: "Fútbol 5",
-      disponible: true,
-    });
+  reset({
+    nombre: "",
+    descripcion: "",
+    precio: 0,
+    imagen: undefined,
+    tipo: "Fútbol 5",
+    disponible: true,
+  });
 
-    setMostrarFormulario(true);
-  };
-
+  setMostrarFormulario(true);
+};
   // ================================
   // EDITAR CANCHA
   // ================================
@@ -113,7 +113,6 @@ export default function AdminCanchas() {
       nombre: cancha.nombre,
       descripcion: cancha.descripcion,
       precio: cancha.precio,
-      imagen: cancha.imagen,
       tipo: cancha.tipo,
       disponible: cancha.disponible,
     });
@@ -125,10 +124,11 @@ export default function AdminCanchas() {
   // CERRAR FORMULARIO
   // ================================
   const cerrarFormulario = () => {
-    setMostrarFormulario(false);
-    setEditando(null);
-    reset();
-  };
+  setMostrarFormulario(false);
+  setEditando(null);
+  setVistaPrevia(null);
+  reset();
+};
 
   // ================================
   // GUARDAR CANCHA
@@ -137,17 +137,24 @@ export default function AdminCanchas() {
     try {
       setGuardando(true);
 
-      const url = editando
-        ? `${API_URL}/${editando._id}`
-        : API_URL;
+      const url = editando ? `${API_URL}/${editando._id}` : API_URL;
+
+      const formData = new FormData();
+
+      formData.append("nombre", datos.nombre);
+      formData.append("descripcion", datos.descripcion);
+      formData.append("precio", datos.precio.toString());
+      formData.append("tipo", datos.tipo);
+      formData.append("disponible", datos.disponible.toString());
+
+      if (datos.imagen && datos.imagen.length > 0) {
+        formData.append("imagen", datos.imagen[0]);
+      }
 
       const respuesta = await fetch(url, {
         method: editando ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         credentials: "include",
-        body: JSON.stringify(datos),
+        body: formData,
       });
 
       const resultado = await respuesta.json();
@@ -156,15 +163,13 @@ export default function AdminCanchas() {
         throw new Error(
           resultado.message ||
             resultado.mensaje ||
-            "No se pudo guardar la cancha"
+            "No se pudo guardar la cancha",
         );
       }
 
       await Swal.fire({
         icon: "success",
-        title: editando
-          ? "Cancha actualizada"
-          : "Cancha creada",
+        title: editando ? "Cancha actualizada" : "Cancha creada",
         text: editando
           ? "La cancha se actualizó correctamente."
           : "La cancha se agregó correctamente.",
@@ -193,7 +198,6 @@ export default function AdminCanchas() {
       setGuardando(false);
     }
   };
-
   // ================================
   // ELIMINAR CANCHA
   // ================================
@@ -216,13 +220,10 @@ export default function AdminCanchas() {
     }
 
     try {
-      const respuesta = await fetch(
-        `${API_URL}/${cancha._id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+      const respuesta = await fetch(`${API_URL}/${cancha._id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       const resultado = await respuesta.json();
 
@@ -230,7 +231,7 @@ export default function AdminCanchas() {
         throw new Error(
           resultado.message ||
             resultado.mensaje ||
-            "No se pudo eliminar la cancha"
+            "No se pudo eliminar la cancha",
         );
       }
 
@@ -260,10 +261,8 @@ export default function AdminCanchas() {
 
   return (
     <div className="space-y-8">
-
       {/* ENCABEZADO */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold mb-3">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -287,67 +286,48 @@ export default function AdminCanchas() {
           <span className="text-lg">+</span>
           Nueva cancha
         </button>
-
       </div>
 
       {/* ESTADÍSTICAS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
         <div className="bg-linear-to-b from-green-500/20 to-emerald-500/5 bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 shadow-xl shadow-black/40">
-
           <div className="flex justify-between items-start">
-
             <div>
               <p className="text-slate-400 text-sm font-medium">
                 Total de canchas
               </p>
 
-              <p className="text-3xl font-black mt-2">
-                {canchas.length}
-              </p>
+              <p className="text-3xl font-black mt-2">{canchas.length}</p>
             </div>
 
             <div className="w-11 h-11 rounded-2xl bg-slate-800/80 border border-slate-700/50 flex items-center justify-center text-lg">
               ⚽
             </div>
-
           </div>
-
         </div>
 
         <div className="bg-linear-to-b from-blue-500/20 to-indigo-500/5 bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 shadow-xl shadow-black/40">
-
           <div className="flex justify-between items-start">
-
             <div>
               <p className="text-slate-400 text-sm font-medium">
                 Canchas disponibles
               </p>
 
               <p className="text-3xl font-black mt-2">
-                {
-                  canchas.filter(
-                    (cancha) => cancha.disponible
-                  ).length
-                }
+                {canchas.filter((cancha) => cancha.disponible).length}
               </p>
             </div>
 
             <div className="w-11 h-11 rounded-2xl bg-slate-800/80 border border-slate-700/50 flex items-center justify-center text-lg">
               ✅
             </div>
-
           </div>
-
         </div>
-
       </div>
 
       {/* LISTADO */}
       <div className="bg-linear-to-b from-slate-900/90 to-[#0b0f19] border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl">
-
         <div className="p-6 border-b border-slate-800/80">
-
           <h2 className="text-lg font-bold tracking-tight">
             Canchas registradas
           </h2>
@@ -355,25 +335,16 @@ export default function AdminCanchas() {
           <p className="text-xs text-slate-400 mt-1">
             Administrá la información de cada cancha.
           </p>
-
         </div>
 
         {cargando ? (
-
           <div className="p-12 text-center">
-
             <div className="w-10 h-10 border-4 border-slate-700 border-t-green-500 rounded-full animate-spin mx-auto mb-4" />
 
-            <p className="text-slate-400 text-sm">
-              Cargando canchas...
-            </p>
-
+            <p className="text-slate-400 text-sm">Cargando canchas...</p>
           </div>
-
         ) : canchas.length === 0 ? (
-
           <div className="p-12 text-center">
-
             <div className="w-16 h-16 rounded-3xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center mx-auto mb-4 text-3xl">
               ⚽
             </div>
@@ -393,22 +364,15 @@ export default function AdminCanchas() {
             >
               Agregar primera cancha
             </button>
-
           </div>
-
         ) : (
-
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-
             {canchas.map((cancha) => (
-
               <div
                 key={cancha._id}
                 className="bg-slate-950/50 border border-slate-800/80 rounded-2xl overflow-hidden hover:border-green-500/30 transition-all group"
               >
-
                 <div className="h-48 bg-slate-800 overflow-hidden">
-
                   <img
                     src={cancha.imagen}
                     alt={cancha.nombre}
@@ -417,15 +381,11 @@ export default function AdminCanchas() {
                       e.currentTarget.style.display = "none";
                     }}
                   />
-
                 </div>
 
                 <div className="p-5">
-
                   <div className="flex items-start justify-between gap-3 mb-3">
-
                     <div>
-
                       <h3 className="text-lg font-bold text-slate-100">
                         {cancha.nombre}
                       </h3>
@@ -433,7 +393,6 @@ export default function AdminCanchas() {
                       <span className="inline-block mt-1 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-[11px] font-semibold">
                         {cancha.tipo}
                       </span>
-
                     </div>
 
                     <span
@@ -443,11 +402,8 @@ export default function AdminCanchas() {
                           : "bg-rose-500/10 border-rose-500/20 text-rose-400"
                       }`}
                     >
-                      {cancha.disponible
-                        ? "Disponible"
-                        : "No disponible"}
+                      {cancha.disponible ? "Disponible" : "No disponible"}
                     </span>
-
                   </div>
 
                   <p className="text-slate-400 text-sm line-clamp-2 min-h-10">
@@ -455,24 +411,17 @@ export default function AdminCanchas() {
                   </p>
 
                   <div className="mt-4 pt-4 border-t border-slate-800/80">
-
-                    <p className="text-xs text-slate-500">
-                      Precio
-                    </p>
+                    <p className="text-xs text-slate-500">Precio</p>
 
                     <p className="text-xl font-black text-green-400">
                       ${cancha.precio.toLocaleString("es-AR")}
                     </p>
-
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mt-5">
-
                     <button
                       type="button"
-                      onClick={() =>
-                        abrirFormularioEditar(cancha)
-                      }
+                      onClick={() => abrirFormularioEditar(cancha)}
                       className="px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition text-sm font-semibold"
                     >
                       ✏️ Editar
@@ -480,50 +429,33 @@ export default function AdminCanchas() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        eliminarCancha(cancha)
-                      }
+                      onClick={() => eliminarCancha(cancha)}
                       className="px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition text-sm font-semibold"
                     >
                       🗑️ Eliminar
                     </button>
-
                   </div>
-
                 </div>
-
               </div>
-
             ))}
-
           </div>
-
         )}
-
       </div>
 
       {/* MODAL */}
       {mostrarFormulario && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0b0f19] border border-slate-800 rounded-3xl shadow-2xl">
-
             {/* HEADER */}
             <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-
               <div>
-
                 <h2 className="text-xl font-bold">
-                  {editando
-                    ? "Editar cancha"
-                    : "Nueva cancha"}
+                  {editando ? "Editar cancha" : "Nueva cancha"}
                 </h2>
 
                 <p className="text-xs text-slate-400 mt-1">
                   Completá los datos de la cancha.
                 </p>
-
               </div>
 
               <button
@@ -533,7 +465,6 @@ export default function AdminCanchas() {
               >
                 ✕
               </button>
-
             </div>
 
             {/* FORMULARIO */}
@@ -541,10 +472,8 @@ export default function AdminCanchas() {
               onSubmit={handleSubmit(guardarCancha)}
               className="p-6 space-y-5"
             >
-
               {/* NOMBRE */}
               <div>
-
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
                   Nombre
                 </label>
@@ -556,13 +485,11 @@ export default function AdminCanchas() {
                     required: "El nombre es obligatorio",
                     minLength: {
                       value: 3,
-                      message:
-                        "El nombre debe tener al menos 3 caracteres",
+                      message: "El nombre debe tener al menos 3 caracteres",
                     },
                     maxLength: {
                       value: 50,
-                      message:
-                        "El nombre no puede superar los 50 caracteres",
+                      message: "El nombre no puede superar los 50 caracteres",
                     },
                   })}
                   className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition ${
@@ -577,12 +504,10 @@ export default function AdminCanchas() {
                     {errors.nombre.message}
                   </p>
                 )}
-
               </div>
 
               {/* DESCRIPCIÓN */}
               <div>
-
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
                   Descripción
                 </label>
@@ -615,14 +540,11 @@ export default function AdminCanchas() {
                     {errors.descripcion.message}
                   </p>
                 )}
-
               </div>
 
               {/* PRECIO + TIPO */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
                 <div>
-
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Precio
                   </label>
@@ -637,8 +559,7 @@ export default function AdminCanchas() {
                       valueAsNumber: true,
                       min: {
                         value: 0,
-                        message:
-                          "El precio debe ser mayor o igual a 0",
+                        message: "El precio debe ser mayor o igual a 0",
                       },
                     })}
                     className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition ${
@@ -653,19 +574,16 @@ export default function AdminCanchas() {
                       {errors.precio.message}
                     </p>
                   )}
-
                 </div>
 
                 <div>
-
                   <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Tipo de cancha
                   </label>
 
                   <select
                     {...register("tipo", {
-                      required:
-                        "El tipo de cancha es obligatorio",
+                      required: "El tipo de cancha es obligatorio",
                     })}
                     className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 focus:outline-none transition ${
                       errors.tipo
@@ -673,17 +591,11 @@ export default function AdminCanchas() {
                         : "border-slate-800 focus:border-green-500"
                     }`}
                   >
-                    <option value="Fútbol 5">
-                      Fútbol 5
-                    </option>
+                    <option value="Fútbol 5">Fútbol 5</option>
 
-                    <option value="Fútbol 7">
-                      Fútbol 7
-                    </option>
+                    <option value="Fútbol 7">Fútbol 7</option>
 
-                    <option value="Fútbol 11">
-                      Fútbol 11
-                    </option>
+                    <option value="Fútbol 11">Fútbol 11</option>
                   </select>
 
                   {errors.tipo && (
@@ -691,36 +603,40 @@ export default function AdminCanchas() {
                       {errors.tipo.message}
                     </p>
                   )}
-
                 </div>
-
               </div>
 
               {/* IMAGEN */}
               <div>
-
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
-                  URL de imagen
+                  Imagen de la cancha
                 </label>
 
                 <input
-                  type="url"
-                  placeholder="https://..."
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
                   {...register("imagen", {
-                    required: "La imagen es obligatoria",
-                    pattern: {
-                      value:
-                        /^(https?:\/\/)([\w.-]+)(\/[\w./?%&=-]*)?$/,
-                      message:
-                        "Ingresá una URL de imagen válida",
+                    required: editando ? false : "La imagen es obligatoria",
+                    onChange: (e) => {
+                      const archivo = e.target.files?.[0];
+
+                      if (archivo) {
+                        setVistaPrevia(URL.createObjectURL(archivo));
+                      } else {
+                        setVistaPrevia(null);
+                      }
                     },
                   })}
-                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition ${
+                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-500 file:text-slate-950 file:font-semibold hover:file:bg-green-400 focus:outline-none transition ${
                     errors.imagen
                       ? "border-rose-500 focus:border-rose-500"
                       : "border-slate-800 focus:border-green-500"
                   }`}
                 />
+
+                <p className="text-xs text-slate-500 mt-2">
+                  Formatos permitidos: JPG, PNG o WEBP. Máximo 2 MB.
+                </p>
 
                 {errors.imagen && (
                   <p className="text-rose-400 text-xs mt-1.5">
@@ -728,11 +644,23 @@ export default function AdminCanchas() {
                   </p>
                 )}
 
-              </div>
+                {/* VISTA PREVIA */}
+                {vistaPrevia && (
+                  <div className="mt-4">
+                    <p className="text-xs text-slate-400 mb-2">Vista previa</p>
 
+                    <div className="w-48 h-32 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
+                      <img
+                        src={vistaPrevia}
+                        alt="Vista previa de la cancha"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
               {/* DISPONIBLE */}
               <label className="flex items-center gap-3 p-4 rounded-xl bg-slate-950/70 border border-slate-800 cursor-pointer">
-
                 <input
                   type="checkbox"
                   {...register("disponible")}
@@ -740,7 +668,6 @@ export default function AdminCanchas() {
                 />
 
                 <div>
-
                   <p className="text-sm font-semibold text-slate-200">
                     Cancha disponible
                   </p>
@@ -748,14 +675,11 @@ export default function AdminCanchas() {
                   <p className="text-xs text-slate-500">
                     Indica si la cancha puede ser reservada.
                   </p>
-
                 </div>
-
               </label>
 
               {/* BOTONES */}
               <div className="flex flex-col-reverse sm:flex-row gap-3 pt-3">
-
                 <button
                   type="button"
                   onClick={cerrarFormulario}
@@ -772,20 +696,14 @@ export default function AdminCanchas() {
                   {guardando
                     ? "Guardando..."
                     : editando
-                    ? "Guardar cambios"
-                    : "Crear cancha"}
+                      ? "Guardar cambios"
+                      : "Crear cancha"}
                 </button>
-
               </div>
-
             </form>
-
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 }

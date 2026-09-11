@@ -16,7 +16,7 @@ import Tienda from "./components/Tienda";
 
 export default function App() {
   return (
-    <AuthProvider>
+    <AuthProvider>|
       <ProductoProvider>
       <BrowserRouter>
         {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}

@@ -9,8 +9,10 @@ import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
 import Error404 from "./components/Error404";
 import { AuthProvider } from "./context/AuthContext";
+import { ProductoProvider } from "./context/ProductoContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MiPerfil from "./components/MiPerfil";
+import Tienda from "./components/Tienda";
 import NuestrasCanchas from "./components/NuestrasCanchas";
 import ReservarTurnos from "./components/ReservarTurnos";
 import ScrollToTop from "./components/ScrollToTop";
@@ -19,7 +21,8 @@ import ScrollToTop from "./components/ScrollToTop";
 
 export default function App() {
   return (
-    <AuthProvider>
+    <AuthProvider>|
+      <ProductoProvider>
       <BrowserRouter>
         <ScrollToTop />
         {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
@@ -35,6 +38,7 @@ export default function App() {
               
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
+              <Route path="/tienda" element={<Tienda />} />
               <Route path="/verificar-email" element={<VerificarEmail />} />
               
               <Route
@@ -55,6 +59,7 @@ export default function App() {
               />
               
               <Route path="/contacto" element={<Contacto />} />
+            
               <Route path="/reservas" element={<NuestrasCanchas />} />
               <Route path="/canchas" element={<NuestrasCanchas />} />
               <Route path="/nuestras-canchas" element={<NuestrasCanchas />} />
@@ -67,6 +72,7 @@ export default function App() {
           <Footer />
         </div>
       </BrowserRouter>
+      </ProductoProvider>
     </AuthProvider>
   );
 }

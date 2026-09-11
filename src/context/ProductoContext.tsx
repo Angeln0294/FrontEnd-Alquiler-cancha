@@ -23,7 +23,7 @@ interface DatosProducto {
   nombreProducto: string;
   precio: number;
   categoria: string;
-  imagen: string;
+  imagen: File | null;
   descripcion: string;
 }
 
@@ -36,7 +36,15 @@ interface ProductoContextType {
   cargando: boolean;
   guardando: boolean;
 
-  cargarProductos: () => Promise<void>;
+  cantidadProductos: number;
+  paginaActual: number;
+  limiteProductos: number;
+  
+  cargarProductos: (
+    pagina?: number,
+    termino?: string,
+    limite?: number
+  ) => Promise<void>;
 
   abrirCrear: () => void;
   abrirEditar: (producto: Producto) => void;
@@ -65,13 +73,27 @@ export function ProductoProvider({
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  const cargarProductos = async () => {
+  const [cantidadProductos, setCantidadProductos] = useState(0);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [limiteProductos] = useState(8);
+
+  const cargarProductos = async (
+    pagina = 1,
+    termino = "",
+    limite = limiteProductos,) => {
+    
     try {
       setCargando(true);
+     let url =
+        `http://localhost:3003/api/producto` +
+        `?pagina=${pagina}` +
+        `&limite=${limite}`;
 
-      const respuesta = await fetch(
-        "http://localhost:3003/api/productos"
-      );
+      if (termino.trim() !== "") {
+        url += `&termino=${encodeURIComponent(termino)}`;
+      }
+
+      const respuesta = await fetch(url);
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener los productos");
@@ -79,9 +101,14 @@ export function ProductoProvider({
 
       const datos = await respuesta.json();
 
-      setProductos(datos);
+      setProductos(datos.productos);
+      setCantidadProductos(datos.cantidadProductos);
+      setPaginaActual(pagina);
+
     } catch (error) {
       console.error("Error al cargar productos:", error);
+      setProductos([]);
+      setCantidadProductos(0);
     } finally {
       setCargando(false);
     }
@@ -90,7 +117,7 @@ export function ProductoProvider({
   const cargarCategorias = async () => {
     try {
       const respuesta = await fetch(
-        "http://localhost:3000/api/categorias"
+        "http://localhost:3003/api/categorias"
       );
 
       if (!respuesta.ok) {
@@ -129,20 +156,48 @@ export function ProductoProvider({
     datosProducto: DatosProducto
   ) => {
     try {
-      setGuardando(true);
+    setGuardando(true);
 
-      let respuesta;
+    const formulario = new FormData();
+
+    formulario.append(
+      "nombreProducto",
+      datosProducto.nombreProducto
+    );
+
+    formulario.append(
+      "precio",
+      String(datosProducto.precio)
+    );
+
+    formulario.append(
+      "categoria",
+      datosProducto.categoria
+    );
+
+    formulario.append(
+      "descripcion",
+      datosProducto.descripcion
+    );
+
+    // Solo agregamos imagen si seleccionó un archivo
+    if (datosProducto.imagen) {
+      formulario.append(
+        "imagen",
+        datosProducto.imagen
+      );
+    }
+
+    let respuesta;
 
       // EDITAR
       if (productoSeleccionado) {
         respuesta = await fetch(
-          `http://localhost:3003/api/productos/${productoSeleccionado._id}`,
+          `http://localhost:3003/api/producto/${productoSeleccionado._id}`,
           {
             method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(datosProducto),
+            body: formulario,
+            credentials: "include",
           }
         );
       }
@@ -150,13 +205,11 @@ export function ProductoProvider({
       // CREAR
       else {
         respuesta = await fetch(
-          "http://localhost:3003/api/productos",
+          "http://localhost:3003/api/producto",
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(datosProducto),
+            body: formulario,
+            credentials: "include",
           }
         );
       }
@@ -198,9 +251,10 @@ export function ProductoProvider({
 
     try {
       const respuesta = await fetch(
-        `http://localhost:3003/api/productos/${id}`,
+        `http://localhost:3003/api/producto/${id}`,
         {
           method: "DELETE",
+          credentials: "include",
         }
       );
 
@@ -226,6 +280,10 @@ export function ProductoProvider({
         modalAbierto,
         cargando,
         guardando,
+
+        cantidadProductos,
+        paginaActual,
+        limiteProductos,
 
         cargarProductos,
 

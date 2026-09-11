@@ -16,6 +16,7 @@ import Tienda from "./components/Tienda";
 import NuestrasCanchas from "./components/NuestrasCanchas";
 import ReservarTurnos from "./components/ReservarTurnos";
 import ScrollToTop from "./components/ScrollToTop";
+import Carrito from "./components/Carrito";
 
 
 
@@ -38,8 +39,9 @@ export default function App() {
               
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
-              <Route path="/tienda" element={<Tienda />} />
               <Route path="/verificar-email" element={<VerificarEmail />} />
+              <Route path="/tienda" element={<Tienda />} />
+              <Route path="/carrito" element={<Carrito />} />
               
               <Route
                 path="/admin"

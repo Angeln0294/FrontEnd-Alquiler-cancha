@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useProductos } from "../context/ProductoContext";
+import { useCarrito } from "../context/CarritoContext";
 
 export default function Tienda() {
 
@@ -13,9 +14,15 @@ export default function Tienda() {
     cargarProductos,
   } = useProductos();
 
+  const {
+  agregarAlCarrito,
+} = useCarrito();
+
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] =
     useState("");
+
+  
 
   // =========================
   // BUSCAR PRODUCTOS
@@ -67,61 +74,7 @@ export default function Tienda() {
       behavior: "smooth",
     });
   };
-
-  // =========================
-  // AGREGAR AL CARRITO
-  // =========================
-
-  const agregarAlCarrito = async (
-    productoId: string
-  ) => {
-
-    try {
-
-      const respuesta = await fetch(
-        "http://localhost:3003/api/carrito",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          credentials: "include",
-
-          body: JSON.stringify({
-            producto: productoId,
-            cantidad: 1,
-          }),
-        }
-      );
-
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          datos?.mensaje ||
-          "No se pudo agregar el producto al carrito"
-        );
-      }
-
-      alert("Producto agregado al carrito 🛒");
-
-    } catch (error) {
-
-      console.error(
-        "Error al agregar al carrito:",
-        error
-      );
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "No se pudo agregar el producto al carrito"
-      );
-    }
-  };
-
+  
   // =========================
   // CANTIDAD DE PÁGINAS
   // =========================

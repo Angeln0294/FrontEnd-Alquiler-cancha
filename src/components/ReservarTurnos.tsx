@@ -28,6 +28,20 @@ export default function ReservasPage() {
   const nombreCanchaUrl = searchParams.get('cancha') || "Cancha 5 - Fútbol 7";
   const precioCanchaUrl = searchParams.get('precio') || "$1200";
 
+  // 💸 CÁLCULO DINÁMICO DEL 20% DE DESCUENTO (PROMO NOCTURNA)
+// =========================================================
+// Convertimos el texto del precio (ej: "$12.000") a un número limpio (12000)
+const precioNumero = Number(precioCanchaUrl.replace(/[^0-8.-]+/g, "")) * 1000 || 12000;
+
+// Verificamos si el turno seleccionado califica para la promo nocturna ('t6' es 21-22hs, 't7' es 23-24hs)
+const esHorarioPromo = turnoIdSeleccionado === 't6' || turnoIdSeleccionado === 't7';
+
+// Si aplica el horario promo, restamos el 20%, si no, queda el valor base
+const precioFinalNumero = esHorarioPromo ? precioNumero * 0.8 : precioNumero;
+
+// Le devolvemos el formato de moneda local tucumana (ej: $9.600)
+const precioFinalFormateado = `$${precioFinalNumero.toLocaleString('es-AR')}`;
+
   
   const [turnos, setTurnos] = useState<HorarioTurno[]>([
     { id: 't1', rango: '18:00 - 19:00', estado: 'disponible' },
@@ -90,7 +104,7 @@ export default function ReservasPage() {
               </div>
               
               <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500 mb-2 uppercase">
-                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                <span>Dom</span><span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span>
               </div>
 
               <div className="grid grid-cols-7 gap-1 text-center text-xs">
@@ -175,25 +189,36 @@ export default function ReservasPage() {
                 Resumen de Reserva
               </h4>
               
-              <div className="space-y-3 text-xs text-slate-400">
+          <div className="space-y-3 text-xs text-slate-400">
                 <div className="flex justify-between items-center">
-                  <span>Date:</span>
-                  <span className="text-slate-200 font-bold">Martes, {calendarDay} de Octubre</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Hora:</span>
-                  <span className="text-slate-200 font-bold">{turnoActual ? turnoActual.rango : 'No seleccionado'}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Court:</span>
-                  <span className="text-slate-200 font-bold">{nombreCanchaUrl}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm pt-3 border-t border-slate-800/80">
-                  <span className="text-slate-300 font-black">Total:</span>
-                  {/* 🟢 ¡Precio dinámico solucionado! */}
-                  <span className="text-green-400 font-black text-lg">{precioCanchaUrl}</span>
+                <span>Date:</span>
+                <span className="text-slate-200 font-bold">Martes, {calendarDay} de Octubre</span>
               </div>
-              </div>
+              <div className="flex justify-between items-center">
+                <span>Hora:</span>
+                <span className="text-slate-200 font-bold">{turnoActual ? turnoActual.rango : 'No seleccionado'}</span>
+          </div>
+          <div className="flex justify-between items-center">
+                <span>Court:</span>
+                <span className="text-slate-200 font-bold">{nombreCanchaUrl}</span>
+          </div>
+
+  {/* 📢 NUEVO: Cartelito indicador que aparece solo si eligen horario nocturno */}
+  {esHorarioPromo && (
+    <div className="flex justify-between items-center text-[10px] text-green-400 font-bold bg-green-500/10 px-2 py-1.5 rounded-lg border border-green-500/20 uppercase tracking-wider">
+      <span>¡Promo Nocturna Aplicada!</span>
+      <span>-20% OFF</span>
+    </div>
+  )}
+
+  {/* 💸 Fila del Total Modificada */}
+  <div className="flex justify-between items-center text-sm pt-3 border-t border-slate-800/80">
+    <span className="text-slate-300 font-black">Total:</span>
+    {/* 🟢 Cambiamos 'precioCanchaUrl' por 'precioFinalFormateado' para mostrar el descuento en vivo */}
+    <span className="text-green-400 font-black text-lg">{precioFinalFormateado}</span>
+  </div>
+</div>
+
 
               {/* Botón definitivo para confirmar la operación */}
               <button

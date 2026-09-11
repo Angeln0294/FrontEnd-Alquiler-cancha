@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import AdminUsuarios from "./AdminUsuarios";
 import AdminCanchas from "./AdminCanchas";
 import AdminReservas from "./AdminReservas";
+import AdminCategorias from "./AdminCategorias";
+import { CategoriaProvider } from "../context/CategoriaContext";
 import AdminProductos from "./AdminProductos";
 
 type Seccion =
@@ -132,6 +134,12 @@ export default function PanelAdmin() {
 
 {/* SECCIÓN CANCHAS */}
 {seccionActiva === "canchas" && <AdminCanchas />}
+
+{seccionActiva === "categorias" && (
+  <CategoriaProvider>
+    <AdminCategorias />
+  </CategoriaProvider>
+)}
 
 {/* SECCIÓN PRODUCTOS */}
 {seccionActiva === "productos" && <AdminProductos />}

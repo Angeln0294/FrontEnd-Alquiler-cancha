@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Inicio from "./components/Inicio"; 
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
@@ -26,23 +27,14 @@ export default function App() {
           {/* 2. HIJO: Con 'grow' se estira ocupando el espacio del medio */}
           <div className="grow">
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <main className="flex flex-col items-center justify-center text-white py-20 px-4">
-                    <h1 className="text-3xl md:text-5xl font-black text-center tracking-tight uppercase">
-                      RESERVA TU CANCHA{" "}
-                      <span className="text-green-400 block md:inline">
-                        FÁCILMENTE
-                      </span>
-                    </h1>
-                  </main>
-                }
-              />
+              {/* 🟢 Renderiza la página de Inicio con el banner de anuncios y las 3 canchas */}
+              <Route path="/" element={<Inicio />} />
+              
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
               <Route path="/tienda" element={<Tienda />} />
               <Route path="/verificar-email" element={<VerificarEmail />} />
+              
               <Route
                 path="/admin"
                 element={
@@ -59,7 +51,9 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              
               <Route path="/contacto" element={<Contacto />} />
+            
               {/* 🚨 RUTA COMODÍN: Es obligatorio que path="*" esté último en esta lista */}
               <Route path="*" element={<Error404 />} />
             </Routes>

@@ -23,7 +23,7 @@ interface DatosProducto {
   nombreProducto: string;
   precio: number;
   categoria: string;
-  imagen: string;
+  imagen: File | null;
   descripcion: string;
 }
 
@@ -70,7 +70,7 @@ export function ProductoProvider({
       setCargando(true);
 
       const respuesta = await fetch(
-        "http://localhost:3003/api/productos"
+        "http://localhost:3003/api/producto"
       );
 
       if (!respuesta.ok) {
@@ -79,7 +79,7 @@ export function ProductoProvider({
 
       const datos = await respuesta.json();
 
-      setProductos(datos);
+      setProductos(datos.productos);
     } catch (error) {
       console.error("Error al cargar productos:", error);
     } finally {
@@ -129,20 +129,48 @@ export function ProductoProvider({
     datosProducto: DatosProducto
   ) => {
     try {
-      setGuardando(true);
+    setGuardando(true);
 
-      let respuesta;
+    const formulario = new FormData();
+
+    formulario.append(
+      "nombreProducto",
+      datosProducto.nombreProducto
+    );
+
+    formulario.append(
+      "precio",
+      String(datosProducto.precio)
+    );
+
+    formulario.append(
+      "categoria",
+      datosProducto.categoria
+    );
+
+    formulario.append(
+      "descripcion",
+      datosProducto.descripcion
+    );
+
+    // Solo agregamos imagen si seleccionó un archivo
+    if (datosProducto.imagen) {
+      formulario.append(
+        "imagen",
+        datosProducto.imagen
+      );
+    }
+
+    let respuesta;
 
       // EDITAR
       if (productoSeleccionado) {
         respuesta = await fetch(
-          `http://localhost:3003/api/productos/${productoSeleccionado._id}`,
+          `http://localhost:3003/api/producto/${productoSeleccionado._id}`,
           {
             method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(datosProducto),
+            body: formulario,
+            credentials: "include",
           }
         );
       }
@@ -150,13 +178,11 @@ export function ProductoProvider({
       // CREAR
       else {
         respuesta = await fetch(
-          "http://localhost:3003/api/productos",
+          "http://localhost:3003/api/producto",
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(datosProducto),
+            body: formulario,
+            credentials: "include",
           }
         );
       }
@@ -198,9 +224,10 @@ export function ProductoProvider({
 
     try {
       const respuesta = await fetch(
-        `http://localhost:3003/api/productos/${id}`,
+        `http://localhost:3003/api/producto/${id}`,
         {
           method: "DELETE",
+          credentials: "include",
         }
       );
 

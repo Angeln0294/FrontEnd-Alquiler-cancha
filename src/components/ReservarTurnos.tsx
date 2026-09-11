@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export interface CanchaDetalle {
@@ -21,18 +21,12 @@ export default function ReservasPage() {
   const [searchParams] = useSearchParams();
 
   // Estados interactivos idénticos a los valores del mockup
-  const [calendarDay, setCalendarDay] = useState<number>(25); // Octubre 25 seleccionado en el mockup
-  const [turnoIdSeleccionado, setTurnoIdSeleccionado] = useState<string | null>('t6'); // Pre-seleccionado el de las 21:00
+  const [calendarDay, setCalendarDay] = useState<number>(25);
+  const [turnoIdSeleccionado, setTurnoIdSeleccionado] = useState<string | null>('t6');
 
-  // Obtenemos de la URL qué cancha clickeó el usuario en el catálogo
-  const [nombreCanchaUrl, setNombreCanchaUrl] = useState<string>("Cancha 5 - Fútbol 7");
-
-  useEffect(() => {
-    const canchaParam = searchParams.get('cancha');
-    if (canchaParam) {
-      setNombreCanchaUrl(decodeURIComponent(canchaParam));
-    }
-  }, [searchParams]);
+// 🔍 Leemos DIRECTAMENTE de la URL el nombre y el precio de forma reactiva
+  const nombreCanchaUrl = searchParams.get('cancha') || "Cancha 5 - Fútbol 7";
+  const precioCanchaUrl = searchParams.get('precio') || "$1200";
 
   
   const [turnos, setTurnos] = useState<HorarioTurno[]>([
@@ -196,8 +190,9 @@ export default function ReservasPage() {
                 </div>
                 <div className="flex justify-between items-center text-sm pt-3 border-t border-slate-800/80">
                   <span className="text-slate-300 font-black">Total:</span>
-                  <span className="text-green-400 font-black text-lg">$1200</span>
-                </div>
+                  {/* 🟢 ¡Precio dinámico solucionado! */}
+                  <span className="text-green-400 font-black text-lg">{precioCanchaUrl}</span>
+              </div>
               </div>
 
               {/* Botón definitivo para confirmar la operación */}

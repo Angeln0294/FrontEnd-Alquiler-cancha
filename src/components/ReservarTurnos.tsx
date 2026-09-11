@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 export interface CanchaDetalle {
   id: number;
@@ -19,6 +19,7 @@ interface HorarioTurno {
 
 export default function ReservasPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Estados interactivos idénticos a los valores del mockup
   const [calendarDay, setCalendarDay] = useState<number>(25);
@@ -71,6 +72,14 @@ const precioFinalFormateado = `$${precioFinalNumero.toLocaleString('es-AR')}`;
   return (
     <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans animate-fadeIn">
       <div className="max-w-6xl mx-auto space-y-6">
+
+        <button 
+          type="button" 
+          onClick={() => navigate('/canchas')} // 🚀 Te manda directo al catálogo de 9 tarjetas
+          className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-green-400 transition-colors flex items-center gap-2 cursor-pointer mb-2"
+        >
+          ← Volver a canchas
+        </button>
         
         <h1 className="text-2xl font-bold tracking-tight text-white">Reserva de Cancha</h1>
 

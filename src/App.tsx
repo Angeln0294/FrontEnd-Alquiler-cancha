@@ -12,7 +12,8 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MiPerfil from "./components/MiPerfil";
 import NuestrasCanchas from "./components/NuestrasCanchas";
-import ReservarTurnos from "./components/ReservarTurnos"; 
+import ReservarTurnos from "./components/ReservarTurnos";
+import ScrollToTop from "./components/ScrollToTop";
 
 
 
@@ -20,6 +21,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
         <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
           {/* 🟢 NAVBAR REAL interactivo para todo el sitio */}

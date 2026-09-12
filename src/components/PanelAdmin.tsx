@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+
 import AdminUsuarios from "./AdminUsuarios";
 import AdminCanchas from "./AdminCanchas";
 import AdminReservas from "./AdminReservas";
 import AdminCategorias from "./AdminCategorias";
-import { CategoriaProvider } from "../context/CategoriaContext";
 import AdminProductos from "./AdminProductos";
+
+import { CategoriaProvider } from "../context/CategoriaContext";
+import { useAuth } from "../context/AuthContext";
 
 type Seccion =
   | "dashboard"
@@ -16,420 +18,1245 @@ type Seccion =
   | "reservas"
   | "configuracion";
 
-export default function PanelAdmin() {
-  const [menuAbierto, setMenuAbierto] = useState(false);
+interface Usuario {
+  _id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  rol: "usuario" | "admin";
+  activo: boolean;
+  emailVerificado: boolean;
+}
 
-  const [seccionActiva, setSeccionActiva] = useState<Seccion>("dashboard");
+interface Cancha {
+  _id: string;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  imagen: string;
+  tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
+  disponible: boolean;
+}
+
+interface Reserva {
+  _id: string;
+  usuario: {
+    _id: string;
+    nombre: string;
+    apellido: string;
+    email: string;
+  };
+  cancha: {
+    _id: string;
+    nombre: string;
+    tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
+    precio: number;
+  };
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  precio: number;
+  estado: "pendiente" | "confirmada" | "cancelada";
+  createdAt?: string;
+}
+
+interface DatosDashboard {
+  usuarios: Usuario[];
+  canchas: Cancha[];
+  reservas: Reserva[];
+}
+
+export default function PanelAdmin() {
+  const { cerrarSesion } = useAuth();
+
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [seccionActiva, setSeccionActiva] =
+    useState<Seccion>("dashboard");
+
+  const [datos, setDatos] = useState<DatosDashboard>({
+    usuarios: [],
+    canchas: [],
+    reservas: [],
+  });
+
+  const [cargandoDashboard, setCargandoDashboard] = useState(true);
+  const [errorDashboard, setErrorDashboard] = useState(false);
+
+  // ==========================================
+  // CARGAR DATOS DEL DASHBOARD
+  // ==========================================
+
+  const cargarDatosDashboard = async () => {
+    try {
+      setCargandoDashboard(true);
+      setErrorDashboard(false);
+
+      const [respuestaUsuarios, respuestaCanchas, respuestaReservas] =
+        await Promise.all([
+          fetch("http://localhost:3003/api/usuario", {
+            credentials: "include",
+          }),
+
+          fetch("http://localhost:3003/api/canchas", {
+            credentials: "include",
+          }),
+
+          fetch("http://localhost:3003/api/reservas", {
+            credentials: "include",
+          }),
+        ]);
+
+      if (
+        !respuestaUsuarios.ok ||
+        !respuestaCanchas.ok ||
+        !respuestaReservas.ok
+      ) {
+        throw new Error("No se pudieron obtener los datos del dashboard");
+      }
+
+      const resultadoUsuarios = await respuestaUsuarios.json();
+      const resultadoCanchas = await respuestaCanchas.json();
+      const resultadoReservas = await respuestaReservas.json();
+
+      setDatos({
+        usuarios: Array.isArray(resultadoUsuarios)
+          ? resultadoUsuarios
+          : [],
+
+        canchas: resultadoCanchas.canchas || [],
+
+        reservas: resultadoReservas.reservas || [],
+      });
+    } catch (error) {
+      console.error(
+        "Error al cargar datos del dashboard:",
+        error
+      );
+
+      setErrorDashboard(true);
+    } finally {
+      setCargandoDashboard(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarDatosDashboard();
+  }, []);
+
+  // ==========================================
+  // ESTADÍSTICAS
+  // ==========================================
+
+  const totalUsuarios = datos.usuarios.length;
+
+  const usuariosActivos = datos.usuarios.filter(
+    (usuario) => usuario.activo
+  ).length;
+
+  const usuariosVerificados = datos.usuarios.filter(
+    (usuario) => usuario.emailVerificado
+  ).length;
+
+  const administradores = datos.usuarios.filter(
+    (usuario) => usuario.rol === "admin"
+  ).length;
+
+  const totalCanchas = datos.canchas.length;
+
+  const canchasDisponibles = datos.canchas.filter(
+    (cancha) => cancha.disponible
+  ).length;
+
+  const canchasNoDisponibles =
+    totalCanchas - canchasDisponibles;
+
+  const futbol5 = datos.canchas.filter(
+    (cancha) => cancha.tipo === "Fútbol 5"
+  ).length;
+
+  const futbol7 = datos.canchas.filter(
+    (cancha) => cancha.tipo === "Fútbol 7"
+  ).length;
+
+  const futbol11 = datos.canchas.filter(
+    (cancha) => cancha.tipo === "Fútbol 11"
+  ).length;
+
+  const totalReservas = datos.reservas.length;
+
+  const reservasPendientes = datos.reservas.filter(
+    (reserva) => reserva.estado === "pendiente"
+  ).length;
+
+  const reservasConfirmadas = datos.reservas.filter(
+    (reserva) => reserva.estado === "confirmada"
+  ).length;
+
+  const reservasCanceladas = datos.reservas.filter(
+    (reserva) => reserva.estado === "cancelada"
+  ).length;
+
+  // ==========================================
+  // RESERVAS DE LOS ÚLTIMOS 7 DÍAS
+  // ==========================================
+
+  const obtenerReservasUltimos7Dias = () => {
+    const hoy = new Date();
+
+    hoy.setHours(23, 59, 59, 999);
+
+    const hace7Dias = new Date();
+
+    hace7Dias.setDate(hace7Dias.getDate() - 6);
+    hace7Dias.setHours(0, 0, 0, 0);
+
+    return datos.reservas.filter((reserva) => {
+      const fecha = new Date(reserva.fecha);
+
+      return fecha >= hace7Dias && fecha <= hoy;
+    });
+  };
+
+  const reservasUltimos7Dias =
+    obtenerReservasUltimos7Dias();
+
+  // ==========================================
+  // DATOS PARA GRÁFICO SEMANAL
+  // ==========================================
+
+  const obtenerDatosSemana = () => {
+    const hoy = new Date();
+
+    return Array.from({ length: 7 }, (_, indice) => {
+      const fecha = new Date(hoy);
+
+      fecha.setDate(hoy.getDate() - (6 - indice));
+      fecha.setHours(0, 0, 0, 0);
+
+      const siguienteDia = new Date(fecha);
+
+      siguienteDia.setDate(fecha.getDate() + 1);
+
+      const cantidad = datos.reservas.filter((reserva) => {
+        const fechaReserva = new Date(reserva.fecha);
+
+        return (
+          fechaReserva >= fecha &&
+          fechaReserva < siguienteDia
+        );
+      }).length;
+
+      return {
+        fecha,
+        cantidad,
+        nombre: fecha.toLocaleDateString("es-AR", {
+          weekday: "short",
+        }),
+      };
+    });
+  };
+
+  const datosSemana = obtenerDatosSemana();
+
+  const maxReservasSemana = Math.max(
+    ...datosSemana.map((dia) => dia.cantidad),
+    1
+  );
+
+  // ==========================================
+  // RESERVAS RECIENTES
+  // ==========================================
+
+  const reservasRecientes = [...datos.reservas]
+    .sort((a, b) => {
+      const fechaA = a.createdAt
+        ? new Date(a.createdAt).getTime()
+        : new Date(a.fecha).getTime();
+
+      const fechaB = b.createdAt
+        ? new Date(b.createdAt).getTime()
+        : new Date(b.fecha).getTime();
+
+      return fechaB - fechaA;
+    })
+    .slice(0, 5);
+
+  // ==========================================
+  // FORMATEAR FECHA
+  // ==========================================
+
+  const formatearFecha = (fecha: string) => {
+    return new Date(fecha).toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  // ==========================================
+  // CLASE ESTADO
+  // ==========================================
+
+  const obtenerClaseEstado = (
+    estado: Reserva["estado"]
+  ) => {
+    switch (estado) {
+      case "confirmada":
+        return "bg-green-500/10 border-green-500/20 text-green-400";
+
+      case "cancelada":
+        return "bg-rose-500/10 border-rose-500/20 text-rose-400";
+
+      default:
+        return "bg-yellow-500/10 border-yellow-500/20 text-yellow-400";
+    }
+  };
+
+  // ==========================================
+  // MENÚ
+  // ==========================================
 
   const cambiarSeccion = (seccion: Seccion) => {
     setSeccionActiva(seccion);
     setMenuAbierto(false);
   };
 
+  const menuItems = [
+    {
+      id: "dashboard" as Seccion,
+      nombre: "Dashboard",
+      icono: "📊",
+    },
+    {
+      id: "usuarios" as Seccion,
+      nombre: "Usuarios",
+      icono: "👥",
+    },
+    {
+      id: "canchas" as Seccion,
+      nombre: "Canchas",
+      icono: "⚽",
+    },
+    {
+      id: "productos" as Seccion,
+      nombre: "Productos",
+      icono: "🛒",
+    },
+    {
+      id: "categorias" as Seccion,
+      nombre: "Categorías",
+      icono: "🏷️",
+    },
+    {
+      id: "reservas" as Seccion,
+      nombre: "Reservas",
+      icono: "📅",
+    },
+    {
+      id: "configuracion" as Seccion,
+      nombre: "Configuración",
+      icono: "⚙️",
+    },
+  ];
+
+  // ==========================================
+  // RENDER
+  // ==========================================
+
   return (
-    <div className="min-h-[calc(100vh-72px)] bg-[#030712] text-slate-100 flex font-sans selection:bg-green-500 selection:text-slate-950">
-      {/* Overlay móvil con desenfoque */}
-      {menuAbierto && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-30 md:hidden transition-opacity"
-          onClick={() => setMenuAbierto(false)}
-        />
-      )}
+    <div className="min-h-screen bg-[#030712] text-white">
+      <div className="flex min-h-screen">
 
-      {/* MENÚ LATERAL */}
-      <aside
-        className={`
-          fixed md:static z-40 top-0 left-0
-          h-full md:min-h-[calc(100vh-72px)] w-72
-          bg-[#0b0f19]/90 backdrop-blur-xl
-          border-r border-slate-800/60
-          transform transition-transform duration-300 ease-in-out
-          flex flex-col
-          ${menuAbierto ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        `}
-      >
-        {/* Logo moderno */}
-        <div className="h-20 flex items-center px-6 border-b border-slate-800/60">
-          <Link
-            to="/"
-            className="text-xl font-black text-transparent bg-clip-text bg-linear-to-r from-green-400 to-emerald-500 tracking-wider flex items-center gap-2.5 group"
-            onClick={() => setMenuAbierto(false)}
-          >
-            <span className="p-2 rounded-xl bg-green-500/10 border border-green-500/20 group-hover:scale-105 transition-transform">
-              ⚽
-            </span>
-            CANCHAS YA
-          </Link>
-        </div>
+        {/* =====================================
+            SIDEBAR
+        ===================================== */}
 
-        {/* Navegación lateral */}
-        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-3">
-            Menú Principal
-          </p>
+        <aside
+          className={`
+            fixed left-0 top-0 z-50
+            h-screen w-72
+            border-r border-slate-800
+            bg-[#0b0f19]
+            transition-transform duration-300
+            lg:translate-x-0
+            ${
+              menuAbierto
+                ? "translate-x-0"
+                : "-translate-x-full"
+            }
+          `}
+        >
+          {/* LOGO */}
 
-          {[
-            { id: "dashboard", label: "Dashboard", icon: "📊" },
-            { id: "usuarios", label: "Usuarios", icon: "👥" },
-            { id: "canchas", label: "Canchas", icon: "⚽" },
-            { id: "productos", label: "Productos", icon: "🛒" },
-            { id: "categorias", label: "Categorías", icon: "🏷️" },
-            { id: "reservas", label: "Reservas", icon: "📅" },
-            { id: "configuracion", label: "Configuración", icon: "⚙️" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium relative group ${
-                seccionActiva === item.id
-                  ? "bg-linear-to-r from-green-500 to-emerald-500 text-slate-950 font-bold shadow-lg shadow-green-500/25"
-                  : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
-              }`}
-              onClick={() => cambiarSeccion(item.id as Seccion)}
-            >
-              <span className="text-base">{item.icon}</span>
+          <div className="flex h-20 items-center border-b border-slate-800 px-6">
+            <div>
+              <p className="text-xl font-black">
+                Canchas <span className="text-green-400">Ya</span>
+              </p>
 
-              {item.label}
-
-              {seccionActiva === item.id && (
-                <span className="absolute right-3 w-1.5 h-1.5 rounded-full bg-slate-950 animate-pulse" />
-              )}
-            </button>
-          ))}
-        </nav>
-
-        {/* Perfil o Cerrar sesión */}
-        <div className="p-4 border-t border-slate-800/60 bg-[#070a12]/50">
-          <button
-            type="button"
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-all font-medium text-sm border border-transparent hover:border-rose-500/20"
-          >
-            <span>🚪</span>
-            Cerrar sesión
-          </button>
-        </div>
-      </aside>
-
-      {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 min-w-0 bg-[#030712] overflow-x-hidden">
-        {/* Header móvil */}
-        <header className="md:hidden h-16 bg-[#0b0f19] border-b border-slate-800/60 flex items-center px-4 sticky top-0 z-30">
-          <button
-            type="button"
-            onClick={() => setMenuAbierto(true)}
-            className="text-xl text-slate-300 hover:text-white p-2 rounded-lg bg-slate-800/50 border border-slate-700/50"
-          >
-            ☰
-          </button>
-
-          <span className="ml-4 font-bold text-sm tracking-wide">
-            Panel de Administración
-          </span>
-        </header>
-
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
-          {/* SECCIÓN USUARIOS */}
-          {/* SECCIÓN USUARIOS */}
-{seccionActiva === "usuarios" && <AdminUsuarios />}
-
-{/* SECCIÓN CANCHAS */}
-{seccionActiva === "canchas" && <AdminCanchas />}
-
-{seccionActiva === "categorias" && (
-  <CategoriaProvider>
-    <AdminCategorias />
-  </CategoriaProvider>
-)}
-
-{/* SECCIÓN PRODUCTOS */}
-{seccionActiva === "productos" && <AdminProductos />}
-
-{/* SECCIÓN RESERVAS */}
-{seccionActiva === "reservas" && <AdminReservas />}
-
-{seccionActiva !== "dashboard" &&
-  seccionActiva !== "usuarios" &&
-  seccionActiva !== "canchas" &&
-  seccionActiva !== "productos" &&
-  seccionActiva !== "reservas" && (
-            <div className="bg-linear-to-br from-slate-900/80 to-[#0b0f19] border border-slate-800/80 rounded-3xl p-8 shadow-2xl">
-              <h1 className="text-3xl font-extrabold capitalize mb-2 tracking-tight">
-                Gestión de {seccionActiva}
-              </h1>
-
-              <p className="text-slate-400 text-sm">
-                Apartado dedicado al control y administración de {seccionActiva}
-                .
+              <p className="text-xs text-slate-500">
+                Panel de administración
               </p>
             </div>
-          )}
+          </div>
 
-          {/* SECCIÓN DASHBOARD CON GRÁFICAS */}
-          {seccionActiva === "dashboard" && (
-            <div className="space-y-8">
-              {/* Encabezado */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* MENÚ */}
+
+          <nav className="p-4">
+            <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Administración
+            </p>
+
+            <div className="space-y-1">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => cambiarSeccion(item.id)}
+                  className={`
+                    flex w-full items-center gap-3
+                    rounded-xl px-4 py-3
+                    text-sm font-medium
+                    transition
+                    ${
+                      seccionActiva === item.id
+                        ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                        : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                    }
+                  `}
+                >
+                  <span className="text-lg">
+                    {item.icono}
+                  </span>
+
+                  {item.nombre}
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          {/* PARTE INFERIOR */}
+
+          <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 p-4">
+            <button
+              type="button"
+              onClick={cerrarSesion}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-400"
+            >
+              <span>🚪</span>
+              Cerrar sesión
+            </button>
+          </div>
+        </aside>
+
+        {/* =====================================
+            OVERLAY MOBILE
+        ===================================== */}
+
+        {menuAbierto && (
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() => setMenuAbierto(false)}
+            className="fixed inset-0 z-40 bg-black/70 lg:hidden"
+          />
+        )}
+
+        {/* =====================================
+            CONTENIDO PRINCIPAL
+        ===================================== */}
+
+        <main className="w-full lg:ml-72">
+
+          {/* HEADER */}
+
+          <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-800 bg-[#030712]/90 px-5 backdrop-blur-xl lg:px-8">
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setMenuAbierto(!menuAbierto)
+                }
+                className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-lg lg:hidden"
+              >
+                ☰
+              </button>
+
+              <div>
+                <p className="text-xs text-slate-500">
+                  Panel de administración
+                </p>
+
+                <h2 className="font-bold">
+                  {menuItems.find(
+                    (item) =>
+                      item.id === seccionActiva
+                  )?.nombre || "Dashboard"}
+                </h2>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={cargarDatosDashboard}
+              className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-300 transition hover:border-green-500/30 hover:text-green-400"
+            >
+              🔄 Actualizar
+            </button>
+          </header>
+
+          {/* CONTENIDO */}
+
+          <div className="p-5 lg:p-8">
+
+            {/* =================================
+                DASHBOARD
+            ================================= */}
+
+            {seccionActiva === "dashboard" && (
+              <div className="space-y-8">
+
+                {/* TÍTULO */}
+
                 <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold mb-3">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
-                    Sistema Operativo Online
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-400">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                    Sistema activo
                   </div>
 
-                  <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-                    Resumen General 📈
+                  <h1 className="text-3xl font-black tracking-tight md:text-4xl">
+                    Resumen general 📈
                   </h1>
 
-                  <p className="text-slate-400 text-sm mt-1">
-                    Métricas del rendimiento actual de Canchas Ya.
+                  <p className="mt-1 text-sm text-slate-400">
+                    Información actual de Canchas Ya.
                   </p>
                 </div>
 
-                <div className="flex gap-2">
-                  <span className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300">
-                    📅 Hoy: {new Date().toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
+                {/* ERROR */}
 
-              {/* TARJETAS DE ESTADÍSTICAS MEJORADAS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-                {[
-                  {
-                    title: "Usuarios",
-                    count: "0",
-                    icon: "👥",
-                    change: "+0% este mes",
-                    color: "from-blue-500/20 to-indigo-500/5",
-                    border: "hover:border-blue-500/40",
-                  },
-                  {
-                    title: "Canchas",
-                    count: "0",
-                    icon: "⚽",
-                    change: "0 activas",
-                    color: "from-green-500/20 to-emerald-500/5",
-                    border: "hover:border-green-500/40",
-                  },
-                  {
-                    title: "Reservas",
-                    count: "0",
-                    icon: "📅",
-                    change: "0 pendientes",
-                    color: "from-amber-500/20 to-orange-500/5",
-                    border: "hover:border-amber-500/40",
-                  },
-                  {
-                    title: "Productos",
-                    count: "0",
-                    icon: "🛒",
-                    change: "Stock normal",
-                    color: "from-purple-500/20 to-pink-500/5",
-                    border: "hover:border-purple-500/40",
-                  },
-                ].map((stat, i) => (
-                  <div
-                    key={i}
-                    className={`bg-linear-to-b ${stat.color} bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1.5 ${stat.border} shadow-xl shadow-black/40 group`}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="text-slate-400 text-sm font-medium">
-                        {stat.title}
-                      </span>
+                {errorDashboard && (
+                  <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-5">
+                    <p className="font-semibold text-rose-400">
+                      No se pudieron cargar los datos.
+                    </p>
 
-                      <div className="w-11 h-11 rounded-2xl bg-slate-800/80 border border-slate-700/50 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
-                        {stat.icon}
-                      </div>
-                    </div>
-
-                    <div className="text-3xl font-black tracking-tight mb-2">
-                      {stat.count}
-                    </div>
-
-                    <span className="text-xs text-slate-400 font-medium bg-slate-950/40 px-2.5 py-1 rounded-lg border border-slate-800/50 inline-block">
-                      {stat.change}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={cargarDatosDashboard}
+                      className="mt-3 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400"
+                    >
+                      Reintentar
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
 
-              {/* SECCIÓN DE GRÁFICAS */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Gráfica de Barras Principal */}
-                <div className="lg:col-span-2 bg-linear-to-b from-slate-900/90 to-[#0b0f19] border border-slate-800/80 rounded-3xl p-6 shadow-2xl flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-center mb-6">
+                {/* =================================
+                    TARJETAS PRINCIPALES
+                ================================= */}
+
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
+                  {/* USUARIOS */}
+
+                  <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-green-500/20 to-emerald-500/5 p-6 shadow-xl shadow-black/30">
+                    <div className="flex items-start justify-between">
                       <div>
-                        <h2 className="text-lg font-bold tracking-tight">
-                          Actividad Semanal de Reservas
-                        </h2>
+                        <p className="text-sm text-slate-400">
+                          Usuarios
+                        </p>
 
-                        <p className="text-xs text-slate-400">
-                          Flujo de reservas durante los últimos 7 días
+                        <p className="mt-2 text-4xl font-black">
+                          {cargandoDashboard
+                            ? "..."
+                            : totalUsuarios}
+                        </p>
+
+                        <p className="mt-2 text-xs text-green-400">
+                          {usuariosActivos} activos
                         </p>
                       </div>
 
-                      <span className="text-xs font-semibold px-3 py-1 bg-green-500/10 text-green-400 rounded-full border border-green-500/20">
-                        Estadísticas
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-xl">
+                        👥
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CANCHAS */}
+
+                  <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-blue-500/20 to-indigo-500/5 p-6 shadow-xl shadow-black/30">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm text-slate-400">
+                          Canchas
+                        </p>
+
+                        <p className="mt-2 text-4xl font-black">
+                          {cargandoDashboard
+                            ? "..."
+                            : totalCanchas}
+                        </p>
+
+                        <p className="mt-2 text-xs text-blue-400">
+                          {canchasDisponibles} disponibles
+                        </p>
+                      </div>
+
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-xl">
+                        ⚽
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RESERVAS */}
+
+                  <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-yellow-500/20 to-orange-500/5 p-6 shadow-xl shadow-black/30">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm text-slate-400">
+                          Reservas
+                        </p>
+
+                        <p className="mt-2 text-4xl font-black">
+                          {cargandoDashboard
+                            ? "..."
+                            : totalReservas}
+                        </p>
+
+                        <p className="mt-2 text-xs text-yellow-400">
+                          {reservasPendientes} pendientes
+                        </p>
+                      </div>
+
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-xl">
+                        📅
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CONFIRMADAS */}
+
+                  <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-purple-500/20 to-violet-500/5 p-6 shadow-xl shadow-black/30">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm text-slate-400">
+                          Confirmadas
+                        </p>
+
+                        <p className="mt-2 text-4xl font-black">
+                          {cargandoDashboard
+                            ? "..."
+                            : reservasConfirmadas}
+                        </p>
+
+                        <p className="mt-2 text-xs text-purple-400">
+                          Reservas confirmadas
+                        </p>
+                      </div>
+
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-xl">
+                        ✅
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* =================================
+                    SEGUNDA FILA
+                ================================= */}
+
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+
+                  {/* RESERVAS SEMANA */}
+
+                  <div className="xl:col-span-2 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
+
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-lg font-bold">
+                          Reservas de los últimos 7 días
+                        </h2>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          Cantidad de reservas por día.
+                        </p>
+                      </div>
+
+                      <span className="rounded-lg bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-400">
+                        {reservasUltimos7Dias.length} reservas
                       </span>
                     </div>
 
-                    {/* Gráfica de Barras Visual */}
-                    <div className="h-48 flex items-end justify-between gap-2 pt-6 px-2 border-b border-slate-800/60 pb-2">
-                      {[
-                        { day: "Lun", val: "15%" },
-                        { day: "Mar", val: "30%" },
-                        { day: "Mié", val: "45%" },
-                        { day: "Jue", val: "25%" },
-                        { day: "Vie", val: "70%" },
-                        { day: "Sáb", val: "95%" },
-                        { day: "Dom", val: "85%" },
-                      ].map((bar, index) => (
-                        <div
-                          key={index}
-                          className="flex-1 flex flex-col items-center gap-2 h-full justify-end group"
-                        >
+                    <div className="mt-8 flex h-64 items-end justify-between gap-3">
+
+                      {datosSemana.map((dia) => {
+                        const altura =
+                          dia.cantidad === 0
+                            ? 4
+                            : Math.max(
+                                (dia.cantidad /
+                                  maxReservasSemana) *
+                                  100,
+                                8
+                              );
+
+                        return (
                           <div
-                            className="w-full max-w-9 bg-linear-to-t from-green-600 to-emerald-400 rounded-t-xl transition-all duration-500 group-hover:brightness-125 shadow-lg shadow-green-900/20 relative"
-                            style={{ height: bar.val }}
+                            key={dia.fecha.toISOString()}
+                            className="flex h-full flex-1 flex-col items-center justify-end gap-2"
                           >
-                            <span className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 text-green-400 whitespace-nowrap">
-                              {bar.val}
+                            <span className="text-xs font-semibold text-slate-300">
+                              {dia.cantidad}
+                            </span>
+
+                            <div className="flex h-48 w-full items-end">
+                              <div
+                                className="w-full rounded-t-xl bg-linear-to-t from-green-600 to-green-400 transition-all"
+                                style={{
+                                  height: `${altura}%`,
+                                }}
+                              />
+                            </div>
+
+                            <span className="text-[11px] capitalize text-slate-500">
+                              {dia.nombre.replace(".", "")}
                             </span>
                           </div>
-
-                          <span className="text-[11px] font-medium text-slate-400">
-                            {bar.day}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 text-xs text-slate-400 font-medium">
-                    <span>Total semanal: 0 reservas</span>
+                  {/* ESTADO RESERVAS */}
 
-                    <span className="text-green-400 font-bold">
-                      ▲ 0% vs semana pasada
-                    </span>
-                  </div>
-                </div>
+                  <div className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
 
-                {/* Gráfica Circular / Barras de Progreso Secundarias */}
-                <div className="bg-linear-to-b from-slate-900/90 to-[#0b0f19] border border-slate-800/80 rounded-3xl p-6 shadow-2xl flex flex-col justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold tracking-tight mb-1">
-                      Estado de Canchas
+                    <h2 className="text-lg font-bold">
+                      Estado de reservas
                     </h2>
 
-                    <p className="text-xs text-slate-400 mb-6">
-                      Distribución por tipo o estado
+                    <p className="mt-1 text-xs text-slate-500">
+                      Distribución actual.
                     </p>
 
-                    <div className="space-y-4">
+                    <div className="mt-8 space-y-6">
+
+                      {/* PENDIENTES */}
+
                       <div>
-                        <div className="flex justify-between text-xs font-semibold mb-1.5">
-                          <span className="text-slate-300">
-                            Canchas Sintéticas (F5)
+                        <div className="mb-2 flex justify-between">
+                          <span className="text-sm text-slate-300">
+                            Pendientes
                           </span>
 
-                          <span className="text-green-400">0%</span>
+                          <span className="text-sm font-bold text-yellow-400">
+                            {reservasPendientes}
+                          </span>
                         </div>
 
-                        <div className="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden">
-                          <div className="h-full bg-linear-to-r from-green-500 to-emerald-400 rounded-full w-[0%]" />
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                          <div
+                            className="h-full rounded-full bg-yellow-400"
+                            style={{
+                              width:
+                                totalReservas > 0
+                                  ? `${
+                                      (reservasPendientes /
+                                        totalReservas) *
+                                      100
+                                    }%`
+                                  : "0%",
+                            }}
+                          />
                         </div>
                       </div>
 
+                      {/* CONFIRMADAS */}
+
                       <div>
-                        <div className="flex justify-between text-xs font-semibold mb-1.5">
-                          <span className="text-slate-300">
-                            Canchas Techadas
+                        <div className="mb-2 flex justify-between">
+                          <span className="text-sm text-slate-300">
+                            Confirmadas
                           </span>
 
-                          <span className="text-blue-400">0%</span>
+                          <span className="text-sm font-bold text-green-400">
+                            {reservasConfirmadas}
+                          </span>
                         </div>
 
-                        <div className="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden">
-                          <div className="h-full bg-linear-to-r from-blue-500 to-indigo-400 rounded-full w-[0%]" />
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                          <div
+                            className="h-full rounded-full bg-green-500"
+                            style={{
+                              width:
+                                totalReservas > 0
+                                  ? `${
+                                      (reservasConfirmadas /
+                                        totalReservas) *
+                                      100
+                                    }%`
+                                  : "0%",
+                            }}
+                          />
                         </div>
                       </div>
 
+                      {/* CANCELADAS */}
+
                       <div>
-                        <div className="flex justify-between text-xs font-semibold mb-1.5">
-                          <span className="text-slate-300">
-                            Canchas de Césped Natural
+                        <div className="mb-2 flex justify-between">
+                          <span className="text-sm text-slate-300">
+                            Canceladas
                           </span>
 
-                          <span className="text-amber-400">0%</span>
+                          <span className="text-sm font-bold text-rose-400">
+                            {reservasCanceladas}
+                          </span>
                         </div>
 
-                        <div className="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden">
-                          <div className="h-full bg-linear-to-r from-amber-500 to-orange-400 rounded-full w-[0%]" />
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                          <div
+                            className="h-full rounded-full bg-rose-500"
+                            style={{
+                              width:
+                                totalReservas > 0
+                                  ? `${
+                                      (reservasCanceladas /
+                                        totalReservas) *
+                                      100
+                                    }%`
+                                  : "0%",
+                            }}
+                          />
                         </div>
                       </div>
+
                     </div>
                   </div>
+                </div>
 
-                  <div className="pt-6 border-t border-slate-800/60 mt-6">
-                    <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800/60 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">💡</span>
+                {/* =================================
+                    TERCERA FILA
+                ================================= */}
 
-                        <div>
-                          <p className="text-xs font-bold text-slate-200">
-                            Sugerencia
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+
+                  {/* USUARIOS */}
+
+                  <div className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-lg font-bold">
+                          Usuarios
+                        </h2>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          Estado de las cuentas.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          cambiarSeccion("usuarios")
+                        }
+                        className="text-xs font-semibold text-green-400 hover:text-green-300"
+                      >
+                        Ver usuarios →
+                      </button>
+                    </div>
+
+                    <div className="mt-6 space-y-5">
+
+                      <div>
+                        <div className="mb-2 flex justify-between">
+                          <span className="text-sm text-slate-300">
+                            Activos
+                          </span>
+
+                          <span className="text-sm font-bold text-green-400">
+                            {usuariosActivos}
+                          </span>
+                        </div>
+
+                        <div className="h-2 rounded-full bg-slate-800">
+                          <div
+                            className="h-2 rounded-full bg-green-500"
+                            style={{
+                              width:
+                                totalUsuarios > 0
+                                  ? `${
+                                      (usuariosActivos /
+                                        totalUsuarios) *
+                                      100
+                                    }%`
+                                  : "0%",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="mb-2 flex justify-between">
+                          <span className="text-sm text-slate-300">
+                            Email verificado
+                          </span>
+
+                          <span className="text-sm font-bold text-blue-400">
+                            {usuariosVerificados}
+                          </span>
+                        </div>
+
+                        <div className="h-2 rounded-full bg-slate-800">
+                          <div
+                            className="h-2 rounded-full bg-blue-500"
+                            style={{
+                              width:
+                                totalUsuarios > 0
+                                  ? `${
+                                      (usuariosVerificados /
+                                        totalUsuarios) *
+                                      100
+                                    }%`
+                                  : "0%",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+                          <p className="text-xs text-slate-500">
+                            Administradores
                           </p>
 
-                          <p className="text-[11px] text-slate-400">
-                            Registra tu primera cancha para ver métricas.
+                          <p className="mt-1 text-2xl font-black text-purple-400">
+                            {administradores}
                           </p>
                         </div>
+
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+                          <p className="text-xs text-slate-500">
+                            Inactivos
+                          </p>
+
+                          <p className="mt-1 text-2xl font-black text-rose-400">
+                            {totalUsuarios - usuariosActivos}
+                          </p>
+                        </div>
+
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* ACTIVIDAD RECIENTE */}
-              <div className="bg-linear-to-b from-slate-900/90 to-[#0b0f19] border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-slate-800/80 flex justify-between items-center">
-                  <div>
-                    <h2 className="text-lg font-bold tracking-tight">
-                      Actividad reciente
-                    </h2>
+                  {/* CANCHAS */}
 
-                    <p className="text-xs text-slate-400">
-                      Últimos movimientos del sistema en tiempo real
-                    </p>
-                  </div>
+                  <div className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
 
-                  <span
-                    className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"
-                    title="En vivo"
-                  />
-                </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-lg font-bold">
+                          Estado de canchas
+                        </h2>
 
-                <div className="p-8">
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 rounded-3xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
-                      📋
+                        <p className="mt-1 text-xs text-slate-500">
+                          Distribución de las canchas registradas.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          cambiarSeccion("canchas")
+                        }
+                        className="text-xs font-semibold text-green-400 hover:text-green-300"
+                      >
+                        Ver canchas →
+                      </button>
                     </div>
 
-                    <p className="text-slate-200 font-semibold text-base">
-                      No hay registros recientes todavía
-                    </p>
+                    <div className="mt-6 grid grid-cols-2 gap-3">
 
-                    <p className="text-slate-500 text-xs mt-1.5 max-w-sm mx-auto">
-                      Las reservas, nuevos usuarios y transacciones que realicen
-                      los clientes aparecerán listadas aquí automáticamente.
-                    </p>
+                      <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-4">
+                        <p className="text-xs text-slate-500">
+                          Disponibles
+                        </p>
+
+                        <p className="mt-1 text-2xl font-black text-green-400">
+                          {canchasDisponibles}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4">
+                        <p className="text-xs text-slate-500">
+                          No disponibles
+                        </p>
+
+                        <p className="mt-1 text-2xl font-black text-rose-400">
+                          {canchasNoDisponibles}
+                        </p>
+                      </div>
+
+                    </div>
+
+                    <div className="mt-5 space-y-4">
+
+                      <div className="flex items-center justify-between rounded-xl bg-slate-950/50 px-4 py-3">
+                        <span className="text-sm text-slate-300">
+                          ⚽ Fútbol 5
+                        </span>
+
+                        <span className="font-bold text-white">
+                          {futbol5}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between rounded-xl bg-slate-950/50 px-4 py-3">
+                        <span className="text-sm text-slate-300">
+                          ⚽ Fútbol 7
+                        </span>
+
+                        <span className="font-bold text-white">
+                          {futbol7}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between rounded-xl bg-slate-950/50 px-4 py-3">
+                        <span className="text-sm text-slate-300">
+                          ⚽ Fútbol 11
+                        </span>
+
+                        <span className="font-bold text-white">
+                          {futbol11}
+                        </span>
+                      </div>
+
+                    </div>
                   </div>
                 </div>
+
+                {/* =================================
+                    ÚLTIMAS RESERVAS
+                ================================= */}
+
+                <div className="rounded-3xl border border-slate-800/80 bg-slate-900/70">
+
+                  <div className="flex flex-col gap-3 border-b border-slate-800 p-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-bold">
+                        Últimas reservas 📅
+                      </h2>
+
+                      <p className="mt-1 text-xs text-slate-500">
+                        Las reservas más recientes del sistema.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        cambiarSeccion("reservas")
+                      }
+                      className="text-sm font-semibold text-green-400 hover:text-green-300"
+                    >
+                      Ver todas →
+                    </button>
+                  </div>
+
+                  {reservasRecientes.length === 0 ? (
+                    <div className="p-10 text-center">
+                      <div className="text-4xl">
+                        📅
+                      </div>
+
+                      <p className="mt-3 font-semibold text-slate-300">
+                        No hay reservas todavía
+                      </p>
+
+                      <p className="mt-1 text-xs text-slate-500">
+                        Las reservas aparecerán aquí.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-187.5 text-left">
+
+                        <thead className="border-b border-slate-800">
+                          <tr>
+                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              Usuario
+                            </th>
+
+                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              Cancha
+                            </th>
+
+                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              Fecha
+                            </th>
+
+                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              Horario
+                            </th>
+
+                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              Estado
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {reservasRecientes.map(
+                            (reserva) => (
+                              <tr
+                                key={reserva._id}
+                                className="border-b border-slate-800/70 transition hover:bg-slate-800/30"
+                              >
+                                <td className="px-6 py-4">
+                                  <p className="font-medium text-white">
+                                    {
+                                      reserva.usuario
+                                        .nombre
+                                    }{" "}
+                                    {
+                                      reserva.usuario
+                                        .apellido
+                                    }
+                                  </p>
+
+                                  <p className="mt-1 text-xs text-slate-500">
+                                    {
+                                      reserva.usuario
+                                        .email
+                                    }
+                                  </p>
+                                </td>
+
+                                <td className="px-6 py-4">
+                                  <p className="font-medium text-white">
+                                    {
+                                      reserva.cancha
+                                        .nombre
+                                    }
+                                  </p>
+
+                                  <p className="mt-1 text-xs text-green-400">
+                                    {
+                                      reserva.cancha
+                                        .tipo
+                                    }
+                                  </p>
+                                </td>
+
+                                <td className="px-6 py-4 text-sm text-slate-300">
+                                  {formatearFecha(
+                                    reserva.fecha
+                                  )}
+                                </td>
+
+                                <td className="px-6 py-4">
+                                  <span className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white">
+                                    {
+                                      reserva.horaInicio
+                                    }{" "}
+                                    -{" "}
+                                    {reserva.horaFin}
+                                  </span>
+                                </td>
+
+                                <td className="px-6 py-4">
+                                  <span
+                                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${obtenerClaseEstado(
+                                      reserva.estado
+                                    )}`}
+                                  >
+                                    {reserva.estado ===
+                                    "confirmada"
+                                      ? "Confirmada"
+                                      : reserva.estado ===
+                                        "cancelada"
+                                      ? "Cancelada"
+                                      : "Pendiente"}
+                                  </span>
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+
+                      </table>
+                    </div>
+                  )}
+                </div>
+
               </div>
-            </div>
-          )}
-        </div>
-      </main>
+            )}
+
+            {/* =================================
+                USUARIOS
+            ================================= */}
+
+            {seccionActiva === "usuarios" && (
+              <AdminUsuarios />
+            )}
+
+            {/* =================================
+                CANCHAS
+            ================================= */}
+
+            {seccionActiva === "canchas" && (
+              <AdminCanchas />
+            )}
+
+            {/* =================================
+                CATEGORÍAS
+            ================================= */}
+
+            {seccionActiva === "categorias" && (
+              <CategoriaProvider>
+                <AdminCategorias />
+              </CategoriaProvider>
+            )}
+
+            {/* =================================
+                PRODUCTOS
+            ================================= */}
+
+            {seccionActiva === "productos" && (
+              <AdminProductos />
+            )}
+
+            {/* =================================
+                RESERVAS
+            ================================= */}
+
+            {seccionActiva === "reservas" && (
+              <AdminReservas />
+            )}
+
+            {/* =================================
+                CONFIGURACIÓN
+            ================================= */}
+
+            {seccionActiva === "configuracion" && (
+              <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8">
+                <h1 className="text-2xl font-bold">
+                  Configuración ⚙️
+                </h1>
+
+                <p className="mt-2 text-slate-400">
+                  La sección de configuración estará disponible próximamente.
+                </p>
+              </div>
+            )}
+
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

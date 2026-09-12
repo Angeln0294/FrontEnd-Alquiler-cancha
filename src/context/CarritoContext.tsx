@@ -33,6 +33,7 @@ interface CarritoContextType {
   eliminarProducto: (productoId: string) => Promise<void>;
   vaciarCarrito: () => Promise<void>;
   obtenerCarrito: () => Promise<void>;
+  pagarCarrito: () => Promise<void>;
   cantidadTotal: number;
   precioTotal: number;
 }
@@ -293,6 +294,37 @@ export function CarritoProvider({
     }
   };
 
+  const pagarCarrito = async () => {
+  try {
+    const respuesta = await fetch(
+      "http://localhost:3003/api/pago/crear-preferencia",
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok) {
+      throw new Error(
+        datos?.mensaje || "No se pudo iniciar el pago"
+      );
+    }
+
+    window.location.href = datos.init_point;
+
+  } catch (error) {
+    console.error("Error al iniciar el pago:", error);
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "No se pudo iniciar el pago"
+    );
+  }
+};
+
   // =================================
   // CARGAR CARRITO
   // =================================
@@ -340,6 +372,7 @@ export function CarritoProvider({
         eliminarProducto,
         vaciarCarrito,
         obtenerCarrito,
+        pagarCarrito,
         cantidadTotal,
         precioTotal,
       }}

@@ -17,7 +17,7 @@ import NuestrasCanchas from "./components/NuestrasCanchas";
 import ReservarTurnos from "./components/ReservarTurnos";
 import ScrollToTop from "./components/ScrollToTop";
 import Carrito from "./components/Carrito";
-
+import ResultadoExitosMp from "./components/ResultadoExitosoMp";
 
 
 export default function App() {
@@ -42,7 +42,7 @@ export default function App() {
               <Route path="/verificar-email" element={<VerificarEmail />} />
               <Route path="/tienda" element={<Tienda />} />
               <Route path="/carrito" element={<Carrito />} />
-              
+              <Route path="/comprobar/resultado" element={<ResultadoExitosMp />}/>
               <Route
                 path="/admin"
                 element={

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export default function Footer(): JSX.Element { 
   return (
-    <footer className="bg-[#0b132b] text-gray-400 border-t border-gray-800 pt-12 pb-6 px-6 md:px-12 w-full mt-auto">
+    <footer className="bg-[#0b132b] text-gray-400 border-t border-gray-800 pt-12 pb-6 px-6 md:px-12 w-full mt-auto z-50">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
         
         {/* Columna 1: Info de la marca */}

@@ -240,9 +240,13 @@ export default function Inicio() {
                           }
 
                           navigate(
-                            `/reservar-turnos?cancha=${encodeURIComponent(
+                            `/reservar-turnos?canchaId=${encodeURIComponent(
+                              cancha._id,
+                            )}&cancha=${encodeURIComponent(
                               cancha.nombre,
-                            )}&precio=${encodeURIComponent(cancha.precio)}`,
+                            )}&precio=${encodeURIComponent(
+                              cancha.precio,
+                            )}&imagen=${encodeURIComponent(cancha.imagen)}`,
                           );
                         }}
                         className="bg-green-500 hover:bg-green-600 text-[#0b132b] font-black px-4 py-2.5 rounded-xl transition-all text-xs tracking-wide shadow-md shadow-green-500/10 cursor-pointer"

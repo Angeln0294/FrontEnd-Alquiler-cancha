@@ -17,105 +17,93 @@ import ReservarTurnos from "./components/ReservarTurnos";
 import MisReservas from "./components/MisReservas";
 import ScrollToTop from "./components/ScrollToTop";
 import Carrito from "./components/Carrito";
-import ResultadoExitosMp from "./components/ResultadoExitosoMp";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ResultadoExitosoMp from "./components/ResultadoExitosoMp";
+import CheckoutResultado from "./components/CheckoutResultado";
 
 export default function App() {
   return (
     <AuthProvider>
       <ProductoProvider>
-      <BrowserRouter>
+        <BrowserRouter>
+          <ScrollToTop />
+          <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
+            {/* NAVBAR */}
+            <Navbar />
 
-<ScrollToTop />
-        <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
+            {/* CONTENIDO PRINCIPAL */}
+            <div className="grow">
+              <Routes>
+                {/* INICIO */}
+                <Route path="/" element={<Inicio />} />
 
-          {/* NAVBAR */}
-          <Navbar />
+                {/* AUTENTICACIÓN */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/registro" element={<Registro />} />
+                <Route path="/verificar-email" element={<VerificarEmail />} />
+                <Route path="/tienda" element={<Tienda />} />
+                <Route path="/carrito" element={<Carrito />} />
+                <Route
+                  path="/checkout/resultado"
+                  element={<ResultadoExitosoMp />}
+                />
 
-          {/* CONTENIDO PRINCIPAL */}
-          <div className="grow">
-            <Routes>
+                <Route
+                  path="/checkout/resultado-cancha"
+                  element={<CheckoutResultado />}
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute adminOnly>
+                      <PanelAdmin />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* INICIO */}
-              <Route path="/" element={<Inicio />} />
+                {/* PERFIL */}
+                <Route
+                  path="/perfil"
+                  element={
+                    <ProtectedRoute>
+                      <MiPerfil />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* AUTENTICACIÓN */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/registro" element={<Registro />} />
-              <Route path="/verificar-email" element={<VerificarEmail />} />
-              <Route path="/tienda" element={<Tienda />} />
-              <Route path="/carrito" element={<Carrito />} />
-              <Route path="/checkout/resultado" element={<ResultadoExitosMp />}/>
-              <Route path="/admin" element={
-                  <ProtectedRoute adminOnly>
-                    <PanelAdmin />
-                  </ProtectedRoute>
-                }
-              />
+                {/* MIS RESERVAS */}
+                <Route
+                  path="/mis-reservas"
+                  element={
+                    <ProtectedRoute>
+                      <MisReservas />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* PERFIL */}
-              <Route
-                path="/perfil"
-                element={
-                  <ProtectedRoute>
-                    <MiPerfil />
-                  </ProtectedRoute>
-                }
-              />
+                {/* CONTACTO */}
+                <Route path="/contacto" element={<Contacto />} />
 
+                {/* CANCHAS */}
+                <Route path="/reservas" element={<NuestrasCanchas />} />
 
-              {/* MIS RESERVAS */}
-              <Route
-  path="/mis-reservas"
-  element={
-    <ProtectedRoute>
-      <MisReservas />
-    </ProtectedRoute>
-  }
-/>
+                <Route path="/canchas" element={<NuestrasCanchas />} />
 
-{/* CONTACTO */}
-<Route
-  path="/contacto"
-  element={<Contacto />}
-/>
+                <Route path="/nuestras-canchas" element={<NuestrasCanchas />} />
 
-{/* CANCHAS */}
-<Route
-  path="/reservas"
-  element={<NuestrasCanchas />}
-/>
+                {/* RESERVAR TURNO */}
+                <Route path="/reservar-turnos" element={<ReservarTurnos />} />
 
-<Route
-  path="/canchas"
-  element={<NuestrasCanchas />}
-/>
+                {/* RUTA 404 - SIEMPRE AL FINAL */}
+                <Route path="*" element={<Error404 />} />
+              </Routes>
+            </div>
 
-<Route
-  path="/nuestras-canchas"
-  element={<NuestrasCanchas />}
-/>
-
-{/* RESERVAR TURNO */}
-<Route
-  path="/reservar-turnos"
-  element={<ReservarTurnos />}
-/>
-
-{/* RUTA 404 - SIEMPRE AL FINAL */}
-<Route
-  path="*"
-  element={<Error404 />}
-/>
-            </Routes>
+            {/* FOOTER */}
+            <Footer />
           </div>
-
-          {/* FOOTER */}
-          <Footer />
-
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
       </ProductoProvider>
     </AuthProvider>
   );

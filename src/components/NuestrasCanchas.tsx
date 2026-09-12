@@ -21,14 +21,22 @@ export default function NuestrasCanchas() {
   const [canchas, setCanchas] = useState<CanchaDetalle[]>([]);
   const [cargando, setCargando] = useState(true);
 
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [cantidadCanchas, setCantidadCanchas] = useState(0);
+
+  const limiteCanchas = 8;
+
   useEffect(() => {
     const cargarCanchas = async () => {
       try {
         setCargando(true);
 
-        const respuesta = await fetch(API_URL, {
-          credentials: "include",
-        });
+         const respuesta = await fetch(
+          `${API_URL}?pagina=${paginaActual}&limite=${limiteCanchas}`,
+          {
+            credentials: "include",
+          },
+        );
 
         const resultado = await respuesta.json();
 
@@ -39,6 +47,7 @@ export default function NuestrasCanchas() {
         }
 
         setCanchas(resultado.canchas || []);
+        setCantidadCanchas(resultado.cantidadCanchas || 0);
       } catch (error) {
         console.error("Error al cargar las canchas:", error);
       } finally {
@@ -56,7 +65,20 @@ export default function NuestrasCanchas() {
         decodeURIComponent(canchaParam),
       );
     }
-  }, [searchParams]);
+  }, [searchParams, paginaActual]);
+
+  const cantidadPaginas = Math.ceil(
+    cantidadCanchas / limiteCanchas,
+  );
+
+  const cambiarPagina = (pagina: number) => {
+    setPaginaActual(pagina);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   // Dentro de src/components/NuestrasCanchas.tsx
 
@@ -134,6 +156,52 @@ export default function NuestrasCanchas() {
             </div>
           ))}
         </div>
+       {/* PAGINACIÓN */}
+        {cantidadPaginas > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-10">
+
+            {/* ANTERIOR */}
+            <button
+              type="button"
+              disabled={paginaActual === 1}
+              onClick={() => cambiarPagina(paginaActual - 1)}
+              className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              &lt;
+            </button>
+
+            {/* NÚMEROS */}
+            {Array.from(
+              { length: cantidadPaginas },
+              (_, index) => index + 1,
+            ).map((pagina) => (
+              <button
+                key={pagina}
+                type="button"
+                onClick={() => cambiarPagina(pagina)}
+                className={`w-10 h-10 rounded-lg font-semibold transition ${
+                  pagina === paginaActual
+                    ? "bg-green-500 text-slate-950"
+                    : "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                {pagina}
+              </button>
+            ))}
+
+            {/* SIGUIENTE */}
+            <button
+              type="button"
+              disabled={paginaActual === cantidadPaginas}
+              onClick={() => cambiarPagina(paginaActual + 1)}
+              className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              &gt;
+            </button>
+
+          </div>
+        )}
+
       </div>
     </div>
   );

@@ -257,7 +257,10 @@ export default function Tienda() {
                   disabled={paginaActual === cantidadPaginas}
                   onClick={() => cambiarPagina(paginaActual + 1)}
                   className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-                ></button>
+                >
+                  &gt;
+                </button>
+                
               </div>
             )}
           </>

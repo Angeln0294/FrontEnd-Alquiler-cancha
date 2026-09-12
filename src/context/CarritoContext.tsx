@@ -29,6 +29,7 @@ interface CarritoContextType {
     cantidad?: number
   ) => Promise<void>;
   restarCantidad: (productoId: string) => Promise<void>;
+  sumarCantidad: (productoId: string) => Promise<void>;
   eliminarProducto: (productoId: string) => Promise<void>;
   vaciarCarrito: () => Promise<void>;
   obtenerCarrito: () => Promise<void>;
@@ -167,6 +168,44 @@ export function CarritoProvider({
     }
   };
 
+  const sumarCantidad = async (productoId: string) => {
+  try {
+    const respuesta = await fetch(
+      "http://localhost:3003/api/carrito",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          producto: productoId,
+          cantidad: 1,
+        }),
+      }
+    );
+
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok) {
+      throw new Error(
+        datos?.mensaje || "No se pudo aumentar la cantidad"
+      );
+    }
+
+    setCarrito(datos.carrito);
+
+  } catch (error) {
+    console.error("Error al aumentar cantidad:", error);
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "No se pudo aumentar la cantidad"
+    );
+  }
+};
+
   // =================================
   // ELIMINAR PRODUCTO
   // =================================
@@ -267,7 +306,9 @@ export function CarritoProvider({
   // =================================
 
   const cantidadTotal =
-    carrito?.items.reduce(
+  carrito?.items
+    .filter((item) => item.producto)
+    .reduce(
       (total, item) =>
         total + item.cantidad,
       0
@@ -278,10 +319,12 @@ export function CarritoProvider({
   // =================================
 
   const precioTotal =
-    carrito?.items.reduce(
+  carrito?.items
+    .filter((item) => item.producto)
+    .reduce(
       (total, item) =>
         total +
-        item.producto?.precio *
+        item.producto.precio *
           item.cantidad,
       0
     ) || 0;
@@ -293,6 +336,7 @@ export function CarritoProvider({
         cargando,
         agregarAlCarrito,
         restarCantidad,
+        sumarCantidad,
         eliminarProducto,
         vaciarCarrito,
         obtenerCarrito,

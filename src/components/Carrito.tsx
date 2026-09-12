@@ -5,6 +5,7 @@ export default function Carrito() {
     carrito,
     cargando,
     restarCantidad,
+    sumarCantidad,
     eliminarProducto,
     vaciarCarrito,
     cantidadTotal,
@@ -106,7 +107,7 @@ export default function Carrito() {
                 <button
                   type="button"
                   onClick={() =>
-                    useCarrito
+                     sumarCantidad(item.producto._id)
                   }
                   className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700"
                 >

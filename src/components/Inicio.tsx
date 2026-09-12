@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useProductos } from "../context/ProductoContext";
+import { useCarrito } from "../context/CarritoContext";
+import Swal from "sweetalert2";
 
 // 📋 Interfaces estrictas para el tipado de TypeScript
 interface Anuncio {
@@ -21,17 +24,11 @@ interface Cancha {
   disponible: boolean;
 }
 
-interface ProductoDestacado {
-  id: number;
-  nombre: string;
-  categoria: string;
-  precio: string;
-  imagen: string;
-}
-
 export default function Inicio() {
   const navigate = useNavigate();
   const { usuario } = useAuth();
+  const { productos } = useProductos();
+  const { agregarAlCarrito } = useCarrito();
   // 🔘 Estado para controlar el carrusel de anuncios publicitarios
   const [currentSlide, setCurrentSlide] = useState<number>(0);
   const [canchas, setCanchas] = useState<Cancha[]>([]);
@@ -59,32 +56,6 @@ export default function Inicio() {
       subtitulo: "Planes mensuales para niños y adolescentes",
       descuento: "Matrícula Gratis",
       colorBg: "from-amber-600 to-orange-900",
-    },
-  ];
-
-  // ⚽ Catálogo exclusivo con exactamente 3 canchas
-
-  const productosDestacados: ProductoDestacado[] = [
-    {
-      id: 1,
-      nombre: "Botines Sintéticos Elite",
-      categoria: "Calzado",
-      precio: "$45.000",
-      imagen: "https://unsplash.com",
-    },
-    {
-      id: 2,
-      nombre: "Pelota de Fútbol F5 Pro",
-      categoria: "Accesorios",
-      precio: "$15.000",
-      imagen: "https://unsplash.com",
-    },
-    {
-      id: 3,
-      nombre: "Guantes de Arquero GripMax",
-      categoria: "Protección",
-      precio: "$25.000",
-      imagen: "https://unsplash.com",
     },
   ];
 
@@ -272,42 +243,75 @@ export default function Inicio() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {productosDestacados.map((producto) => (
+          {productos.slice(0, 3).map((producto) => (
             <div
-              key={producto.id}
-              className="bg-[#1e293b] rounded-2xl p-6 border border-gray-800 flex flex-col justify-between items-center text-center shadow-lg hover:scale-[1.02] transition-transform duration-300"
+              key={producto._id}
+              className="bg-[#1e293b] rounded-2xl overflow-hidden border border-gray-800 shadow-xl flex flex-col justify-between hover:scale-[1.02] transition-transform duration-300"
             >
-              <div className="w-full h-44 flex items-center justify-center overflow-hidden bg-gray-900/40 rounded-xl mb-4 p-4">
+              <div className="w-full h-48 bg-gray-900 overflow-hidden relative">
                 <img
                   src={producto.imagen}
-                  alt={producto.nombre}
-                  className="max-h-full max-w-full object-cover rounded-lg"
+                  alt={producto.nombreProducto}
+                  className="w-full h-full object-cover"
                 />
               </div>
 
-              <div className="w-full mb-6">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full">
-                  {producto.categoria}
-                </span>
-                <h3 className="text-lg font-bold text-white mt-3 mb-1 truncate">
-                  {producto.nombre}
-                </h3>
-                <p className="text-xl font-black text-gray-200">
-                  {producto.precio}
-                </p>
-              </div>
+              <div className="p-6 w-full ">
+                <div className="mb-6 text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full">
+                    {producto.categoria?.nombreCategoria}
+                  </span>
+                  <h3 className="text-lg font-bold text-white mt-3 mb-1 truncate">
+                    {producto.nombreProducto}
+                  </h3>
+                  <p className="text-xl font-black text-gray-200">
+                    ${producto.precio.toLocaleString("es-AR")}
+                  </p>
+                </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  alert(`Añadiste "${producto.nombre}" al carrito rápido`)
-                }
-                className="w-full bg-green-500 hover:bg-green-600 text-[#0b132b] font-black py-2.5 rounded-xl transition-colors text-sm tracking-wide shadow-md shadow-green-500/10 cursor-pointer"
-              >
-                COMPRAR AHORA
-              </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await agregarAlCarrito(producto._id);
+
+                    Swal.fire({
+                      icon: "success",
+                      title: "¡Producto agregado!",
+                      text: `${producto.nombreProducto} fue agregado al carrito.`,
+                      background: "#1e293b",
+                      color: "#ffffff",
+
+                      showCancelButton: true,
+                      confirmButtonText: "🛒 Ver carrito",
+                      cancelButtonText: "Seguir comprando",
+
+                      confirmButtonColor: "#00d26a",
+                      cancelButtonColor: "#00d26a",
+
+                      reverseButtons: true,
+                    }).then((resultado) => {
+                      if (resultado.isConfirmed) {
+                        navigate("/carrito");
+                      }
+                    });
+                  }}
+                  className="w-full bg-green-500 hover:bg-green-600 text-[#0b132b] font-black py-2.5 rounded-xl transition-colors text-sm tracking-wide shadow-md shadow-green-500/10 cursor-pointer"
+                >
+                  AGREGAR 🛒
+                </button>
+              </div>
             </div>
           ))}
+        </div>
+        <div className="flex justify-end mt-8">
+          <button
+            type="button"
+            onClick={() => navigate("/tienda")}
+            className="text-green-400 hover:text-green-300 text-2xl font-bold transition-colors cursor-pointer"
+            aria-label="Ir a la tienda"
+          >
+            Ver más &gt;
+          </button>
         </div>
       </section>
     </div>

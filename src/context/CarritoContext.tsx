@@ -115,8 +115,6 @@ export function CarritoProvider({
 
       setCarrito(datos.carrito);
 
-      alert("Producto agregado al carrito 🛒");
-
     } catch (error) {
       console.error("Error al agregar al carrito:", error);
 

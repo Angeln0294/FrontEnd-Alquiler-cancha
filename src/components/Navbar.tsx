@@ -196,16 +196,18 @@ export default function Navbar(): React.JSX.Element {
                     👤 Mi Perfil
                   </Link>
 
-                  <Link
-                    to="/mis-reservas"
-                    onClick={() => {
-                      setIsAccountOpen(false);
-                      setIsOpen(false);
-                    }}
-                    className="block px-4 py-2 hover:bg-slate-700 text-sm text-gray-200 hover:text-green-400 transition no-underline"
-                  >
-                    📅 Mis Reservas
-                  </Link>
+                  {usuario?.rol !== "admin" && (
+                    <Link
+                      to="/mis-reservas"
+                      onClick={() => {
+                        setIsAccountOpen(false);
+                        setIsOpen(false);
+                      }}
+                      className="block px-4 py-2 hover:bg-slate-700 text-sm text-gray-200 hover:text-green-400 transition no-underline"
+                    >
+                      📅 Mis Reservas
+                    </Link>
+                  )}
 
                   <hr className="border-slate-700 my-1" />
 

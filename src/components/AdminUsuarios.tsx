@@ -1,7 +1,9 @@
-
 import { useEffect, useState } from "react";
+
 import { useForm } from "react-hook-form";
+
 import type { SubmitHandler } from "react-hook-form";
+
 import Swal from "sweetalert2";
 
 interface Usuario {
@@ -39,14 +41,28 @@ const swalTema = Swal.mixin({
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [paginaActual, setPaginaActual] = useState(1);
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
+
+  // ==========================================
+  // PAGINACIÓN
+  // ==========================================
+
+  const usuariosPorPagina = 5;
+
+  const totalPaginas = Math.ceil(usuarios.length / usuariosPorPagina);
+
+  const indiceInicio = (paginaActual - 1) * usuariosPorPagina;
+
+  const indiceFin = indiceInicio + usuariosPorPagina;
+
+  const usuariosPagina = usuarios.slice(indiceInicio, indiceFin);
 
   const {
     register,
     handleSubmit,
     reset,
     watch,
-   
     formState: { errors, isSubmitting },
   } = useForm<FormularioUsuario>({
     mode: "onTouched",
@@ -59,26 +75,27 @@ export default function AdminUsuarios() {
   // ==========================================
   // OBTENER USUARIOS
   // ==========================================
+
   const cargarUsuarios = async () => {
     try {
       setCargando(true);
 
-      const respuesta = await fetch(
-        "http://localhost:3003/api/usuario",
-        {
-          credentials: "include",
-        }
-      );
+      const respuesta = await fetch("http://localhost:3003/api/usuario", {
+        credentials: "include",
+      });
 
       const resultado = await respuesta.json();
 
       if (!respuesta.ok) {
         throw new Error(
-          resultado.mensaje || "No se pudieron obtener los usuarios"
+          resultado.mensaje || "No se pudieron obtener los usuarios",
         );
       }
 
       setUsuarios(resultado);
+
+      // Volver a la primera página al cargar nuevamente
+      setPaginaActual(1);
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
 
@@ -101,6 +118,7 @@ export default function AdminUsuarios() {
   // ==========================================
   // ABRIR MODAL EDITAR
   // ==========================================
+
   const abrirEditar = (usuario: Usuario) => {
     setUsuarioEditando(usuario);
 
@@ -116,6 +134,7 @@ export default function AdminUsuarios() {
   // ==========================================
   // CERRAR MODAL
   // ==========================================
+
   const cerrarModal = () => {
     setUsuarioEditando(null);
     reset();
@@ -124,6 +143,7 @@ export default function AdminUsuarios() {
   // ==========================================
   // GUARDAR CAMBIOS
   // ==========================================
+
   const guardarCambios: SubmitHandler<FormularioUsuario> = async (datos) => {
     if (!usuarioEditando) return;
 
@@ -137,7 +157,7 @@ export default function AdminUsuarios() {
           },
           credentials: "include",
           body: JSON.stringify(datos),
-        }
+        },
       );
 
       const resultado = await respuesta.json();
@@ -180,9 +200,10 @@ export default function AdminUsuarios() {
   // ==========================================
   // CAMBIAR ROL
   // ==========================================
+
   const cambiarRol = async (
     usuario: Usuario,
-    nuevoRol: "usuario" | "admin"
+    nuevoRol: "usuario" | "admin",
   ) => {
     if (usuario.rol === nuevoRol) return;
 
@@ -212,23 +233,19 @@ export default function AdminUsuarios() {
           body: JSON.stringify({
             rol: nuevoRol,
           }),
-        }
+        },
       );
 
       const resultado = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudo cambiar el rol"
-        );
+        throw new Error(resultado.mensaje || "No se pudo cambiar el rol");
       }
 
       setUsuarios((usuariosActuales) =>
         usuariosActuales.map((u) =>
-          u._id === usuario._id
-            ? { ...u, rol: nuevoRol }
-            : u
-        )
+          u._id === usuario._id ? { ...u, rol: nuevoRol } : u,
+        ),
       );
 
       await swalTema.fire({
@@ -254,17 +271,13 @@ export default function AdminUsuarios() {
   // ==========================================
   // CAMBIAR ESTADO
   // ==========================================
-  const cambiarEstado = async (
-    usuario: Usuario,
-    nuevoEstado: boolean
-  ) => {
+
+  const cambiarEstado = async (usuario: Usuario, nuevoEstado: boolean) => {
     if (usuario.activo === nuevoEstado) return;
 
     const confirmacion = await swalTema.fire({
       icon: "warning",
-      title: nuevoEstado
-        ? "¿Activar usuario?"
-        : "¿Desactivar usuario?",
+      title: nuevoEstado ? "¿Activar usuario?" : "¿Desactivar usuario?",
       text: nuevoEstado
         ? "El usuario podrá utilizar nuevamente su cuenta."
         : "El usuario no podrá utilizar su cuenta.",
@@ -290,23 +303,19 @@ export default function AdminUsuarios() {
           body: JSON.stringify({
             activo: nuevoEstado,
           }),
-        }
+        },
       );
 
       const resultado = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudo cambiar el estado"
-        );
+        throw new Error(resultado.mensaje || "No se pudo cambiar el estado");
       }
 
       setUsuarios((usuariosActuales) =>
         usuariosActuales.map((u) =>
-          u._id === usuario._id
-            ? { ...u, activo: nuevoEstado }
-            : u
-        )
+          u._id === usuario._id ? { ...u, activo: nuevoEstado } : u,
+        ),
       );
 
       await swalTema.fire({
@@ -332,6 +341,7 @@ export default function AdminUsuarios() {
   // ==========================================
   // ELIMINAR USUARIO
   // ==========================================
+
   const eliminarUsuario = async (usuario: Usuario) => {
     const confirmacion = await swalTema.fire({
       icon: "warning",
@@ -353,22 +363,30 @@ export default function AdminUsuarios() {
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       const resultado = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudo eliminar el usuario"
-        );
+        throw new Error(resultado.mensaje || "No se pudo eliminar el usuario");
       }
 
-      setUsuarios((usuariosActuales) =>
-        usuariosActuales.filter(
-          (u) => u._id !== usuario._id
-        )
-      );
+      setUsuarios((usuariosActuales) => {
+        const usuariosActualizados = usuariosActuales.filter(
+          (u) => u._id !== usuario._id,
+        );
+
+        const nuevasPaginas = Math.ceil(
+          usuariosActualizados.length / usuariosPorPagina,
+        );
+
+        setPaginaActual((pagina) =>
+          Math.min(pagina, Math.max(nuevasPaginas, 1)),
+        );
+
+        return usuariosActualizados;
+      });
 
       await swalTema.fire({
         icon: "success",
@@ -393,24 +411,22 @@ export default function AdminUsuarios() {
   // ==========================================
   // ESTILOS
   // ==========================================
+
   const inputBase =
     "w-full rounded-lg border bg-[#111c36] px-4 py-3 text-white outline-none transition placeholder:text-slate-500";
 
-  const inputNormal =
-    `${inputBase} border-slate-700 focus:border-green-500`;
+  const inputNormal = `${inputBase} border-slate-700 focus:border-green-500`;
 
-  const inputError =
-    `${inputBase} border-red-500 focus:border-red-500`;
+  const inputError = `${inputBase} border-red-500 focus:border-red-500`;
 
   // ==========================================
   // CARGANDO
   // ==========================================
+
   if (cargando) {
     return (
       <div className="flex min-h-100 items-center justify-center">
-        <p className="text-slate-400">
-          Cargando usuarios...
-        </p>
+        <p className="text-slate-400">Cargando usuarios...</p>
       </div>
     );
   }
@@ -420,10 +436,9 @@ export default function AdminUsuarios() {
       {/* ========================================
           ENCABEZADO
       ======================================== */}
+
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">
-          Gestión de usuarios
-        </h1>
+        <h1 className="text-2xl font-bold text-white">Gestión de usuarios</h1>
 
         <p className="mt-1 text-slate-400">
           Administra los usuarios registrados en el sistema.
@@ -433,6 +448,7 @@ export default function AdminUsuarios() {
       {/* ========================================
           TABLA / GRID
       ======================================== */}
+
       <div className="overflow-x-auto rounded-xl border border-slate-700 bg-[#0b132b]">
         <table className="w-full min-w-225 text-left">
           <thead className="border-b border-slate-700 bg-[#111c36]">
@@ -464,7 +480,7 @@ export default function AdminUsuarios() {
           </thead>
 
           <tbody>
-            {usuarios.map((usuario) => (
+            {usuariosPagina.map((usuario) => (
               <tr
                 key={usuario._id}
                 className="border-b border-slate-800 transition hover:bg-[#111c36]"
@@ -477,55 +493,42 @@ export default function AdminUsuarios() {
                   </div>
                 </td>
 
-                <td className="px-5 py-4 text-slate-400">
-                  {usuario.email}
-                </td>
+                <td className="px-5 py-4 text-slate-400">{usuario.email}</td>
 
                 {/* ROL */}
+
                 <td className="px-5 py-4">
                   <select
                     value={usuario.rol}
                     onChange={(e) =>
-                      cambiarRol(
-                        usuario,
-                        e.target.value as "usuario" | "admin"
-                      )
+                      cambiarRol(usuario, e.target.value as "usuario" | "admin")
                     }
                     className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
                   >
-                    <option value="usuario">
-                      Usuario
-                    </option>
+                    <option value="usuario">Usuario</option>
 
-                    <option value="admin">
-                      Admin
-                    </option>
+                    <option value="admin">Admin</option>
                   </select>
                 </td>
 
                 {/* ESTADO */}
+
                 <td className="px-5 py-4">
                   <select
                     value={usuario.activo ? "activo" : "inactivo"}
                     onChange={(e) =>
-                      cambiarEstado(
-                        usuario,
-                        e.target.value === "activo"
-                      )
+                      cambiarEstado(usuario, e.target.value === "activo")
                     }
                     className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
                   >
-                    <option value="activo">
-                      Activo
-                    </option>
+                    <option value="activo">Activo</option>
 
-                    <option value="inactivo">
-                      Inactivo
-                    </option>
+                    <option value="inactivo">Inactivo</option>
                   </select>
                 </td>
 
                 {/* VERIFICACIÓN */}
+
                 <td className="px-5 py-4">
                   {usuario.emailVerificado ? (
                     <span className="text-sm font-medium text-green-500">
@@ -539,6 +542,7 @@ export default function AdminUsuarios() {
                 </td>
 
                 {/* ACCIONES */}
+
                 <td className="px-5 py-4">
                   <div className="flex gap-2">
                     <button
@@ -551,9 +555,7 @@ export default function AdminUsuarios() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        eliminarUsuario(usuario)
-                      }
+                      onClick={() => eliminarUsuario(usuario)}
                       className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
                     >
                       Eliminar
@@ -567,13 +569,60 @@ export default function AdminUsuarios() {
       </div>
 
       {/* ========================================
+          PAGINACIÓN
+      ======================================== */}
+
+      {totalPaginas > 1 && (
+        <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-700 bg-[#0b132b] px-5 py-4">
+          <p className="text-sm text-slate-400">
+            Mostrando{" "}
+            <span className="font-medium text-white">{indiceInicio + 1}</span> -{" "}
+            <span className="font-medium text-white">
+              {Math.min(indiceFin, usuarios.length)}
+            </span>{" "}
+            de <span className="font-medium text-white">{usuarios.length}</span>{" "}
+            usuarios
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setPaginaActual((pagina) => Math.max(pagina - 1, 1))
+              }
+              disabled={paginaActual === 1}
+              className="rounded-lg border border-slate-700 bg-[#111c36] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1a2948] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Anterior
+            </button>
+
+            <span className="rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white">
+              {paginaActual} / {totalPaginas}
+            </span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPaginaActual((pagina) => Math.min(pagina + 1, totalPaginas))
+              }
+              disabled={paginaActual === totalPaginas}
+              className="rounded-lg border border-slate-700 bg-[#111c36] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1a2948] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================
           MODAL EDITAR USUARIO
       ======================================== */}
+
       {usuarioEditando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b132b] p-6 shadow-2xl">
-
             {/* ENCABEZADO MODAL */}
+
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-white">
@@ -595,11 +644,10 @@ export default function AdminUsuarios() {
             </div>
 
             {/* FORMULARIO */}
-            <form
-              onSubmit={handleSubmit(guardarCambios)}
-              className="space-y-5"
-            >
+
+            <form onSubmit={handleSubmit(guardarCambios)} className="space-y-5">
               {/* NOMBRE */}
+
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-medium text-white">
@@ -616,22 +664,16 @@ export default function AdminUsuarios() {
                 <input
                   type="text"
                   maxLength={25}
-                  className={
-                    errors.nombre
-                      ? inputError
-                      : inputNormal
-                  }
+                  className={errors.nombre ? inputError : inputNormal}
                   {...register("nombre", {
                     required: "El nombre es obligatorio.",
                     minLength: {
                       value: 2,
-                      message:
-                        "El nombre debe tener al menos 2 caracteres.",
+                      message: "El nombre debe tener al menos 2 caracteres.",
                     },
                     maxLength: {
                       value: 25,
-                      message:
-                        "El nombre no puede superar los 25 caracteres.",
+                      message: "El nombre no puede superar los 25 caracteres.",
                     },
                   })}
                 />
@@ -644,6 +686,7 @@ export default function AdminUsuarios() {
               </div>
 
               {/* APELLIDO */}
+
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-medium text-white">
@@ -660,17 +703,12 @@ export default function AdminUsuarios() {
                 <input
                   type="text"
                   maxLength={25}
-                  className={
-                    errors.apellido
-                      ? inputError
-                      : inputNormal
-                  }
+                  className={errors.apellido ? inputError : inputNormal}
                   {...register("apellido", {
                     required: "El apellido es obligatorio.",
                     minLength: {
                       value: 2,
-                      message:
-                        "El apellido debe tener al menos 2 caracteres.",
+                      message: "El apellido debe tener al menos 2 caracteres.",
                     },
                     maxLength: {
                       value: 25,
@@ -688,6 +726,7 @@ export default function AdminUsuarios() {
               </div>
 
               {/* EMAIL */}
+
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-medium text-white">
@@ -704,21 +743,15 @@ export default function AdminUsuarios() {
                 <input
                   type="email"
                   maxLength={50}
-                  className={
-                    errors.email
-                      ? inputError
-                      : inputNormal
-                  }
+                  className={errors.email ? inputError : inputNormal}
                   {...register("email", {
                     required: "El email es obligatorio.",
                     maxLength: {
                       value: 50,
-                      message:
-                        "El email no puede superar los 50 caracteres.",
+                      message: "El email no puede superar los 50 caracteres.",
                     },
                     pattern: {
-                      value:
-                        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                      value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
                       message:
                         "Ingresá un email válido. Ejemplo: usuario@gmail.com",
                     },
@@ -733,26 +766,21 @@ export default function AdminUsuarios() {
               </div>
 
               {/* ROL */}
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-white">
                   Rol
                 </label>
 
-                <select
-                  className={inputNormal}
-                  {...register("rol")}
-                >
-                  <option value="usuario">
-                    Usuario
-                  </option>
+                <select className={inputNormal} {...register("rol")}>
+                  <option value="usuario">Usuario</option>
 
-                  <option value="admin">
-                    Administrador
-                  </option>
+                  <option value="admin">Administrador</option>
                 </select>
               </div>
 
               {/* ESTADO */}
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-white">
                   Estado
@@ -761,21 +789,17 @@ export default function AdminUsuarios() {
                 <select
                   className={inputNormal}
                   {...register("activo", {
-                    setValueAs: (value) =>
-                      value === "true",
+                    setValueAs: (value) => value === "true",
                   })}
                 >
-                  <option value="true">
-                    Activo
-                  </option>
+                  <option value="true">Activo</option>
 
-                  <option value="false">
-                    Inactivo
-                  </option>
+                  <option value="false">Inactivo</option>
                 </select>
               </div>
 
               {/* BOTONES */}
+
               <div className="flex justify-end gap-3 border-t border-slate-700 pt-5">
                 <button
                   type="button"
@@ -790,9 +814,7 @@ export default function AdminUsuarios() {
                   disabled={isSubmitting}
                   className="rounded-lg bg-green-500 px-5 py-3 font-medium text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isSubmitting
-                    ? "Guardando..."
-                    : "Guardar cambios"}
+                  {isSubmitting ? "Guardando..." : "Guardar cambios"}
                 </button>
               </div>
             </form>

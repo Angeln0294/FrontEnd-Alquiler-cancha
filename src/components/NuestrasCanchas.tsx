@@ -15,7 +15,7 @@ export interface CanchaDetalle {
 export default function NuestrasCanchas() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { usuario } = useAuth()
+  const { usuario } = useAuth();
   const API_URL = "http://localhost:3003/api/canchas";
 
   const [canchas, setCanchas] = useState<CanchaDetalle[]>([]);
@@ -59,7 +59,7 @@ export default function NuestrasCanchas() {
   }, [searchParams]);
 
   // Dentro de src/components/NuestrasCanchas.tsx
- 
+
   if (cargando) {
     return (
       <div className="w-full bg-[#0b132b] text-white min-h-screen flex items-center justify-center">
@@ -116,7 +116,13 @@ export default function NuestrasCanchas() {
                       }
 
                       navigate(
-                        `/reservar-turnos?cancha=${encodeURIComponent(cancha.nombre)}&precio=${encodeURIComponent(cancha.precio)}`,
+                        `/reservar-turnos?canchaId=${encodeURIComponent(
+                          cancha._id,
+                        )}&cancha=${encodeURIComponent(
+                          cancha.nombre,
+                        )}&precio=${encodeURIComponent(cancha.precio,
+
+                        )}&imagen=${encodeURIComponent(cancha.imagen)}`,
                       );
                     }}
                     className="font-black px-5 py-2.5 rounded-xl text-xs bg-gray-800 text-gray-300 hover:bg-green-500 hover:text-[#0b132b] cursor-pointer transition-colors"

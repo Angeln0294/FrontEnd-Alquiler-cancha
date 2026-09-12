@@ -47,6 +47,17 @@ export default function AdminReservas() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [cargando, setCargando] = useState(true);
 
+  const [paginaActual, setPaginaActual] = useState(1);
+
+  const reservasPorPagina = 5;
+
+const totalPaginas = Math.ceil(reservas.length / reservasPorPagina);
+
+const indiceInicio = (paginaActual - 1) * reservasPorPagina;
+const indiceFin = indiceInicio + reservasPorPagina;
+
+const reservasPagina = reservas.slice(indiceInicio, indiceFin);
+
   const cargarReservas = async () => {
     try {
       setCargando(true);
@@ -78,6 +89,8 @@ export default function AdminReservas() {
       setCargando(false);
     }
   };
+
+ 
 
   useEffect(() => {
     cargarReservas();
@@ -197,8 +210,6 @@ export default function AdminReservas() {
         return "bg-yellow-500/10 border-yellow-500/20 text-yellow-400";
     }
   };
-
-  
 
   const pendientes = reservas.filter(
     (reserva) => reserva.estado === "pendiente",
@@ -337,118 +348,135 @@ export default function AdminReservas() {
           </thead>
 
           <tbody>
-            {reservas.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-5 py-12 text-center">
-                  <div className="text-4xl">📅</div>
+  {reservas.length === 0 ? (
+    <tr>
+      <td colSpan={6} className="px-5 py-12 text-center">
+        <div className="text-4xl">📅</div>
 
-                  <p className="mt-3 font-semibold text-white">
-                    No hay reservas registradas
-                  </p>
+        <p className="mt-3 font-semibold text-white">
+          No hay reservas registradas
+        </p>
 
-                  <p className="mt-1 text-sm text-slate-500">
-                    Las reservas realizadas aparecerán aquí.
-                  </p>
-                </td>
-              </tr>
-            ) : (
-              reservas.map((reserva) => (
-                <tr
-                  key={reserva._id}
-                  className="border-b border-slate-800 transition hover:bg-[#111c36]"
-                >
-                  {/* USUARIO */}
+        <p className="mt-1 text-sm text-slate-500">
+          Las reservas realizadas aparecerán aquí.
+        </p>
+      </td>
+    </tr>
+  ) : (
+    reservasPagina.map((reserva) => (
+      <tr
+        key={reserva._id}
+        className="border-b border-slate-800 transition hover:bg-[#111c36]"
+      >
+        <td className="px-5 py-4">
+          <div>
+            <p className="font-medium text-white">
+              {reserva.usuario.nombre} {reserva.usuario.apellido}
+            </p>
 
-                  <td className="px-5 py-4">
-                    <div>
-                      <p className="font-medium text-white">
-                        {reserva.usuario.nombre} {reserva.usuario.apellido}
-                      </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {reserva.usuario.email}
+            </p>
+          </div>
+        </td>
 
-                      <p className="mt-1 text-xs text-slate-500">
-                        {reserva.usuario.email}
-                      </p>
-                    </div>
-                  </td>
+        <td className="px-5 py-4">
+          <p className="font-medium text-white">
+            {reserva.cancha.nombre}
+          </p>
 
-                  {/* CANCHA */}
+          <p className="mt-1 text-xs text-green-400">
+            {reserva.cancha.tipo}
+          </p>
+        </td>
 
-                  <td className="px-5 py-4">
-                    <p className="font-medium text-white">
-                      {reserva.cancha.nombre}
-                    </p>
+        <td className="px-5 py-4 text-slate-300">
+          {formatearFecha(reserva.fecha)}
+        </td>
 
-                    <p className="mt-1 text-xs text-green-400">
-                      {reserva.cancha.tipo}
-                    </p>
-                  </td>
+        <td className="px-5 py-4">
+          <span className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white">
+            {reserva.horaInicio} - {reserva.horaFin}
+          </span>
+        </td>
 
-                  {/* FECHA */}
+        <td className="px-5 py-4">
+          <span className="font-bold text-green-400">
+            ${reserva.precio.toLocaleString("es-AR")}
+          </span>
+        </td>
 
-                  <td className="px-5 py-4 text-slate-300">
-                    {formatearFecha(reserva.fecha)}
-                  </td>
+        <td className="px-5 py-4">
+          <select
+            value={reserva.estado}
+            onChange={(e) =>
+              cambiarEstado(
+                reserva,
+                e.target.value as Reserva["estado"],
+              )
+            }
+            className={`rounded-lg border px-3 py-2 text-sm font-medium outline-none bg-[#0b132b] ${obtenerClaseEstado(
+              reserva.estado,
+            )}`}
+          >
+            <option
+              value="pendiente"
+              className="bg-[#0b132b] text-white"
+            >
+              Pendiente
+            </option>
 
-                  {/* HORARIO */}
+            <option
+              value="confirmada"
+              className="bg-[#0b132b] text-white"
+            >
+              Confirmada
+            </option>
 
-                  <td className="px-5 py-4">
-                    <span className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white">
-                      {reserva.horaInicio} - {reserva.horaFin}
-                    </span>
-                  </td>
-
-                  {/* PRECIO */}
-
-                  <td className="px-5 py-4">
-                    <span className="font-bold text-green-400">
-                      ${reserva.precio.toLocaleString("es-AR")}
-                    </span>
-                  </td>
-
-                  {/* ESTADO */}
-
-                  <td className="px-5 py-4">
-                    <select
-                      value={reserva.estado}
-                      onChange={(e) =>
-                        cambiarEstado(
-                          reserva,
-                          e.target.value as Reserva["estado"],
-                        )
-                      }
-                      className={`rounded-lg border px-3 py-2 text-sm font-medium outline-none bg-[#0b132b] ${obtenerClaseEstado(
-                        reserva.estado,
-                      )}`}
-                    >
-                      <option
-                        value="pendiente"
-                        className="bg-[#0b132b] text-white"
-                      >
-                        Pendiente
-                      </option>
-
-                      <option
-                        value="confirmada"
-                        className="bg-[#0b132b] text-white"
-                      >
-                        Confirmada
-                      </option>
-
-                      <option
-                        value="cancelada"
-                        className="bg-[#0b132b] text-white"
-                      >
-                        Cancelada
-                      </option>
-                    </select>
-
-                    
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
+            <option
+              value="cancelada"
+              className="bg-[#0b132b] text-white"
+            >
+              Cancelada
+            </option>
+          </select>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
         </table>
+
+      {totalPaginas > 1 && (
+  <div className="flex items-center justify-between border-t border-slate-700 px-5 py-4">
+    <button
+      onClick={() => setPaginaActual((pagina) => pagina - 1)}
+      disabled={paginaActual === 1}
+      className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      ← Anterior
+    </button>
+
+    <div className="text-sm text-slate-400">
+      Página{" "}
+      <span className="font-semibold text-white">
+        {paginaActual}
+      </span>{" "}
+      de{" "}
+      <span className="font-semibold text-white">
+        {totalPaginas}
+      </span>
+    </div>
+
+    <button
+      onClick={() => setPaginaActual((pagina) => pagina + 1)}
+      disabled={paginaActual === totalPaginas}
+      className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      Siguiente →
+    </button>
+  </div>
+)}
       </div>
     </div>
   );

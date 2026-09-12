@@ -5,7 +5,7 @@ export default function CheckoutResultado() {
 
   const status = searchParams.get("status");
 
-  if (status === "sucess") {
+  if (status === "success") {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-6">
         <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">

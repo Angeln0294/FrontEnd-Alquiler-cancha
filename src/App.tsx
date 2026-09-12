@@ -42,7 +42,7 @@ export default function App() {
               <Route path="/verificar-email" element={<VerificarEmail />} />
               <Route path="/tienda" element={<Tienda />} />
               <Route path="/carrito" element={<Carrito />} />
-              <Route path="/comprobar/resultado" element={<ResultadoExitosMp />}/>
+              <Route path="/checkout/resultado" element={<ResultadoExitosMp />}/>
               <Route
                 path="/admin"
                 element={

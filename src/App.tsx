@@ -10,20 +10,24 @@ import Contacto from "./components/Contacto";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
 import Error404 from "./components/Error404";
+import { ProductoProvider } from "./context/ProductoContext";
 import MiPerfil from "./components/MiPerfil";
+import Tienda from "./components/Tienda";
 import NuestrasCanchas from "./components/NuestrasCanchas";
 import ReservarTurnos from "./components/ReservarTurnos";
 import CheckoutResultado from "./components/CheckoutResultado";
 import MisReservas from "./components/MisReservas";
-
+import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
     <AuthProvider>
+      <ProductoProvider>
       <BrowserRouter>
-        {/* PADRE: Mantiene flex-col para empujar el footer abajo */}
+
+<ScrollToTop />
         <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
 
           {/* NAVBAR */}
@@ -39,16 +43,21 @@ export default function App() {
               {/* AUTENTICACIÓN */}
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Registro />} />
-              <Route
-                path="/checkout/resultado"
-                element={<CheckoutResultado />}
-              />
-              <Route
-                path="/verificar-email"
-                element={<VerificarEmail />}
-              />
 
-              {/* PANEL ADMIN */}
+
+<Route
+  path="/checkout/resultado"
+  element={<CheckoutResultado />}
+/>
+
+<Route path="/tienda" element={<Tienda />} />
+
+<Route
+  path="/verificar-email"
+  element={<VerificarEmail />}
+/>
+
+{/* PANEL ADMIN */}
               <Route
                 path="/admin"
                 element={
@@ -68,50 +77,50 @@ export default function App() {
                 }
               />
 
+
               {/* MIS RESERVAS */}
               <Route
-                path="/mis-reservas"
-                element={
-                  <ProtectedRoute>
-                    <MisReservas />
-                  </ProtectedRoute>
-                }
-              />
+  path="/mis-reservas"
+  element={
+    <ProtectedRoute>
+      <MisReservas />
+    </ProtectedRoute>
+  }
+/>
 
-              {/* CONTACTO */}
-              <Route
-                path="/contacto"
-                element={<Contacto />}
-              />
+{/* CONTACTO */}
+<Route
+  path="/contacto"
+  element={<Contacto />}
+/>
 
-              {/* CANCHAS */}
-              <Route
-                path="/reservas"
-                element={<NuestrasCanchas />}
-              />
+{/* CANCHAS */}
+<Route
+  path="/reservas"
+  element={<NuestrasCanchas />}
+/>
 
-              <Route
-                path="/canchas"
-                element={<NuestrasCanchas />}
-              />
+<Route
+  path="/canchas"
+  element={<NuestrasCanchas />}
+/>
 
-              <Route
-                path="/nuestras-canchas"
-                element={<NuestrasCanchas />}
-              />
+<Route
+  path="/nuestras-canchas"
+  element={<NuestrasCanchas />}
+/>
 
-              {/* RESERVAR TURNO */}
-              <Route
-                path="/reservar-turnos"
-                element={<ReservarTurnos />}
-              />
+{/* RESERVAR TURNO */}
+<Route
+  path="/reservar-turnos"
+  element={<ReservarTurnos />}
+/>
 
-              {/* RUTA 404 - SIEMPRE AL FINAL */}
-              <Route
-                path="*"
-                element={<Error404 />}
-              />
-
+{/* RUTA 404 - SIEMPRE AL FINAL */}
+<Route
+  path="*"
+  element={<Error404 />}
+/>
             </Routes>
           </div>
 
@@ -120,6 +129,7 @@ export default function App() {
 
         </div>
       </BrowserRouter>
+      </ProductoProvider>
     </AuthProvider>
   );
 }

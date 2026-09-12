@@ -13,7 +13,7 @@ export default function FormularioProductoAdmin() {
   const [nombreProducto, setNombreProducto] = useState("");
   const [precio, setPrecio] = useState("");
   const [categoria, setCategoria] = useState("");
-  const [imagen, setImagen] = useState("");
+  const [imagen, setImagen] = useState<File | null>(null);
   const [descripcion, setDescripcion] = useState("");
 
   // =========================
@@ -28,10 +28,6 @@ export default function FormularioProductoAdmin() {
 
       setPrecio(
         String(productoSeleccionado.precio)
-      );
-
-      setImagen(
-        productoSeleccionado.imagen
       );
 
       setDescripcion(
@@ -49,27 +45,53 @@ export default function FormularioProductoAdmin() {
           productoSeleccionado.categoria
         );
       }
-
+       setImagen(null);
     } else {
       // FORMULARIO VACÍO PARA CREAR
       setNombreProducto("");
       setPrecio("");
       setCategoria("");
-      setImagen("");
+      setImagen(null);
       setDescripcion("");
     }
   }, [productoSeleccionado]);
 
+
+  // =========================
+  // CAMBIAR IMAGEN
+  // =========================
+
+  const manejarImagen = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const archivo = e.target.files?.[0];
+
+    if (!archivo) return;
+
+    // Validar tamaño máximo: 2 MB
+    if (archivo.size > 2 * 1024 * 1024) {
+      alert("La imagen no puede superar los 2 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setImagen(archivo);
+  };
+
   // =========================
   // SUBMIT
   // =========================
+const manejarSubmit = async (
+  e: React.FormEvent<HTMLFormElement>
+) => {
+  e.preventDefault();
 
-  const manejarSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
+  if (!productoSeleccionado && !imagen) {
+    alert("Tenés que seleccionar una imagen.");
+    return;
+  }
 
-    const datosProducto = {
+   const datosProducto = {
       nombreProducto,
       precio: Number(precio),
       categoria,
@@ -77,8 +99,8 @@ export default function FormularioProductoAdmin() {
       descripcion,
     };
 
-    await guardarProducto(datosProducto);
-  };
+  await guardarProducto(datosProducto);
+};
 
   return (
     <div
@@ -223,19 +245,22 @@ export default function FormularioProductoAdmin() {
           <div>
 
             <label className="block text-sm font-semibold text-slate-300 mb-2">
-              URL de la imagen
+              Imagen del producto
             </label>
 
-            <input
-              type="url"
-              value={imagen}
-              onChange={(e) =>
-                setImagen(e.target.value)
-              }
-              required
-              placeholder="https://..."
-              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder:text-slate-600 outline-none focus:border-green-500 transition"
+             <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+              onChange={manejarImagen}
+              required={!productoSeleccionado}
+              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-500 file:text-slate-950 file:font-semibold hover:file:bg-green-400 transition"
             />
+
+            <p className="text-xs text-slate-500 mt-2">
+              Máximo 2 MB. Formatos permitidos: JPG, PNG, WEBP, AVIF o SVG.
+            </p>
+
+
 
           </div>
 
@@ -246,12 +271,9 @@ export default function FormularioProductoAdmin() {
             <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-950 border border-slate-800">
 
               <img
-                src={imagen}
-                alt="Vista previa"
-                className="w-20 h-20 object-cover rounded-xl border border-slate-700"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
+              src={URL.createObjectURL(imagen)}
+              alt="Vista previa"
+              className="w-20 h-20 object-cover rounded-xl border border-slate-700"
               />
 
               <div>

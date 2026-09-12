@@ -54,11 +54,11 @@ export default function Carrito() {
 
         <div className="space-y-4">
 
-          {carrito.items.map((item) => (
+          {carrito.items.filter((item) => item.producto).map((item) => (
 
             <div
               key={item.producto._id}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 sm:items-center"
+               className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 sm:items-center"
             >
 
               {/* IMAGEN */}

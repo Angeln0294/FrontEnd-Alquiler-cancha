@@ -281,7 +281,7 @@ export function CarritoProvider({
     carrito?.items.reduce(
       (total, item) =>
         total +
-        item.producto.precio *
+        item.producto?.precio *
           item.cantidad,
       0
     ) || 0;

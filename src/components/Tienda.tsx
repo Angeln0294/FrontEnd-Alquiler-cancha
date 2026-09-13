@@ -72,25 +72,30 @@ export default function Tienda() {
         {/* ENCABEZADO */}
         {/* ========================= */}
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-black tracking-tight">Tienda 🛒</h1>
+        <div className="mb-8 flex items-end justify-between gap-4">
+  <div>
+    <h1 className="text-4xl font-black tracking-tight">
+      Tienda 🛒
+    </h1>
 
-          <p className="text-slate-400 mt-2">
-            Encontrá todo lo que necesitás para disfrutar de tu cancha.
-          </p>
+    <p className="text-slate-400 mt-2">
+      Encontrá todo lo que necesitás para disfrutar de tu cancha.
+    </p>
+  </div>
 
-          <a
-            href="/carrito"
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-green-500 text-slate-950 font-bold hover:bg-green-400 transition"
-          >
-            🛒 Ver carrito
-            {cantidadTotal > 0 && (
-              <span className="bg-slate-950 text-green-400 px-2 py-0.5 rounded-full text-sm">
-                {cantidadTotal}
-              </span>
-            )}
-          </a>
-        </div>
+  <a
+    href="/carrito"
+    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-green-500 text-slate-950 font-bold hover:bg-green-400 transition shrink-0"
+  >
+    🛒 Ver carrito
+
+    {cantidadTotal > 0 && (
+      <span className="bg-slate-950 text-green-400 px-2 py-0.5 rounded-full text-sm">
+        {cantidadTotal}
+      </span>
+    )}
+  </a>
+</div>
 
         {/* ========================= */}
         {/* FILTROS */}
@@ -225,7 +230,7 @@ export default function Tienda() {
                   type="button"
                   disabled={paginaActual === 1}
                   onClick={() => cambiarPagina(paginaActual - 1)}
-                  className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ‹
                 </button>
@@ -256,7 +261,7 @@ export default function Tienda() {
                   type="button"
                   disabled={paginaActual === cantidadPaginas}
                   onClick={() => cambiarPagina(paginaActual + 1)}
-                  className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   &gt;
                 </button>

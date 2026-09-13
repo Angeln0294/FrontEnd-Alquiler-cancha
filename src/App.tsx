@@ -21,6 +21,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ResultadoExitosoMp from "./components/ResultadoExitosoMp";
 import CheckoutResultado from "./components/CheckoutResultado";
+import QuienesSomos from "./components/QuienesSomos";
 
 export default function App() {
   return (
@@ -94,7 +95,7 @@ export default function App() {
 
                 {/* RESERVAR TURNO */}
                 <Route path="/reservar-turnos" element={<ReservarTurnos />} />
-
+                <Route path="/quienes-somos" element={<QuienesSomos />} />
                 {/* RUTA 404 - SIEMPRE AL FINAL */}
                 <Route path="*" element={<Error404 />} />
               </Routes>

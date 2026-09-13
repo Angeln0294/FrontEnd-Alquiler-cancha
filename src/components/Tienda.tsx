@@ -88,17 +88,47 @@ export default function Tienda() {
             </p>
           </div>
 
-          <a
-            href="/carrito"
+          <button
+            type="button"
+            onClick={async () => {
+              if (!usuario) {
+                await Swal.fire({
+                  icon: "warning",
+                  title: "Iniciá sesión",
+                  text: "Debés iniciar sesión para poder acceder al carrito.",
+                  confirmButtonText: "Iniciar sesión",
+                  background: "#1e293b",
+                  color: "#f8fafc",
+                  confirmButtonColor: "#22c55e",
+                });
+
+                navigate("/login");
+                return;
+              }
+
+              if (usuario.rol === "admin") {
+                Swal.fire({
+                  icon: "info",
+                  title: "Acción no permitida",
+                  text: "Los administradores no pueden acceder al carrito.",
+                  confirmButtonText: "Aceptar",
+                  background: "#1e293b",
+                  color: "#f8fafc",
+                  confirmButtonColor: "#22c55e",
+                });
+
+                return;
+              }
+
+              navigate("/carrito");
+            }}
             className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-green-500 text-slate-950 font-bold hover:bg-green-400 transition shrink-0"
           >
             🛒 Ver carrito
-            {cantidadTotal > 0 && (
-              <span className="bg-slate-950 text-green-400 px-2 py-0.5 rounded-full text-sm">
-                {cantidadTotal}
-              </span>
-            )}
-          </a>
+            <span className="bg-slate-950 text-green-400 px-2 py-0.5 rounded-full text-sm">
+              {usuario && usuario.rol !== "admin" ? cantidadTotal : 0}
+            </span>
+          </button>
         </div>
 
         {/* ========================= */}

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useProductos } from "../context/ProductoContext";
 import { useCarrito } from "../context/CarritoContext";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 export default function Tienda() {
   const {
@@ -12,6 +15,10 @@ export default function Tienda() {
     limiteProductos,
     cargarProductos,
   } = useProductos();
+
+  const { usuario } = useAuth();
+
+  const navigate = useNavigate();
 
   const { agregarAlCarrito, cantidadTotal } = useCarrito();
 
@@ -72,24 +79,56 @@ export default function Tienda() {
         {/* ENCABEZADO */}
         {/* ========================= */}
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-black tracking-tight">Tienda 🛒</h1>
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-black tracking-tight">Tienda 🛒</h1>
 
-          <p className="text-slate-400 mt-2">
-            Encontrá todo lo que necesitás para disfrutar de tu cancha.
-          </p>
+            <p className="text-slate-400 mt-2">
+              Encontrá todo lo que necesitás para disfrutar de tu cancha.
+            </p>
+          </div>
 
-          <a
-            href="/carrito"
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-green-500 text-slate-950 font-bold hover:bg-green-400 transition"
+          <button
+            type="button"
+            onClick={async () => {
+              if (!usuario) {
+                await Swal.fire({
+                  icon: "warning",
+                  title: "Iniciá sesión",
+                  text: "Debés iniciar sesión para poder acceder al carrito.",
+                  confirmButtonText: "Iniciar sesión",
+                  background: "#1e293b",
+                  color: "#f8fafc",
+                  confirmButtonColor: "#22c55e",
+                });
+
+                navigate("/login");
+                return;
+              }
+
+              if (usuario.rol === "admin") {
+                Swal.fire({
+                  icon: "info",
+                  title: "Acción no permitida",
+                  text: "Los administradores no pueden acceder al carrito.",
+                  confirmButtonText: "Aceptar",
+                  background: "#1e293b",
+                  color: "#f8fafc",
+                  confirmButtonColor: "#22c55e",
+                });
+
+                return;
+              }
+
+              navigate("/carrito");
+            }}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-green-500 text-slate-950 font-bold hover:bg-green-400 transition shrink-0"
           >
             🛒 Ver carrito
-            {cantidadTotal > 0 && (
-              <span className="bg-slate-950 text-green-400 px-2 py-0.5 rounded-full text-sm">
-                {cantidadTotal}
-              </span>
-            )}
-          </a>
+            <span className="bg-slate-950 text-green-400 px-2 py-0.5 rounded-full text-sm">
+              {usuario && usuario.rol !== "admin" ? cantidadTotal : 0}
+            </span>
+          </button>
         </div>
 
         {/* ========================= */}
@@ -202,7 +241,62 @@ export default function Tienda() {
 
                       <button
                         type="button"
-                        onClick={() => agregarAlCarrito(producto._id)}
+                        onClick={async () => {
+                          // NO ESTÁ LOGUEADO
+                          if (!usuario) {
+                            await Swal.fire({
+                              icon: "warning",
+                              title: "Iniciá sesión",
+                              text: "Debés iniciar sesión para agregar productos al carrito.",
+                              confirmButtonText: "Iniciar sesión",
+                              background: "#1e293b",
+                              color: "#f8fafc",
+                              confirmButtonColor: "#22c55e",
+                            });
+
+                            navigate("/login");
+                            return;
+                          }
+
+                          // ES ADMIN
+                          if (usuario.rol === "admin") {
+                            Swal.fire({
+                              icon: "info",
+                              title: "Acción no permitida",
+                              text: "Los administradores no pueden agregar productos al carrito.",
+                              confirmButtonText: "Aceptar",
+                              confirmButtonColor: "#22c55e",
+                              background: "#1e293b",
+                              color: "#f8fafc",
+                            });
+
+                            return;
+                          }
+
+                          // USUARIO NORMAL
+                          await agregarAlCarrito(producto._id);
+
+                          Swal.fire({
+                            icon: "success",
+                            title: "¡Producto agregado!",
+                            text: `${producto.nombreProducto} fue agregado al carrito.`,
+                            background: "#1e293b",
+                            color: "#ffffff",
+
+                            showCancelButton: true,
+                            confirmButtonText: "🛒 Ver carrito",
+                            cancelButtonText: "Seguir comprando",
+
+                            confirmButtonColor: "#00d26a",
+                            cancelButtonColor: "#00d26a",
+
+                            reverseButtons: true,
+                          }).then((resultado) => {
+                            if (resultado.isConfirmed) {
+                              navigate("/carrito");
+                            }
+                          });
+                        }}
                         className="px-4 py-2.5 rounded-xl bg-green-500 text-slate-950 font-bold text-sm hover:bg-green-400 transition"
                       >
                         Agregar 🛒
@@ -225,7 +319,7 @@ export default function Tienda() {
                   type="button"
                   disabled={paginaActual === 1}
                   onClick={() => cambiarPagina(paginaActual - 1)}
-                  className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ‹
                 </button>
@@ -256,11 +350,10 @@ export default function Tienda() {
                   type="button"
                   disabled={paginaActual === cantidadPaginas}
                   onClick={() => cambiarPagina(paginaActual + 1)}
-                  className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   &gt;
                 </button>
-                
               </div>
             )}
           </>

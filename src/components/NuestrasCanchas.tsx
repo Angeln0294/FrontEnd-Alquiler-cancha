@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Swal from "sweetalert2";
 
 export interface CanchaDetalle {
   _id: string;
@@ -31,7 +32,7 @@ export default function NuestrasCanchas() {
       try {
         setCargando(true);
 
-         const respuesta = await fetch(
+        const respuesta = await fetch(
           `${API_URL}?pagina=${paginaActual}&limite=${limiteCanchas}`,
           {
             credentials: "include",
@@ -67,9 +68,7 @@ export default function NuestrasCanchas() {
     }
   }, [searchParams, paginaActual]);
 
-  const cantidadPaginas = Math.ceil(
-    cantidadCanchas / limiteCanchas,
-  );
+  const cantidadPaginas = Math.ceil(cantidadCanchas / limiteCanchas);
 
   const cambiarPagina = (pagina: number) => {
     setPaginaActual(pagina);
@@ -133,7 +132,34 @@ export default function NuestrasCanchas() {
                     type="button"
                     onClick={() => {
                       if (!usuario) {
-                        navigate("/login");
+                        Swal.fire({
+                          icon: "warning",
+                          title: "Iniciá sesión",
+                          text: "Debés iniciar sesión para poder reservar una cancha.",
+                          confirmButtonText: "Iniciar sesión",
+                          background: "#1e293b",
+                          color: "#f8fafc",
+                          confirmButtonColor: "#22c55e",
+                        }).then((resultado) => {
+                          if (resultado.isConfirmed) {
+                            navigate("/login");
+                          }
+                        });
+
+                        return;
+                      }
+
+                      if (usuario.rol === "admin") {
+                        Swal.fire({
+                          icon: "warning",
+                          title: "Acceso no permitido",
+                          text: "El administrador no puede reservar canchas.",
+                          confirmButtonText: "Aceptar",
+                          background: "#1e293b",
+                          color: "#f8fafc",
+                          confirmButtonColor: "#22c55e",
+                        });
+
                         return;
                       }
 
@@ -142,8 +168,8 @@ export default function NuestrasCanchas() {
                           cancha._id,
                         )}&cancha=${encodeURIComponent(
                           cancha.nombre,
-                        )}&precio=${encodeURIComponent(cancha.precio,
-
+                        )}&precio=${encodeURIComponent(
+                          cancha.precio,
                         )}&imagen=${encodeURIComponent(cancha.imagen)}`,
                       );
                     }}
@@ -156,10 +182,9 @@ export default function NuestrasCanchas() {
             </div>
           ))}
         </div>
-       {/* PAGINACIÓN */}
+        {/* PAGINACIÓN */}
         {cantidadPaginas > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
-
             {/* ANTERIOR */}
             <button
               type="button"
@@ -198,10 +223,8 @@ export default function NuestrasCanchas() {
             >
               &gt;
             </button>
-
           </div>
         )}
-
       </div>
     </div>
   );

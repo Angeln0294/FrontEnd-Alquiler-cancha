@@ -201,12 +201,39 @@ export default function Inicio() {
                           ${cancha.precio.toLocaleString("es-AR")}
                         </p>
                       </div>
+                      
 
                       <button
                         type="button"
                         onClick={() => {
                           if (!usuario) {
-                            navigate("/login");
+                            Swal.fire({
+                              icon: "warning",
+                              title: "Iniciá sesión",
+                              text: "Debés iniciar sesión para poder reservar una cancha.",
+                              confirmButtonText: "Iniciar sesión",
+                              background: "#1e293b",
+                              color: "#f8fafc",
+                              confirmButtonColor: "#22c55e",
+                            }).then((resultado) => {
+                              if (resultado.isConfirmed) {
+                                navigate("/login");
+                              }
+                            });
+
+                            return;
+                          }
+                          if (usuario.rol === "admin") {
+                            Swal.fire({
+                              icon: "warning",
+                              title: "Acceso no permitido",
+                              text: "El administrador no puede reservar canchas.",
+                              confirmButtonText: "Aceptar",
+                              background: "#1e293b",
+                              color: "#f8fafc",
+                              confirmButtonColor: "#22c55e",
+                            });
+
                             return;
                           }
 
@@ -229,6 +256,16 @@ export default function Inicio() {
                 </div>
               ))
           )}
+        </div>
+        <div className="flex justify-end mt-8">
+          <button
+            type="button"
+            onClick={() => navigate("/nuestras-canchas")}
+            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer"
+            aria-label="Ir a nuestras canchas"
+          >
+            Ver más &gt;
+          </button>
         </div>
       </section>
       {/* 🛍️ 3. NUEVA SECCIÓN: PRODUCTOS DESTACADOS DE LA TIENDA (3 UNIDADES) */}
@@ -272,6 +309,37 @@ export default function Inicio() {
                 <button
                   type="button"
                   onClick={async () => {
+                    if (!usuario) {
+                      Swal.fire({
+                        icon: "warning",
+                        title: "Iniciá sesión",
+                        text: "Debés iniciar sesión para poder agregar productos al carrito.",
+                        confirmButtonText: "Iniciar sesión",
+                        background: "#1e293b",
+                        color: "#f8fafc",
+                        confirmButtonColor: "#22c55e",
+                      }).then((resultado) => {
+                        if (resultado.isConfirmed) {
+                          navigate("/login");
+                        }
+                      });
+
+                      return;
+                    }
+
+                    if (usuario.rol === "admin") {
+                      Swal.fire({
+                        icon: "warning",
+                        title: "Acceso no permitido",
+                        text: "El administrador no puede agregar productos al carrito.",
+                        confirmButtonText: "Aceptar",
+                        background: "#1e293b",
+                        color: "#f8fafc",
+                        confirmButtonColor: "#22c55e",
+                      });
+
+                      return;
+                    }
                     await agregarAlCarrito(producto._id);
 
                     Swal.fire({
@@ -307,7 +375,7 @@ export default function Inicio() {
           <button
             type="button"
             onClick={() => navigate("/tienda")}
-            className="text-green-400 hover:text-green-300 text-2xl font-bold transition-colors cursor-pointer"
+            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer"
             aria-label="Ir a la tienda"
           >
             Ver más &gt;

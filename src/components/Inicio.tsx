@@ -206,7 +206,33 @@ export default function Inicio() {
                         type="button"
                         onClick={() => {
                           if (!usuario) {
-                            navigate("/login");
+                            Swal.fire({
+                              icon: "warning",
+                              title: "Iniciá sesión",
+                              text: "Debés iniciar sesión para poder reservar una cancha.",
+                              confirmButtonText: "Iniciar sesión",
+                              background: "#1e293b",
+                              color: "#f8fafc",
+                              confirmButtonColor: "#22c55e",
+                            }).then((resultado) => {
+                              if (resultado.isConfirmed) {
+                                navigate("/login");
+                              }
+                            });
+
+                            return;
+                          }
+                          if (usuario.rol === "admin") {
+                            Swal.fire({
+                              icon: "warning",
+                              title: "Acceso no permitido",
+                              text: "El administrador no puede reservar canchas.",
+                              confirmButtonText: "Aceptar",
+                              background: "#1e293b",
+                              color: "#f8fafc",
+                              confirmButtonColor: "#22c55e",
+                            });
+
                             return;
                           }
 
@@ -272,6 +298,37 @@ export default function Inicio() {
                 <button
                   type="button"
                   onClick={async () => {
+                    if (!usuario) {
+                      Swal.fire({
+                        icon: "warning",
+                        title: "Iniciá sesión",
+                        text: "Debés iniciar sesión para poder agregar productos al carrito.",
+                        confirmButtonText: "Iniciar sesión",
+                        background: "#1e293b",
+                        color: "#f8fafc",
+                        confirmButtonColor: "#22c55e",
+                      }).then((resultado) => {
+                        if (resultado.isConfirmed) {
+                          navigate("/login");
+                        }
+                      });
+
+                      return;
+                    }
+
+                    if (usuario.rol === "admin") {
+                      Swal.fire({
+                        icon: "warning",
+                        title: "Acceso no permitido",
+                        text: "El administrador no puede agregar productos al carrito.",
+                        confirmButtonText: "Aceptar",
+                        background: "#1e293b",
+                        color: "#f8fafc",
+                        confirmButtonColor: "#22c55e",
+                      });
+
+                      return;
+                    }
                     await agregarAlCarrito(producto._id);
 
                     Swal.fire({

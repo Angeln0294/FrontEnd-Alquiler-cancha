@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Swal from "sweetalert2";
 
 interface HorarioTurno {
@@ -11,6 +12,7 @@ interface HorarioTurno {
 export default function ReservasPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { usuario, cargando: cargandoUsuario } = useAuth();
 
   // Datos recibidos desde la tarjeta de la cancha
   const canchaId = searchParams.get("canchaId");
@@ -90,46 +92,84 @@ export default function ReservasPage() {
   const [cargandoTurnos, setCargandoTurnos] = useState(false);
 
   // --------------------------------------------------
-  // OBTENER DISPONIBILIDAD
-  // --------------------------------------------------
+// OBTENER DISPONIBILIDAD
+// --------------------------------------------------
 
-  useEffect(() => {
-    const cargarDisponibilidad = async () => {
-      if (!canchaId) {
-        console.error("No se recibió el ID de la cancha");
-        return;
+useEffect(() => {
+  if (cargandoUsuario) {
+    return;
+  }
+
+  if (!usuario) {
+    Swal.fire({
+      icon: "warning",
+      title: "Iniciá sesión",
+      text: "Debés iniciar sesión para poder reservar una cancha.",
+      confirmButtonText: "Iniciar sesión",
+      background: "#1e293b",
+      color: "#f8fafc",
+      confirmButtonColor: "#22c55e",
+    }).then((resultado) => {
+      if (resultado.isConfirmed) {
+        navigate("/login");
       }
+    });
 
-      try {
-        setCargandoTurnos(true);
-        setTurnoSeleccionado(null);
+    return;
+  }
 
-        const respuesta = await fetch(
-          `http://localhost:3003/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
-          {
-            credentials: "include",
-          },
+  if (usuario.rol === "admin") {
+    Swal.fire({
+      icon: "warning",
+      title: "Acceso no permitido",
+      text: "El administrador no puede reservar canchas.",
+      confirmButtonText: "Aceptar",
+      background: "#1e293b",
+      color: "#f8fafc",
+      confirmButtonColor: "#22c55e",
+    }).then(() => {
+      navigate("/canchas");
+    });
+  }
+}, [usuario, cargandoUsuario, navigate]);
+
+useEffect(() => {
+  const cargarDisponibilidad = async () => {
+    if (!canchaId) {
+      console.error("No se recibió el ID de la cancha");
+      return;
+    }
+
+    try {
+      setCargandoTurnos(true);
+      setTurnoSeleccionado(null);
+
+      const respuesta = await fetch(
+        `http://localhost:3003/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
+        {
+          credentials: "include",
+        },
+      );
+
+      const resultado = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          resultado.mensaje || "No se pudo obtener la disponibilidad",
         );
-
-        const resultado = await respuesta.json();
-
-        if (!respuesta.ok) {
-          throw new Error(
-            resultado.mensaje || "No se pudo obtener la disponibilidad",
-          );
-        }
-
-        setTurnos(resultado.turnos || []);
-      } catch (error) {
-        console.error("Error al obtener disponibilidad:", error);
-        setTurnos([]);
-      } finally {
-        setCargandoTurnos(false);
       }
-    };
 
-    cargarDisponibilidad();
-  }, [canchaId, fechaSeleccionada]);
+      setTurnos(resultado.turnos || []);
+    } catch (error) {
+      console.error("Error al obtener disponibilidad:", error);
+      setTurnos([]);
+    } finally {
+      setCargandoTurnos(false);
+    }
+  };
+
+  cargarDisponibilidad();
+}, [canchaId, fechaSeleccionada]);
 
   // --------------------------------------------------
   // PRECIO

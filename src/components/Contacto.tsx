@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form';
 import type { SubmitHandler } from 'react-hook-form';
+import Swal from 'sweetalert2';
 
 // 📋 Definimos la estructura estricta de los campos del formulario
 interface ContactInputs {
@@ -25,8 +26,15 @@ export default function Contacto() {
 
   // 🚀 Manejador de envío tipado correctamente
   const onSubmit: SubmitHandler<ContactInputs> = (data) => {
-    // Aquí conectarás la lógica de envío o API más adelante
-    alert(`¡Gracias por tu mensaje, ${data.nombre}! Nos comunicaremos pronto.`);
+    Swal.fire({
+    icon: "success",
+    title: "¡Mensaje enviado!",
+    text: `¡Gracias por tu mensaje, ${data.nombre}! Nos comunicaremos pronto.`,
+    confirmButtonText: "Aceptar",
+    background: "#1e293b",
+    color: "#f8fafc",
+    confirmButtonColor: "#22c55e",
+  });
     reset(); // Limpia el formulario
   };
 

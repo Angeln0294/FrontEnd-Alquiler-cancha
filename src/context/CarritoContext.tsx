@@ -11,6 +11,11 @@ export interface ItemCarrito {
     nombreProducto: string;
     precio: number;
     imagen: string;
+    descripcion: string;
+    categoria: {
+      _id: string;
+      nombreCategoria: string;
+    };
   };
   cantidad: number;
 }

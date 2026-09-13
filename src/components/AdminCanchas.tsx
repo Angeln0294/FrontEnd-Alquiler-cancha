@@ -30,6 +30,9 @@ export default function AdminCanchas() {
   const [editando, setEditando] = useState<Cancha | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [cantidadCanchas, setCantidadCanchas] = useState(0);
+  const [limiteCanchas] = useState(8);
 
   const {
     register,
@@ -50,13 +53,16 @@ export default function AdminCanchas() {
   // ================================
   // CARGAR CANCHAS
   // ================================
-  const cargarCanchas = async () => {
+  const cargarCanchas = async (pagina = 1) => {
     try {
       setCargando(true);
 
-      const respuesta = await fetch(API_URL, {
-        credentials: "include",
-      });
+      const respuesta = await fetch(
+        `${API_URL}?pagina=${pagina}&limite=${limiteCanchas}`,
+        {
+          credentials: "include",
+        },
+      );
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener las canchas");
@@ -65,6 +71,8 @@ export default function AdminCanchas() {
       const resultado = await respuesta.json();
 
       setCanchas(resultado.canchas || []);
+      setCantidadCanchas(resultado.cantidadCanchas || 0);
+      setPaginaActual(resultado.pagina || pagina);
     } catch (error) {
       console.error("Error al cargar canchas:", error);
 
@@ -84,25 +92,32 @@ export default function AdminCanchas() {
   useEffect(() => {
     cargarCanchas();
   }, []);
+  const cantidadPaginas = Math.ceil(cantidadCanchas / limiteCanchas);
+
+  const cambiarPagina = (pagina: number) => {
+    if (pagina < 1 || pagina > cantidadPaginas) return;
+
+    cargarCanchas(pagina);
+  };
 
   // ================================
   // NUEVA CANCHA
   // ================================
   const abrirFormularioNueva = () => {
-  setEditando(null);
-  setVistaPrevia(null);
+    setEditando(null);
+    setVistaPrevia(null);
 
-  reset({
-    nombre: "",
-    descripcion: "",
-    precio: 0,
-    imagen: undefined,
-    tipo: "Fútbol 5",
-    disponible: true,
-  });
+    reset({
+      nombre: "",
+      descripcion: "",
+      precio: 0,
+      imagen: undefined,
+      tipo: "Fútbol 5",
+      disponible: true,
+    });
 
-  setMostrarFormulario(true);
-};
+    setMostrarFormulario(true);
+  };
   // ================================
   // EDITAR CANCHA
   // ================================
@@ -124,11 +139,11 @@ export default function AdminCanchas() {
   // CERRAR FORMULARIO
   // ================================
   const cerrarFormulario = () => {
-  setMostrarFormulario(false);
-  setEditando(null);
-  setVistaPrevia(null);
-  reset();
-};
+    setMostrarFormulario(false);
+    setEditando(null);
+    setVistaPrevia(null);
+    reset();
+  };
 
   // ================================
   // GUARDAR CANCHA
@@ -297,7 +312,7 @@ export default function AdminCanchas() {
                 Total de canchas
               </p>
 
-              <p className="text-3xl font-black mt-2">{canchas.length}</p>
+              <p className="text-3xl font-black mt-2">{cantidadCanchas}</p>
             </div>
 
             <div className="w-11 h-11 rounded-2xl bg-slate-800/80 border border-slate-700/50 flex items-center justify-center text-lg">
@@ -441,6 +456,47 @@ export default function AdminCanchas() {
           </div>
         )}
       </div>
+
+            {/* PAGINACIÓN */}
+      {cantidadPaginas > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            disabled={paginaActual === 1}
+            onClick={() => cambiarPagina(paginaActual - 1)}
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            &lt;
+          </button>
+
+          {Array.from(
+            { length: cantidadPaginas },
+            (_, index) => index + 1,
+          ).map((pagina) => (
+            <button
+              key={pagina}
+              type="button"
+              onClick={() => cambiarPagina(pagina)}
+              className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${
+                paginaActual === pagina
+                  ? "bg-green-500 border-green-500 text-slate-950"
+                  : "bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800"
+              }`}
+            >
+              {pagina}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            disabled={paginaActual === cantidadPaginas}
+            onClick={() => cambiarPagina(paginaActual + 1)}
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            &gt;
+          </button>
+        </div>
+      )}
 
       {/* MODAL */}
       {mostrarFormulario && (

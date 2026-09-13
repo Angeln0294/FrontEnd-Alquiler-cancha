@@ -113,10 +113,6 @@ export default function AdminProductos() {
                     Categoría
                   </th>
 
-                  <th className="text-left px-6 py-4 text-xs uppercase tracking-wider text-slate-500">
-                    Stock
-                  </th>
-
                   <th className="text-center px-6 py-4 text-xs uppercase tracking-wider text-slate-500">
                     Acciones
                   </th>
@@ -173,11 +169,6 @@ export default function AdminProductos() {
                         {obtenerNombreCategoria(producto.categoria)}
                       </span>
 
-                    </td>
-
-                    {/* STOCK */}
-                    <td className="px-6 py-4">
-                      -
                     </td>
 
                     {/* ACCIONES */}

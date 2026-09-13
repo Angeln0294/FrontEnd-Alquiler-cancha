@@ -201,6 +201,7 @@ export default function Inicio() {
                           ${cancha.precio.toLocaleString("es-AR")}
                         </p>
                       </div>
+                      
 
                       <button
                         type="button"
@@ -255,6 +256,16 @@ export default function Inicio() {
                 </div>
               ))
           )}
+        </div>
+        <div className="flex justify-end mt-8">
+          <button
+            type="button"
+            onClick={() => navigate("/nuestras-canchas")}
+            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer"
+            aria-label="Ir a nuestras canchas"
+          >
+            Ver más &gt;
+          </button>
         </div>
       </section>
       {/* 🛍️ 3. NUEVA SECCIÓN: PRODUCTOS DESTACADOS DE LA TIENDA (3 UNIDADES) */}
@@ -364,7 +375,7 @@ export default function Inicio() {
           <button
             type="button"
             onClick={() => navigate("/tienda")}
-            className="text-green-400 hover:text-green-300 text-2xl font-bold transition-colors cursor-pointer"
+            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer"
             aria-label="Ir a la tienda"
           >
             Ver más &gt;

@@ -40,7 +40,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     try {
       setCargando(true);
 
-      const respuesta = await fetch("http://localhost:3003/api/categorias");
+      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/categorias`);
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener las categorías");
@@ -89,7 +89,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       // EDITAR
       if (categoriaSeleccionada) {
         respuesta = await fetch(
-          `http://localhost:3003/api/categorias/${categoriaSeleccionada._id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/categorias/${categoriaSeleccionada._id}`,
           {
             method: "PUT",
             headers: {
@@ -104,7 +104,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       }
       // CREAR
       else {
-        respuesta = await fetch("http://localhost:3003/api/categorias", {
+        respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/categorias`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -173,7 +173,7 @@ if (!respuesta.ok) {
 
     try {
       const respuesta = await fetch(
-        `http://localhost:3003/api/categorias/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/categorias/${id}`,
         {
           method: "DELETE",
           credentials: "include",

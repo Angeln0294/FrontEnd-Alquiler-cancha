@@ -32,7 +32,7 @@ export default function Registro() {
   const alEnviar: SubmitHandler<FormValores> = async (datos) => {
     try {
       const respuesta = await fetch(
-        "http://localhost:3003/api/usuario/registro",
+       `${import.meta.env.VITE_BACKEND_URL}/api/usuario/registro`,
         {
           method: "POST",
           headers: {

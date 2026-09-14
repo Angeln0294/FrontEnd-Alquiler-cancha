@@ -52,7 +52,7 @@ export default function MisReservas() {
     try {
       setCargando(true);
 
-      const respuesta = await fetch("http://localhost:3003/api/reservas", {
+      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
         credentials: "include",
       });
 
@@ -140,7 +140,7 @@ export default function MisReservas() {
       setProcesando(reserva._id);
 
       const respuesta = await fetch(
-        `http://localhost:3003/api/reservas/${reserva._id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/reservas/${reserva._id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -202,7 +202,7 @@ export default function MisReservas() {
       setProcesando(reserva._id);
 
       const respuesta = await fetch(
-        "http://localhost:3003/api/pago/crear-preferencia-reserva",
+        `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia-reserva`,
         {
           method: "POST",
           headers: {

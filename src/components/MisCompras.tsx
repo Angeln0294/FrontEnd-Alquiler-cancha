@@ -42,7 +42,7 @@ export default function MisCompras() {
       setCargando(true);
 
       const respuesta = await fetch(
-        "http://localhost:3003/api/pago/mis-compras",
+        `${import.meta.env.VITE_BACKEND_URL}/api/pago/mis-compras`,
         {
           credentials: "include",
         },

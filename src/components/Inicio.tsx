@@ -72,7 +72,7 @@ export default function Inicio() {
       try {
         setCargandoCanchas(true);
 
-        const respuesta = await fetch("http://localhost:3003/api/canchas", {
+        const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, {
           credentials: "include",
         });
 

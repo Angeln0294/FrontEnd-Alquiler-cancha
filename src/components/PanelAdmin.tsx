@@ -93,15 +93,15 @@ export default function PanelAdmin() {
 
       const [respuestaUsuarios, respuestaCanchas, respuestaReservas] =
         await Promise.all([
-          fetch("http://localhost:3003/api/usuario", {
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario`, {
             credentials: "include",
           }),
 
-          fetch("http://localhost:3003/api/canchas", {
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, {
             credentials: "include",
           }),
 
-          fetch("http://localhost:3003/api/reservas", {
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
             credentials: "include",
           }),
         ]);

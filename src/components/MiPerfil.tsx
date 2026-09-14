@@ -25,7 +25,7 @@ const navigate = useNavigate();
 
     try {
       const respuesta = await fetch(
-        `http://localhost:3003/api/usuario/${usuario._id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuario._id}`,
         {
           method: "PUT",
           headers: {

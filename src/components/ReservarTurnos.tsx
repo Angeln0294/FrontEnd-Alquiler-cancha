@@ -118,19 +118,6 @@ useEffect(() => {
     return;
   }
 
-  if (usuario.rol === "admin") {
-    Swal.fire({
-      icon: "warning",
-      title: "Acceso no permitido",
-      text: "El administrador no puede reservar canchas.",
-      confirmButtonText: "Aceptar",
-      background: "#1e293b",
-      color: "#f8fafc",
-      confirmButtonColor: "#22c55e",
-    }).then(() => {
-      navigate("/canchas");
-    });
-  }
 }, [usuario, cargandoUsuario, navigate]);
 
 useEffect(() => {

@@ -40,22 +40,6 @@ export default function AdminProductos() {
     cargarProductos(pagina);
   };
 
-  // ================================
-  // PAGINACIÓN
-  // ================================
-
-  const cantidadPaginas = Math.ceil(
-    cantidadProductos / limiteProductos
-  );
-
-  const cambiarPagina = (pagina: number) => {
-    if (pagina < 1 || pagina > cantidadPaginas) {
-      return;
-    }
-
-    cargarProductos(pagina);
-  };
-
   return (
     <div className="space-y-6">
       {/* ENCABEZADO */}
@@ -259,61 +243,6 @@ export default function AdminProductos() {
           </div>
         )}
       </div>
-
-      {/* ================================
-          PAGINACIÓN
-      ================================= */}
-
-      {cantidadPaginas > 1 && (
-        <div className="flex items-center justify-center gap-2">
-
-          {/* ANTERIOR */}
-          <button
-            type="button"
-            disabled={paginaActual === 1}
-            onClick={() =>
-              cambiarPagina(paginaActual - 1)
-            }
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            &lt;
-          </button>
-
-          {/* NÚMEROS */}
-          {Array.from(
-            { length: cantidadPaginas },
-            (_, index) => index + 1
-          ).map((pagina) => (
-
-            <button
-              key={pagina}
-              type="button"
-              onClick={() => cambiarPagina(pagina)}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${
-                paginaActual === pagina
-                  ? "bg-green-500 border-green-500 text-slate-950"
-                  : "bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800"
-              }`}
-            >
-              {pagina}
-            </button>
-
-          ))}
-
-          {/* SIGUIENTE */}
-          <button
-            type="button"
-            disabled={paginaActual === cantidadPaginas}
-            onClick={() =>
-              cambiarPagina(paginaActual + 1)
-            }
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            &gt;
-          </button>
-
-        </div>
-      )}
 
       {/* INFORMACIÓN DE PRODUCTOS */}
       {cantidadProductos > 0 && (

@@ -21,7 +21,7 @@ interface FormularioCancha {
   disponible: boolean;
 }
 
-const API_URL = "http://localhost:3003/api/canchas";
+const API_URL = "VITE_BACKEND_URL/api/canchas";
 
 export default function AdminCanchas() {
   const [canchas, setCanchas] = useState<Cancha[]>([]);

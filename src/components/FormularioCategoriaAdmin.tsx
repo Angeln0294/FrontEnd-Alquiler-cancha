@@ -1,31 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { useCategorias } from "../context/CategoriaContext";
 
-export default function FormularioCategoriaAdmin() {
-  const {
-    categoriaSeleccionada,
-    guardando,
-    cerrarModal,
-    guardarCategoria,
-  } = useCategorias();
+interface FormularioCategoria {
+  nombreCategoria: string;
+}
 
-  const [nombreCategoria, setNombreCategoria] = useState("");
+export default function FormularioCategoriaAdmin() {
+  const { categoriaSeleccionada, guardando, cerrarModal, guardarCategoria } =
+    useCategorias();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormularioCategoria>({
+    mode: "onSubmit",
+    defaultValues: {
+      nombreCategoria: "",
+    },
+  });
 
   // Cargar los datos cuando estamos editando
   useEffect(() => {
     if (categoriaSeleccionada) {
-      setNombreCategoria(categoriaSeleccionada.nombreCategoria);
-    } else {
-      setNombreCategoria("");
-    }
-  }, [categoriaSeleccionada]);
+      reset({
+        nombreCategoria: categoriaSeleccionada.nombreCategoria,
+      });
+    } 
+  }, [categoriaSeleccionada, reset]);
 
-  const manejarSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
-
-    await guardarCategoria(nombreCategoria);
+  const manejarSubmit = async (datos: FormularioCategoria) => {
+     console.log("DATOS DEL FORMULARIO:", datos);
+    await guardarCategoria(datos.nombreCategoria.trim());
   };
 
   return (
@@ -33,20 +41,15 @@ export default function FormularioCategoriaAdmin() {
       className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
       onClick={cerrarModal}
     >
-
       <div
         className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-
         {/* ENCABEZADO */}
         <div className="flex items-center justify-between mb-6">
-
           <div>
             <h2 className="text-2xl font-bold text-white">
-              {categoriaSeleccionada
-                ? "Editar categoría"
-                : "Agregar categoría"}
+              {categoriaSeleccionada ? "Editar categoría" : "Agregar categoría"}
             </h2>
 
             <p className="text-slate-400 text-sm mt-1">
@@ -63,14 +66,11 @@ export default function FormularioCategoriaAdmin() {
           >
             ✕
           </button>
-
         </div>
 
         {/* FORMULARIO */}
-        <form onSubmit={manejarSubmit}>
-
+        <form onSubmit={handleSubmit(manejarSubmit)}>
           <div className="mb-6">
-
             <label
               htmlFor="nombreCategoria"
               className="block text-sm font-medium text-slate-300 mb-2"
@@ -81,26 +81,37 @@ export default function FormularioCategoriaAdmin() {
             <input
               id="nombreCategoria"
               type="text"
-              value={nombreCategoria}
-              onChange={(e) =>
-                setNombreCategoria(e.target.value)
-              }
               placeholder="Ej: Indumentaria deportiva"
-              minLength={5}
-              maxLength={100}
-              required
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition"
+              {...register("nombreCategoria", {
+                required: "El nombre de la categoría es obligatorio",
+                minLength: {
+                  value: 5,
+                  message: "El nombre debe tener al menos 5 caracteres",
+                },
+                maxLength: {
+                  value: 100,
+                  message: "El nombre no puede superar los 100 caracteres",
+                },
+              })}
+              className={`w-full bg-slate-800 border text-white rounded-xl px-4 py-3 outline-none transition ${
+                errors.nombreCategoria
+                  ? "border-rose-500 focus:border-rose-500"
+                  : "border-slate-700 focus:border-indigo-500"
+              }`}
             />
 
+            {errors.nombreCategoria && (
+              <p className="text-rose-400 text-xs mt-1.5">
+                {errors.nombreCategoria.message}
+              </p>
+            )}
             <p className="text-xs text-slate-500 mt-2">
               El nombre debe tener entre 5 y 100 caracteres.
             </p>
-
           </div>
 
           {/* BOTONES */}
           <div className="flex justify-end gap-3">
-
             <button
               type="button"
               onClick={cerrarModal}
@@ -117,16 +128,12 @@ export default function FormularioCategoriaAdmin() {
               {guardando
                 ? "Guardando..."
                 : categoriaSeleccionada
-                ? "Guardar cambios"
-                : "Agregar categoría"}
+                  ? "Guardar cambios"
+                  : "Agregar categoría"}
             </button>
-
           </div>
-
         </form>
-
       </div>
-
     </div>
   );
 }

@@ -5,6 +5,8 @@ import {
   useState,
 } from "react";
 
+import Swal from "sweetalert2";
+
 export interface ItemCarrito {
   producto: {
     _id: string;
@@ -123,11 +125,14 @@ export function CarritoProvider({
     } catch (error) {
       console.error("Error al agregar al carrito:", error);
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "No se pudo agregar el producto al carrito"
-      );
+      Swal.fire({
+  icon: "error",
+  title: "Error",
+  text:
+    error instanceof Error
+      ? error.message
+      : "No se pudo agregar el producto al carrito",
+});
     }
   };
 
@@ -164,11 +169,14 @@ export function CarritoProvider({
         error
       );
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "No se pudo actualizar la cantidad"
-      );
+      Swal.fire({
+  icon: "error",
+  title: "Error",
+  text:
+    error instanceof Error
+      ? error.message
+      : "No se pudo actualizar la cantidad",
+});
     }
   };
 
@@ -202,11 +210,14 @@ export function CarritoProvider({
   } catch (error) {
     console.error("Error al aumentar cantidad:", error);
 
-    alert(
-      error instanceof Error
-        ? error.message
-        : "No se pudo aumentar la cantidad"
-    );
+   Swal.fire({
+  icon: "error",
+  title: "Error",
+  text:
+    error instanceof Error
+      ? error.message
+      : "No se pudo aumentar la cantidad",
+});
   }
 };
 
@@ -243,11 +254,14 @@ export function CarritoProvider({
         error
       );
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "No se pudo eliminar el producto"
-      );
+      Swal.fire({
+  icon: "error",
+  title: "Error",
+  text:
+    error instanceof Error
+      ? error.message
+      : "No se pudo eliminar el producto",
+});
     }
   };
 
@@ -288,12 +302,14 @@ export function CarritoProvider({
         "Error al vaciar carrito:",
         error
       );
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "No se pudo vaciar el carrito"
-      );
+Swal.fire({
+  icon: "error",
+  title: "Error",
+  text:
+    error instanceof Error
+      ? error.message
+      : "No se pudo vaciar el carrito",
+});
     }
   };
 
@@ -320,11 +336,14 @@ export function CarritoProvider({
   } catch (error) {
     console.error("Error al iniciar el pago:", error);
 
-    alert(
-      error instanceof Error
-        ? error.message
-        : "No se pudo iniciar el pago"
-    );
+   Swal.fire({
+  icon: "error",
+  title: "Error",
+  text:
+    error instanceof Error
+      ? error.message
+      : "No se pudo iniciar el pago",
+});
   }
 };
 

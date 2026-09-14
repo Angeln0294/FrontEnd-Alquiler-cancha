@@ -9,6 +9,10 @@ export default function AdminProductos() {
     abrirCrear,
     abrirEditar,
     eliminarProducto,
+    paginaActual,
+    cantidadProductos,
+    limiteProductos,
+    cargarProductos,
   } = useProductos();
 
   const obtenerNombreCategoria = (
@@ -27,6 +31,22 @@ export default function AdminProductos() {
     }
 
     return imagen;
+  };
+
+  // ================================
+  // PAGINACIÓN
+  // ================================
+
+  const cantidadPaginas = Math.ceil(
+    cantidadProductos / limiteProductos
+  );
+
+  const cambiarPagina = (pagina: number) => {
+    if (pagina < 1 || pagina > cantidadPaginas) {
+      return;
+    }
+
+    cargarProductos(pagina);
   };
 
   return (
@@ -57,9 +77,11 @@ export default function AdminProductos() {
       <div className="bg-linear-to-b from-slate-900/90 to-[#0b0f19] border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl">
 
         {cargando ? (
+
           <div className="p-10 text-center text-slate-400">
             Cargando productos...
           </div>
+
         ) : productos.length === 0 ? (
 
           /* SIN PRODUCTOS */
@@ -216,8 +238,76 @@ export default function AdminProductos() {
 
       </div>
 
-      {/* MODAL */}
+      {/* ================================
+          PAGINACIÓN
+      ================================= */}
 
+      {cantidadPaginas > 1 && (
+        <div className="flex items-center justify-center gap-2">
+
+          {/* ANTERIOR */}
+          <button
+            type="button"
+            disabled={paginaActual === 1}
+            onClick={() =>
+              cambiarPagina(paginaActual - 1)
+            }
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            &lt;
+          </button>
+
+          {/* NÚMEROS */}
+          {Array.from(
+            { length: cantidadPaginas },
+            (_, index) => index + 1
+          ).map((pagina) => (
+
+            <button
+              key={pagina}
+              type="button"
+              onClick={() => cambiarPagina(pagina)}
+              className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${
+                paginaActual === pagina
+                  ? "bg-green-500 border-green-500 text-slate-950"
+                  : "bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800"
+              }`}
+            >
+              {pagina}
+            </button>
+
+          ))}
+
+          {/* SIGUIENTE */}
+          <button
+            type="button"
+            disabled={paginaActual === cantidadPaginas}
+            onClick={() =>
+              cambiarPagina(paginaActual + 1)
+            }
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            &gt;
+          </button>
+
+        </div>
+      )}
+
+      {/* INFORMACIÓN DE PRODUCTOS */}
+      {cantidadProductos > 0 && (
+        <p className="text-center text-xs text-slate-500">
+          Mostrando{" "}
+          {(paginaActual - 1) * limiteProductos + 1}{" "}
+          -{" "}
+          {Math.min(
+            paginaActual * limiteProductos,
+            cantidadProductos
+          )}{" "}
+          de {cantidadProductos} productos
+        </p>
+      )}
+
+      {/* MODAL */}
       {modalAbierto && <FormularioProductoAdmin />}
 
     </div>

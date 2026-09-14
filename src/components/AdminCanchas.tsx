@@ -32,7 +32,7 @@ export default function AdminCanchas() {
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const [cantidadCanchas, setCantidadCanchas] = useState(0);
-  const [limiteCanchas] = useState(8);
+  const [limiteCanchas] = useState(6);
 
   const {
     register,

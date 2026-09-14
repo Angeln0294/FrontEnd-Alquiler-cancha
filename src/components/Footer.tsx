@@ -26,13 +26,14 @@ export default function Footer(): JSX.Element {
           <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Navegación</h4>
           <ul className="flex flex-col gap-2.5 text-xs">
             <li><Link to="/" className="hover:text-green-400 transition-colors no-underline text-gray-400">Inicio</Link></li>
-            <li><a href="#canchas" className="hover:text-green-400 transition-colors">Nuestras Canchas</a></li>
-            <li><a href="#tienda" className="hover:text-green-400 transition-colors">Tienda</a></li>
+            <li><Link to="/canchas" className="hover:text-green-400 transition-colors no-underline text-gray-400">Nuestras Canchas</Link></li>
+            <li><Link to="/" className="hover:text-green-400 transition-colors no-underline text-gray-400">Tienda</Link></li>
+            <li><Link to="/quienes-somos" className="hover:text-green-400 transition-colors no-underline text-gray-400">Quiénes Somos</Link></li>
             <li><Link to="/contacto" className="hover:text-green-400 transition-colors no-underline text-gray-400">Contacto</Link></li>
           </ul>
         </div>
 
-        {/* Columna 3: Horarios y Soporte */}
+               {/* Columna 3: Horarios y Soporte */}
         <div>
           <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Atención</h4>
           <ul className="flex flex-col gap-2 text-xs">
@@ -42,14 +43,24 @@ export default function Footer(): JSX.Element {
           </ul>
         </div>
 
-        {/* Columna 4: Redes Sociales */}
+        {/* Columna 4: Redes Sociales (Enlaces seguros externos con target='_blank') */}
         <div>
           <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Síguenos</h4>
           <div className="flex gap-3 text-xs">
-            <a href="#facebook" className="bg-gray-800 hover:bg-green-500 hover:text-white px-3 py-2 rounded transition-all text-center">
+            <a 
+              href="https://facebook.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="bg-gray-800 hover:bg-green-500 hover:text-white px-3 py-2 rounded transition-all text-center no-underline text-gray-400"
+            >
               Facebook
             </a>
-            <a href="#instagram" className="bg-gray-800 hover:bg-green-500 hover:text-white px-3 py-2 rounded transition-all text-center">
+            <a 
+              href="https://instagram.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="bg-gray-800 hover:bg-green-500 hover:text-white px-3 py-2 rounded transition-all text-center no-underline text-gray-400"
+            >
               Instagram
             </a>
           </div>
@@ -57,7 +68,7 @@ export default function Footer(): JSX.Element {
 
       </div>
 
-      {/* Barra de Derechos de Autor */}
+      {/* Barra de Derechos de Autor (Año actual dinámico) */}
       <div className="border-t border-gray-800 pt-6 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
         <p>&copy; {new Date().getFullYear()} CanchasYa. Todos los derechos reservados.</p>
         <div className="flex gap-4">

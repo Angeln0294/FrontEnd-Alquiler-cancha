@@ -132,7 +132,7 @@ useEffect(() => {
       setTurnoSeleccionado(null);
 
       const respuesta = await fetch(
-        `VITE_BACKEND_URL/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
         {
           credentials: "include",
         },
@@ -196,7 +196,7 @@ useEffect(() => {
     
 
       // 1. Crear la reserva
-      const respuesta = await fetch("VITE_BACKEND_URL/api/reservas", {
+      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -223,7 +223,7 @@ useEffect(() => {
 
       // 2. Crear preferencia de Mercado Pago
       const respuestaPago = await fetch(
-        "VITE_BACKEND_URL/api/pago/crear-preferencia-reserva",
+       `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia-reserva`,
         {
           method: "POST",
           headers: {
@@ -268,7 +268,7 @@ useEffect(() => {
       setTurnoSeleccionado(null);
 
       const disponibilidad = await fetch(
-        `VITE_BACKEND_URL/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
         {
           credentials: "include",
         },

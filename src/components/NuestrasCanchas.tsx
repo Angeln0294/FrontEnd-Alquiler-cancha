@@ -17,7 +17,7 @@ export default function NuestrasCanchas() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { usuario } = useAuth();
-  const API_URL = "VITE_BACKEND_URL/api/canchas";
+  const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/canchas`;
 
   const [canchas, setCanchas] = useState<CanchaDetalle[]>([]);
   const [cargando, setCargando] = useState(true);

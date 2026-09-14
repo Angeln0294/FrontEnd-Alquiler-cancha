@@ -77,7 +77,7 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     try {
       setCargando(true);
       let url =
-        `VITE_BACKEND_URL/api/producto` +
+        `${import.meta.env.VITE_BACKEND_URL}/api/producto` +
         `?pagina=${pagina}` +
         `&limite=${limite}`;
 
@@ -107,7 +107,7 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
 
   const cargarCategorias = async () => {
     try {
-      const respuesta = await fetch("VITE_BACKEND_URL/api/categorias");
+      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/categorias`);
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener las categorías");
@@ -165,7 +165,7 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
       // EDITAR
       if (productoSeleccionado) {
         respuesta = await fetch(
-          `VITE_BACKEND_URL/api/producto/${productoSeleccionado._id}`,
+         `${import.meta.env.VITE_BACKEND_URL}/api/producto/${productoSeleccionado._id}`,
           {
             method: "PUT",
             body: formulario,
@@ -176,7 +176,7 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
 
       // CREAR
       else {
-        respuesta = await fetch("VITE_BACKEND_URL/api/producto", {
+        respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/producto`, {
           method: "POST",
           body: formulario,
           credentials: "include",
@@ -226,7 +226,7 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const respuesta = await fetch(
-        `VITE_BACKEND_URL/api/producto/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/producto/${id}`,
         {
           method: "DELETE",
           credentials: "include",

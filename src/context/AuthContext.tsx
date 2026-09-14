@@ -36,7 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const cargarUsuario = async (): Promise<Usuario | null> => {
   try {
     const respuesta = await fetch(
-      "http://localhost:3003/api/usuario/me",
+      "VITE_BACKEND_URL/api/usuario/me",
       {
         credentials: "include",
       }

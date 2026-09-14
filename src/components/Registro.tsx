@@ -236,8 +236,6 @@ export default function Registro() {
           </button>
         </form>
 
-       {/* 🟢 REEMPLAZÁ LOS BOTONES SOCIALES POR ESTOS CON LOS ICONOS ORIGINALES VECTORIALES: */}
-
 {/* Divisor estético */}
 <div className="relative flex py-2 items-center mt-6">
   <div className="grow border-t border-slate-800/80"></div>

@@ -1,50 +1,120 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// 🚀 UNIÓN DE IMPORTS: Navbar, Footer reales de 'dev' + tu nuevo Contacto
-import Navbar from "./components/Navbar"; 
-import Footer from "./components/Footer"; 
+
+import Navbar from "./components/Navbar";
+import Inicio from "./components/Inicio";
+import Footer from "./components/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
+import Contacto from "./components/Contacto";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
-import Contacto from "./components/Contacto"; 
+import Error404 from "./components/Error404";
+import { ProductoProvider } from "./context/ProductoContext";
+import MiPerfil from "./components/MiPerfil";
+import Tienda from "./components/Tienda";
+import NuestrasCanchas from "./components/NuestrasCanchas";
+import ReservarTurnos from "./components/ReservarTurnos";
+import MisReservas from "./components/MisReservas";
+import ScrollToTop from "./components/ScrollToTop";
+import Carrito from "./components/Carrito";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import ResultadoExitosoMp from "./components/ResultadoExitosoMp";
+import CheckoutResultado from "./components/CheckoutResultado";
+import QuienesSomos from "./components/QuienesSomos";
+import MisCompras from "./components/MisCompras";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      {/* 1. PADRE: Mantiene 'flex flex-col' para empujar el footer abajo */}
-      <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
-        
-        {/* 🟢 NAVBAR REAL interactivo para todo el sitio */}
-        <Navbar />
+    <AuthProvider>
+      <ProductoProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
+            {/* NAVBAR */}
+            <Navbar />
 
-        {/* 2. HIJO: Con 'grow' se estira ocupando el espacio del medio */}
-        <div className="grow">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <main className="flex flex-col items-center justify-center text-white py-20 px-4">
-                  <h1 className="text-3xl md:text-5xl font-black text-center tracking-tight uppercase">
-                    RESERVA TU CANCHA{" "}
-                    <span className="text-green-400 block md:inline">
-                      FÁCILMENTE
-                    </span>
-                  </h1>
-                </main>
-              }
-            />
+            {/* CONTENIDO PRINCIPAL */}
+            <div className="grow">
+              <Routes>
+                {/* INICIO */}
+                <Route path="/" element={<Inicio />} />
 
-            <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Registro />} />
-            <Route path="/verificar-email" element={<VerificarEmail />} />
-            <Route path="/admin" element={<PanelAdmin />} />
-            <Route path="/contacto" element={<Contacto />} />
-          </Routes>
-        </div>
+                {/* AUTENTICACIÓN */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/registro" element={<Registro />} />
+                <Route path="/verificar-email" element={<VerificarEmail />} />
+                <Route path="/tienda" element={<Tienda />} />
+                <Route path="/carrito" element={<Carrito />} />
+                <Route
+                  path="/checkout/resultado"
+                  element={<ResultadoExitosoMp />}
+                />
 
-        
-        <Footer />
-      </div>
-    </BrowserRouter>
+                <Route
+                  path="/checkout/resultado-cancha"
+                  element={<CheckoutResultado />}
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute adminOnly>
+                      <PanelAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* PERFIL */}
+                <Route
+                  path="/perfil"
+                  element={
+                    <ProtectedRoute>
+                      <MiPerfil />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* MIS RESERVAS */}
+                <Route
+                  path="/mis-reservas"
+                  element={
+                    <ProtectedRoute>
+                      <MisReservas />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/mis-compras"
+                  element={
+                    <ProtectedRoute>
+                      <MisCompras />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* CONTACTO */}
+                <Route path="/contacto" element={<Contacto />} />
+
+                {/* CANCHAS */}
+                <Route path="/reservas" element={<NuestrasCanchas />} />
+
+                <Route path="/canchas" element={<NuestrasCanchas />} />
+
+                <Route path="/nuestras-canchas" element={<NuestrasCanchas />} />
+
+                {/* RESERVAR TURNO */}
+                <Route path="/reservar-turnos" element={<ReservarTurnos />} />
+                <Route path="/quienes-somos" element={<QuienesSomos />} />
+                {/* RUTA 404 - SIEMPRE AL FINAL */}
+                <Route path="*" element={<Error404 />} />
+              </Routes>
+            </div>
+
+            {/* FOOTER */}
+            <Footer />
+          </div>
+        </BrowserRouter>
+      </ProductoProvider>
+    </AuthProvider>
   );
 }

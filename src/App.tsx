@@ -22,6 +22,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ResultadoExitosoMp from "./components/ResultadoExitosoMp";
 import CheckoutResultado from "./components/CheckoutResultado";
 import QuienesSomos from "./components/QuienesSomos";
+import MisCompras from "./components/MisCompras";
 
 export default function App() {
   return (
@@ -79,6 +80,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <MisReservas />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/mis-compras"
+                  element={
+                    <ProtectedRoute>
+                      <MisCompras />
                     </ProtectedRoute>
                   }
                 />

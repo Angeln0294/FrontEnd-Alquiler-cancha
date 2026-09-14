@@ -66,7 +66,7 @@ export function CarritoProvider({
       setCargando(true);
 
       const respuesta = await fetch(
-        "VITE_BACKEND_URL/api/carrito",
+        `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
         {
           credentials: "include",
         }
@@ -97,7 +97,7 @@ export function CarritoProvider({
   ) => {
     try {
       const respuesta = await fetch(
-        "VITE_BACKEND_URL/api/carrito",
+        `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
         {
           method: "POST",
           headers: {
@@ -145,7 +145,7 @@ export function CarritoProvider({
   ) => {
     try {
       const respuesta = await fetch(
-        `VITE_BACKEND_URL/api/carrito/restar/${productoId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/carrito/restar/${productoId}`,
         {
           method: "PATCH",
           credentials: "include",
@@ -183,7 +183,7 @@ export function CarritoProvider({
   const sumarCantidad = async (productoId: string) => {
   try {
     const respuesta = await fetch(
-      "VITE_BACKEND_URL/api/carrito",
+      `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
       {
         method: "POST",
         headers: {
@@ -230,7 +230,7 @@ export function CarritoProvider({
   ) => {
     try {
       const respuesta = await fetch(
-        `VITE_BACKEND_URL/api/carrito/producto/${productoId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/carrito/producto/${productoId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -272,7 +272,7 @@ export function CarritoProvider({
   const vaciarCarrito = async () => {
     try {
       const respuesta = await fetch(
-        "VITE_BACKEND_URL/api/carrito",
+       `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
         {
           method: "DELETE",
           credentials: "include",
@@ -316,7 +316,7 @@ Swal.fire({
   const pagarCarrito = async () => {
   try {
     const respuesta = await fetch(
-      "VITE_BACKEND_URL/api/pago/crear-preferencia",
+      `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia`,
       {
         method: "POST",
         credentials: "include",

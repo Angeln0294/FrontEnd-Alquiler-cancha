@@ -80,7 +80,7 @@ export default function AdminUsuarios() {
     try {
       setCargando(true);
 
-      const respuesta = await fetch("VITE_BACKEND_URL/api/usuario", {
+      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario`, {
         credentials: "include",
       });
 
@@ -149,7 +149,7 @@ export default function AdminUsuarios() {
 
     try {
       const respuesta = await fetch(
-        `VITE_BACKEND_URL/api/usuario/${usuarioEditando._id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuarioEditando._id}`,
         {
           method: "PUT",
           headers: {
@@ -223,7 +223,7 @@ export default function AdminUsuarios() {
 
     try {
       const respuesta = await fetch(
-        `VITE_BACKEND_URL/api/usuario/${usuario._id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuario._id}`,
         {
           method: "PUT",
           headers: {
@@ -293,7 +293,7 @@ export default function AdminUsuarios() {
 
     try {
       const respuesta = await fetch(
-        `VITE_BACKEND_URL/api/usuario/${usuario._id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuario._id}`,
         {
           method: "PUT",
           headers: {
@@ -359,7 +359,7 @@ export default function AdminUsuarios() {
 
     try {
       const respuesta = await fetch(
-        `VITE_BACKEND_URL/api/usuario/${usuario._id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/${usuario._id}`,
         {
           method: "DELETE",
           credentials: "include",

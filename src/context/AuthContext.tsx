@@ -36,7 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const cargarUsuario = async (): Promise<Usuario | null> => {
   try {
     const respuesta = await fetch(
-      "VITE_BACKEND_URL/api/usuario/me",
+      `${import.meta.env.VITE_BACKEND_URL}/api/usuario/me`,
       {
         credentials: "include",
       }
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 };
   const cerrarSesion = async () => {
     try {
-      await fetch("VITE_BACKEND_URL/api/usuario/logout", {
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/logout`, {
         method: "POST",
         credentials: "include",
       });

@@ -27,7 +27,7 @@ interface Reserva {
   createdAt?: string;
 }
 
-const API_URL = "VITE_BACKEND_URL/api/reservas";
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/reservas`;
 
 const swalTema = Swal.mixin({
   background: "#0b132b",

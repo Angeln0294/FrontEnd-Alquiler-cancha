@@ -1,9 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import Swal from "sweetalert2";
 
 export interface Categoria {
   _id: string;
@@ -39,11 +35,11 @@ interface ProductoContextType {
   cantidadProductos: number;
   paginaActual: number;
   limiteProductos: number;
-  
+
   cargarProductos: (
     pagina?: number,
     termino?: string,
-    limite?: number
+    limite?: number,
   ) => Promise<void>;
 
   abrirCrear: () => void;
@@ -55,14 +51,10 @@ interface ProductoContextType {
 }
 
 const ProductoContext = createContext<ProductoContextType | undefined>(
-  undefined
+  undefined,
 );
 
-export function ProductoProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ProductoProvider({ children }: { children: React.ReactNode }) {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
 
@@ -75,16 +67,16 @@ export function ProductoProvider({
 
   const [cantidadProductos, setCantidadProductos] = useState(0);
   const [paginaActual, setPaginaActual] = useState(1);
-  const [limiteProductos] = useState(6);
+  const [limiteProductos] = useState(8);
 
   const cargarProductos = async (
     pagina = 1,
     termino = "",
-    limite = limiteProductos,) => {
-    
+    limite = limiteProductos,
+  ) => {
     try {
       setCargando(true);
-     let url =
+      let url =
         `http://localhost:3003/api/producto` +
         `?pagina=${pagina}` +
         `&limite=${limite}`;
@@ -104,7 +96,6 @@ export function ProductoProvider({
       setProductos(datos.productos);
       setCantidadProductos(datos.cantidadProductos);
       setPaginaActual(pagina);
-
     } catch (error) {
       console.error("Error al cargar productos:", error);
       setProductos([]);
@@ -116,9 +107,7 @@ export function ProductoProvider({
 
   const cargarCategorias = async () => {
     try {
-      const respuesta = await fetch(
-        "http://localhost:3003/api/categorias"
-      );
+      const respuesta = await fetch("http://localhost:3003/api/categorias");
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener las categorías");
@@ -152,43 +141,26 @@ export function ProductoProvider({
     setProductoSeleccionado(null);
   };
 
-  const guardarProducto = async (
-    datosProducto: DatosProducto
-  ) => {
+  const guardarProducto = async (datosProducto: DatosProducto) => {
     try {
-    setGuardando(true);
+      setGuardando(true);
 
-    const formulario = new FormData();
+      const formulario = new FormData();
 
-    formulario.append(
-      "nombreProducto",
-      datosProducto.nombreProducto
-    );
+      formulario.append("nombreProducto", datosProducto.nombreProducto);
 
-    formulario.append(
-      "precio",
-      String(datosProducto.precio)
-    );
+      formulario.append("precio", String(datosProducto.precio));
 
-    formulario.append(
-      "categoria",
-      datosProducto.categoria
-    );
+      formulario.append("categoria", datosProducto.categoria);
 
-    formulario.append(
-      "descripcion",
-      datosProducto.descripcion
-    );
+      formulario.append("descripcion", datosProducto.descripcion);
 
-    // Solo agregamos imagen si seleccionó un archivo
-    if (datosProducto.imagen) {
-      formulario.append(
-        "imagen",
-        datosProducto.imagen
-      );
-    }
+      // Solo agregamos imagen si seleccionó un archivo
+      if (datosProducto.imagen) {
+        formulario.append("imagen", datosProducto.imagen);
+      }
 
-    let respuesta;
+      let respuesta;
 
       // EDITAR
       if (productoSeleccionado) {
@@ -198,29 +170,24 @@ export function ProductoProvider({
             method: "PUT",
             body: formulario,
             credentials: "include",
-          }
+          },
         );
       }
 
       // CREAR
       else {
-        respuesta = await fetch(
-          "http://localhost:3003/api/producto",
-          {
-            method: "POST",
-            body: formulario,
-            credentials: "include",
-          }
-        );
+        respuesta = await fetch("http://localhost:3003/api/producto", {
+          method: "POST",
+          body: formulario,
+          credentials: "include",
+        });
       }
 
       if (!respuesta.ok) {
         const error = await respuesta.json().catch(() => null);
 
         throw new Error(
-          error?.mensaje ||
-            error?.message ||
-            "No se pudo guardar el producto"
+          error?.mensaje || error?.message || "No se pudo guardar el producto",
         );
       }
 
@@ -232,22 +199,30 @@ export function ProductoProvider({
     } catch (error) {
       console.error("Error al guardar producto:", error);
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Ocurrió un error al guardar el producto"
-      );
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error al guardar el producto",
+      });
     } finally {
       setGuardando(false);
     }
   };
 
   const eliminarProducto = async (id: string) => {
-    const confirmar = window.confirm(
-      "¿Estás seguro de que querés eliminar este producto?"
-    );
+    const resultado = await Swal.fire({
+      icon: "warning",
+      title: "¿Eliminar producto?",
+      text: "¿Estás seguro de que querés eliminar este producto?",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
 
-    if (!confirmar) return;
+    if (!resultado.isConfirmed) return;
 
     try {
       const respuesta = await fetch(
@@ -255,7 +230,7 @@ export function ProductoProvider({
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       if (!respuesta.ok) {
@@ -266,7 +241,11 @@ export function ProductoProvider({
     } catch (error) {
       console.error("Error al eliminar producto:", error);
 
-      alert("No se pudo eliminar el producto");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo eliminar el producto",
+      });
     }
   };
 
@@ -304,9 +283,7 @@ export function useProductos() {
   const context = useContext(ProductoContext);
 
   if (!context) {
-    throw new Error(
-      "useProductos debe utilizarse dentro de ProductoProvider"
-    );
+    throw new Error("useProductos debe utilizarse dentro de ProductoProvider");
   }
 
   return context;

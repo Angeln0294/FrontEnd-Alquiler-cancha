@@ -1,9 +1,6 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+
+import Swal from "sweetalert2";
 
 export interface Categoria {
   _id: string;
@@ -26,14 +23,10 @@ interface CategoriaContextType {
 }
 
 const CategoriaContext = createContext<CategoriaContextType | undefined>(
-  undefined
+  undefined,
 );
 
-export function CategoriaProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] =
     useState<Categoria | null>(null);
@@ -47,9 +40,7 @@ export function CategoriaProvider({
     try {
       setCargando(true);
 
-      const respuesta = await fetch(
-        "http://localhost:3003/api/categorias"
-      );
+      const respuesta = await fetch("http://localhost:3003/api/categorias");
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener las categorías");
@@ -107,32 +98,27 @@ export function CategoriaProvider({
             body: JSON.stringify({
               nombreCategoria,
             }),
-          }
+          },
         );
       }
       // CREAR
       else {
-        respuesta = await fetch(
-          "http://localhost:3003/api/categorias",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              nombreCategoria,
-            }),
-          }
-        );
+        respuesta = await fetch("http://localhost:3003/api/categorias", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nombreCategoria,
+          }),
+        });
       }
 
       if (!respuesta.ok) {
         const error = await respuesta.json().catch(() => null);
 
         throw new Error(
-          error?.message ||
-            error?.mensaje ||
-            "No se pudo guardar la categoría"
+          error?.message || error?.mensaje || "No se pudo guardar la categoría",
         );
       }
 
@@ -144,11 +130,18 @@ export function CategoriaProvider({
     } catch (error) {
       console.error("Error al guardar categoría:", error);
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Ocurrió un error al guardar la categoría"
-      );
+      await Swal.fire({
+        icon: "error",
+        title: "Error al guardar",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error al guardar la categoría",
+        confirmButtonText: "Aceptar",
+        background: "#1e293b",
+        color: "#f8fafc",
+        confirmButtonColor: "#22c55e",
+      });
     } finally {
       setGuardando(false);
     }
@@ -156,18 +149,28 @@ export function CategoriaProvider({
 
   // Eliminar categoría
   const eliminarCategoria = async (id: string) => {
-    const confirmar = window.confirm(
-      "¿Estás seguro de que querés eliminar esta categoría?"
-    );
+    const confirmar = await Swal.fire({
+      icon: "warning",
+      title: "¿Eliminar categoría?",
+      text: "Esta acción no se puede deshacer.",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true,
+      background: "#1e293b",
+      color: "#f8fafc",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+    });
 
-    if (!confirmar) return;
+    if (!confirmar.isConfirmed) return;
 
     try {
       const respuesta = await fetch(
         `http://localhost:3003/api/categorias/${id}`,
         {
           method: "DELETE",
-        }
+        },
       );
 
       if (!respuesta.ok) {
@@ -176,7 +179,7 @@ export function CategoriaProvider({
         throw new Error(
           error?.message ||
             error?.mensaje ||
-            "No se pudo eliminar la categoría"
+            "No se pudo eliminar la categoría",
         );
       }
 
@@ -184,11 +187,18 @@ export function CategoriaProvider({
     } catch (error) {
       console.error("Error al eliminar categoría:", error);
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "No se pudo eliminar la categoría"
-      );
+      await Swal.fire({
+        icon: "error",
+        title: "Error al eliminar",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo eliminar la categoría",
+        confirmButtonText: "Aceptar",
+        background: "#1e293b",
+        color: "#f8fafc",
+        confirmButtonColor: "#22c55e",
+      });
     }
   };
 
@@ -218,7 +228,7 @@ export function useCategorias() {
 
   if (!context) {
     throw new Error(
-      "useCategorias debe utilizarse dentro de CategoriaProvider"
+      "useCategorias debe utilizarse dentro de CategoriaProvider",
     );
   }
 

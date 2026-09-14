@@ -195,6 +195,12 @@ export default function Navbar(): React.JSX.Element {
                   >
                     👤 Mi Perfil
                   </Link>
+                  <Link
+                    to="/mis-compras"
+                    className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                   🛍️ Mis compras
+                  </Link>
 
                   {usuario?.rol !== "admin" && (
                     <Link

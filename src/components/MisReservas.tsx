@@ -33,7 +33,17 @@ export default function MisReservas() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
   const [procesando, setProcesando] = useState<string | null>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const reservasPorPagina = 5;
+  const indiceUltimaReserva = paginaActual * reservasPorPagina;
+  const indicePrimeraReserva = indiceUltimaReserva - reservasPorPagina;
 
+  const reservasPagina = reservas.slice(
+    indicePrimeraReserva,
+    indiceUltimaReserva,
+  );
+
+  const cantidadPaginas = Math.ceil(reservas.length / reservasPorPagina);
   // ==============================
   // CARGAR RESERVAS
   // ==============================
@@ -380,7 +390,7 @@ export default function MisReservas() {
 
                 {/* CUERPO */}
                 <tbody className="divide-y divide-slate-800">
-                  {reservas.map((reserva) => (
+                  {reservasPagina.map((reserva) => (
                     <tr
                       key={reserva._id}
                       className="hover:bg-slate-800/40 transition-colors"
@@ -473,6 +483,31 @@ export default function MisReservas() {
                   ))}
                 </tbody>
               </table>
+              {cantidadPaginas > 1 && (
+                <div className="flex items-center justify-center gap-2 p-5 border-t border-slate-800">
+                  <button
+                    type="button"
+                    disabled={paginaActual === 1}
+                    onClick={() => setPaginaActual((pagina) => pagina - 1)}
+                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition"
+                  >
+                    ← Anterior
+                  </button>
+
+                  <span className="px-4 py-2 text-xs font-bold text-slate-400">
+                    Página {paginaActual} de {cantidadPaginas}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={paginaActual === cantidadPaginas}
+                    onClick={() => setPaginaActual((pagina) => pagina + 1)}
+                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition"
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

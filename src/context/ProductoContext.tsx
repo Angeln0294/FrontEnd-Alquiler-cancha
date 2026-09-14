@@ -75,7 +75,7 @@ export function ProductoProvider({
 
   const [cantidadProductos, setCantidadProductos] = useState(0);
   const [paginaActual, setPaginaActual] = useState(1);
-  const [limiteProductos] = useState(8);
+  const [limiteProductos] = useState(6);
 
   const cargarProductos = async (
     pagina = 1,

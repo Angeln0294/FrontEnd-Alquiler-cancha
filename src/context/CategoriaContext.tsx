@@ -95,6 +95,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
             headers: {
               "Content-Type": "application/json",
             },
+            credentials: "include",
             body: JSON.stringify({
               nombreCategoria,
             }),
@@ -108,19 +109,24 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({
             nombreCategoria,
           }),
         });
       }
+if (!respuesta.ok) {
+  const error = await respuesta.json().catch(() => null);
 
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => null);
+  console.log("ERROR DEL BACKEND:", error);
 
-        throw new Error(
-          error?.message || error?.mensaje || "No se pudo guardar la categoría",
-        );
-      }
+  throw new Error(
+    error?.message ||
+      error?.mensaje ||
+      error?.errors?.[0]?.msg ||
+      "No se pudo guardar la categoría",
+  );
+}
 
       // Volvemos a cargar las categorías
       await cargarCategorias();
@@ -170,6 +176,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
         `http://localhost:3003/api/categorias/${id}`,
         {
           method: "DELETE",
+          credentials: "include",
         },
       );
 

@@ -21,20 +21,18 @@ export default function FormularioCategoriaAdmin() {
       nombreCategoria: "",
     },
   });
+
   // Cargar los datos cuando estamos editando
   useEffect(() => {
     if (categoriaSeleccionada) {
       reset({
         nombreCategoria: categoriaSeleccionada.nombreCategoria,
       });
-    } else {
-      reset({
-        nombreCategoria: "",
-      });
-    }
+    } 
   }, [categoriaSeleccionada, reset]);
 
   const manejarSubmit = async (datos: FormularioCategoria) => {
+     console.log("DATOS DEL FORMULARIO:", datos);
     await guardarCategoria(datos.nombreCategoria.trim());
   };
 

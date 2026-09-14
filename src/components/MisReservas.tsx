@@ -202,7 +202,7 @@ export default function MisReservas() {
       setProcesando(reserva._id);
 
       const respuesta = await fetch(
-        "http://localhost:3003/api/pago/crear-preferencia-reserva",
+        "VITE_BACKEND_URL/api/pago/crear-preferencia-reserva",
         {
           method: "POST",
           headers: {

@@ -62,7 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 };
   const cerrarSesion = async () => {
     try {
-      await fetch("http://localhost:3003/api/usuario/logout", {
+      await fetch("VITE_BACKEND_URL/api/usuario/logout", {
         method: "POST",
         credentials: "include",
       });

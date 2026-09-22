@@ -1,16 +1,16 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Navbar from "./components/Navbar";
+import Navbar from "./pages/Navbar";
 import Inicio from "./components/Inicio";
-import Footer from "./components/Footer";
+import Footer from "./pages/Footer";
 import Login from "./components/Login";
 import Registro from "./components/Registro";
-import Contacto from "./components/Contacto";
+import Contacto from "./pages/Contacto";
 import VerificarEmail from "./components/VerificarEmail";
 import PanelAdmin from "./components/PanelAdmin";
-import Error404 from "./components/Error404";
+import Error404 from "./pages/Error404";
 import { ProductoProvider } from "./context/ProductoContext";
-import MiPerfil from "./components/MiPerfil";
+import MiPerfil from "./pages/MiPerfil";
 import Tienda from "./components/Tienda";
 import NuestrasCanchas from "./components/NuestrasCanchas";
 import ReservarTurnos from "./components/ReservarTurnos";
@@ -19,9 +19,9 @@ import ScrollToTop from "./components/ScrollToTop";
 import Carrito from "./components/Carrito";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import ResultadoExitosoMp from "./components/ResultadoExitosoMp";
-import CheckoutResultado from "./components/CheckoutResultado";
-import QuienesSomos from "./components/QuienesSomos";
+import ResultadoExitosoMp from "./pages/ResultadoExitosoMp";
+import CheckoutResultado from "./pages/CheckoutResultado";
+import QuienesSomos from "./pages/QuienesSomos";
 import MisCompras from "./components/MisCompras";
 
 export default function App() {

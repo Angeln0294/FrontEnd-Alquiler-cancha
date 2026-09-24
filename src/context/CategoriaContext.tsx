@@ -13,6 +13,17 @@ interface CategoriaContextType {
   modalAbierto: boolean;
   cargando: boolean;
   guardando: boolean;
+  
+   paginacion: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  obtenerCategorias: (page?: number) => Promise<void>;
+
 
   cargarCategorias: () => Promise<void>;
   abrirCrear: () => void;
@@ -34,13 +45,23 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
-
+  const [paginacion, setPaginacion] = useState({
+    totalItems: 0,
+    totalPages: 1,
+    currentPage: 1,
+    pageSize: 6,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
   // Obtener todas las categorías
-  const cargarCategorias = async () => {
+  const cargarCategorias = async (page = 1) => {
     try {
       setCargando(true);
 
-      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/categorias`);
+      // Agregamos el Query Parameter (?page=) a la URL de la petición
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/categorias?page=${page}`,
+      );
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener las categorías");
@@ -48,7 +69,10 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
       const datos = await respuesta.json();
 
-      setCategorias(datos);
+      // CORRECCIÓN CLAVE:
+      // Guardamos el array de categorías por un lado y los metadatos por el otro
+      setCategorias(datos.categorias);
+      setPaginacion(datos.paginacion);
     } catch (error) {
       console.error("Error al cargar categorías:", error);
     } finally {
@@ -58,7 +82,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
   // Cargar categorías cuando se monta el Provider
   useEffect(() => {
-    cargarCategorias();
+    cargarCategorias(1); // Arranca explícitamente en la página 1
   }, []);
 
   // Abrir modal para crear
@@ -104,29 +128,32 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       }
       // CREAR
       else {
-        respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/categorias`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        respuesta = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/categorias`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              nombreCategoria,
+            }),
           },
-          credentials: "include",
-          body: JSON.stringify({
-            nombreCategoria,
-          }),
-        });
+        );
       }
-if (!respuesta.ok) {
-  const error = await respuesta.json().catch(() => null);
+      if (!respuesta.ok) {
+        const error = await respuesta.json().catch(() => null);
 
-  console.log("ERROR DEL BACKEND:", error);
+        console.log("ERROR DEL BACKEND:", error);
 
-  throw new Error(
-    error?.message ||
-      error?.mensaje ||
-      error?.errors?.[0]?.msg ||
-      "No se pudo guardar la categoría",
-  );
-}
+        throw new Error(
+          error?.message ||
+            error?.mensaje ||
+            error?.errors?.[0]?.msg ||
+            "No se pudo guardar la categoría",
+        );
+      }
 
       // Volvemos a cargar las categorías
       await cargarCategorias();
@@ -223,6 +250,8 @@ if (!respuesta.ok) {
         cerrarModal,
         guardarCategoria,
         eliminarCategoria,
+        paginacion,
+      obtenerCategorias: cargarCategorias
       }}
     >
       {children}

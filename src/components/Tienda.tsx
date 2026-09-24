@@ -152,11 +152,12 @@ export default function Tienda() {
             >
               <option value="">Todas las categorías</option>
 
-              {categorias.map((categoria) => (
-                <option key={categoria._id} value={categoria._id}>
-                  {categoria.nombreCategoria}
-                </option>
-              ))}
+              {Array.isArray(categorias) &&
+                categorias.map((categoria) => (
+                  <option key={categoria._id} value={categoria._id}>
+                    {categoria.nombreCategoria}
+                  </option>
+                ))}
             </select>
           </div>
         </div>

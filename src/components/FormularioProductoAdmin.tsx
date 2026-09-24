@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  useForm,
-  type FieldErrors,
-} from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import Swal from "sweetalert2";
 import { useProductos } from "../context/ProductoContext";
+import { useCategorias } from "../context/CategoriaContext";
 
 interface FormularioProducto {
   nombreProducto: string;
@@ -15,17 +13,12 @@ interface FormularioProducto {
 }
 
 export default function FormularioProductoAdmin() {
-  const {
-    productoSeleccionado,
-    categorias,
-    guardando,
-    cerrarModal,
-    guardarProducto,
-  } = useProductos();
+  const { productoSeleccionado, guardando, cerrarModal, guardarProducto } =
+    useProductos();
 
   const [imagen, setImagen] = useState<File | null>(null);
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
-
+  const { categorias } = useCategorias();
   const {
     register,
     handleSubmit,
@@ -81,9 +74,7 @@ export default function FormularioProductoAdmin() {
   // ================================
   // IMAGEN
   // ================================
-  const manejarImagen = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const manejarImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
     const archivo = e.target.files?.[0];
 
     if (!archivo) {
@@ -129,18 +120,14 @@ export default function FormularioProductoAdmin() {
   // ================================
   // ERRORES
   // ================================
-  const manejarErrores = (
-    errores: FieldErrors<FormularioProducto>,
-  ) => {
+  const manejarErrores = (errores: FieldErrors<FormularioProducto>) => {
     console.log("ERRORES DEL FORMULARIO:", errores);
   };
 
   // ================================
   // GUARDAR
   // ================================
-  const manejarSubmit = async (
-    datos: FormularioProducto,
-  ) => {
+  const manejarSubmit = async (datos: FormularioProducto) => {
     console.log("DATOS DEL FORMULARIO:", datos);
 
     if (!productoSeleccionado && !imagen) {
@@ -160,10 +147,7 @@ export default function FormularioProductoAdmin() {
       descripcion: datos.descripcion.trim(),
     };
 
-    console.log(
-      "DATOS QUE SE ENVIAN AL CONTEXT:",
-      datosProducto,
-    );
+    console.log("DATOS QUE SE ENVIAN AL CONTEXT:", datosProducto);
 
     try {
       await guardarProducto(datosProducto);
@@ -185,7 +169,7 @@ export default function FormularioProductoAdmin() {
 
       Swal.fire({
         icon: "error",
-        title: "Error",
+        title: "Producto duplicado",
         text:
           error instanceof Error
             ? error.message
@@ -199,20 +183,15 @@ export default function FormularioProductoAdmin() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0b0f19] border border-slate-800 rounded-3xl shadow-2xl">
-
         {/* ================================
             HEADER
         ================================= */}
 
         <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-
           <div>
             <h2 className="text-xl font-bold text-slate-100">
-              {productoSeleccionado
-                ? "Editar producto"
-                : "Nuevo producto"}
+              {productoSeleccionado ? "Editar producto" : "Nuevo producto"}
             </h2>
 
             <p className="text-xs text-slate-400 mt-1">
@@ -228,7 +207,6 @@ export default function FormularioProductoAdmin() {
           >
             ✕
           </button>
-
         </div>
 
         {/* ================================
@@ -236,13 +214,9 @@ export default function FormularioProductoAdmin() {
         ================================= */}
 
         <form
-          onSubmit={handleSubmit(
-            manejarSubmit,
-            manejarErrores,
-          )}
+          onSubmit={handleSubmit(manejarSubmit, manejarErrores)}
           className="p-6 space-y-5"
         >
-
           {/* ================================
               NOMBRE
           ================================= */}
@@ -259,13 +233,11 @@ export default function FormularioProductoAdmin() {
                 required: "El nombre es obligatorio",
                 minLength: {
                   value: 2,
-                  message:
-                    "El nombre debe tener al menos 2 caracteres",
+                  message: "El nombre debe tener al menos 2 caracteres",
                 },
                 maxLength: {
                   value: 50,
-                  message:
-                    "El nombre no puede superar los 50 caracteres",
+                  message: "El nombre no puede superar los 50 caracteres",
                 },
               })}
               className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition ${
@@ -287,7 +259,6 @@ export default function FormularioProductoAdmin() {
           ================================= */}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
             {/* PRECIO */}
 
             <div>
@@ -303,8 +274,7 @@ export default function FormularioProductoAdmin() {
                 {...register("precio", {
                   required: "El precio es obligatorio",
                   validate: (valor) =>
-                    Number(valor) >= 0 ||
-                    "El precio no puede ser negativo",
+                    Number(valor) >= 0 || "El precio no puede ser negativo",
                 })}
                 className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition ${
                   errors.precio
@@ -337,16 +307,11 @@ export default function FormularioProductoAdmin() {
                     : "border-slate-800 focus:border-green-500"
                 }`}
               >
-                <option value="">
-                  Seleccionar categoría
-                </option>
+                <option value="">Seleccionar categoría</option>
 
-                {categorias.map((cat) => (
-                  <option
-                    key={cat._id}
-                    value={cat._id}
-                  >
-                    {cat.nombreCategoria}
+                {categorias?.map((categoria) => (
+                  <option key={categoria._id} value={categoria._id}>
+                    {categoria.nombreCategoria}
                   </option>
                 ))}
               </select>
@@ -357,7 +322,6 @@ export default function FormularioProductoAdmin() {
                 </p>
               )}
             </div>
-
           </div>
 
           {/* ================================
@@ -394,21 +358,15 @@ export default function FormularioProductoAdmin() {
 
             {vistaPrevia && (
               <div className="mt-4">
-
-                <p className="text-xs text-slate-400 mb-2">
-                  Vista previa
-                </p>
+                <p className="text-xs text-slate-400 mb-2">Vista previa</p>
 
                 <div className="w-48 h-32 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
-
                   <img
                     src={vistaPrevia}
                     alt="Vista previa del producto"
                     className="w-full h-full object-cover"
                   />
-
                 </div>
-
               </div>
             )}
           </div>
@@ -426,17 +384,14 @@ export default function FormularioProductoAdmin() {
               rows={4}
               placeholder="Descripción del producto..."
               {...register("descripcion", {
-                required:
-                  "La descripción es obligatoria",
+                required: "La descripción es obligatoria",
                 minLength: {
                   value: 5,
-                  message:
-                    "La descripción debe tener al menos 5 caracteres",
+                  message: "La descripción debe tener al menos 5 caracteres",
                 },
                 maxLength: {
                   value: 500,
-                  message:
-                    "La descripción no puede superar los 500 caracteres",
+                  message: "La descripción no puede superar los 500 caracteres",
                 },
               })}
               className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition resize-none ${
@@ -458,7 +413,6 @@ export default function FormularioProductoAdmin() {
           ================================= */}
 
           <div className="flex flex-col-reverse sm:flex-row gap-3 pt-3">
-
             <button
               type="button"
               onClick={cerrarModal}
@@ -479,9 +433,7 @@ export default function FormularioProductoAdmin() {
                   ? "Guardar cambios"
                   : "Crear producto"}
             </button>
-
           </div>
-
         </form>
       </div>
     </div>

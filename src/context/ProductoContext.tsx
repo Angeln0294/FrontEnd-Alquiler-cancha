@@ -183,13 +183,29 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => null);
+if (!respuesta.ok) {
+    const error = await respuesta.json().catch(() => null);
 
-        throw new Error(
-          error?.mensaje || error?.message || "No se pudo guardar el producto",
-        );
-      }
+    console.log("STATUS:", respuesta.status);
+    console.log("ERROR DEL BACKEND:", error);
+
+    let mensaje = `Error ${respuesta.status}`;
+
+    if (Array.isArray(error)) {
+        mensaje = error
+            .map((item) => item.msg)
+            .filter(Boolean)
+            .join("\n");
+    } else {
+        mensaje =
+            error?.message ||
+            error?.mensaje ||
+            error?.error ||
+            mensaje;
+    }
+
+    throw new Error(mensaje);
+}
 
       // Actualizamos la lista
       await cargarProductos();
@@ -197,19 +213,11 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
       // Cerramos el modal
       cerrarModal();
     } catch (error) {
-      console.error("Error al guardar producto:", error);
-
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Ocurrió un error al guardar el producto",
-      });
-    } finally {
-      setGuardando(false);
-    }
+    console.error("Error al guardar producto:", error);
+    throw error;
+} finally {
+    setGuardando(false);
+}
   };
 
   const eliminarProducto = async (id: string) => {

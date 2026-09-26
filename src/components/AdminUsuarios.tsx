@@ -42,22 +42,22 @@ export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState(true);
   const [paginaActual, setPaginaActual] = useState(1);
+  const [cantidadUsuarios, setCantidadUsuarios] = useState(0);
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
 
   // ==========================================
   // PAGINACIÓN
   // ==========================================
 
-  const usuariosPorPagina = 5;
+  const usuariosPorPagina = 6;
 
-  const totalPaginas = Math.ceil(usuarios.length / usuariosPorPagina);
+  const cantidadPaginas = Math.ceil(cantidadUsuarios / usuariosPorPagina);
 
-  const indiceInicio = (paginaActual - 1) * usuariosPorPagina;
+  const cambiarPagina = (pagina: number) => {
+    if (pagina < 1 || pagina > cantidadPaginas) return;
 
-  const indiceFin = indiceInicio + usuariosPorPagina;
-
-  const usuariosPagina = usuarios.slice(indiceInicio, indiceFin);
-
+    setPaginaActual(pagina);
+  };
   const {
     register,
     handleSubmit,
@@ -80,9 +80,12 @@ export default function AdminUsuarios() {
     try {
       setCargando(true);
 
-      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario`, {
-        credentials: "include",
-      });
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario?pagina=${paginaActual}&limite=${usuariosPorPagina}`,
+        {
+          credentials: "include",
+        },
+      );
 
       const resultado = await respuesta.json();
 
@@ -92,10 +95,8 @@ export default function AdminUsuarios() {
         );
       }
 
-      setUsuarios(resultado);
-
-      // Volver a la primera página al cargar nuevamente
-      setPaginaActual(1);
+      setUsuarios(resultado.usuarios || []);
+      setCantidadUsuarios(resultado.cantidadUsuarios || 0);
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
 
@@ -113,7 +114,7 @@ export default function AdminUsuarios() {
 
   useEffect(() => {
     cargarUsuarios();
-  }, []);
+  }, [paginaActual]);
 
   // ==========================================
   // ABRIR MODAL EDITAR
@@ -480,7 +481,7 @@ export default function AdminUsuarios() {
           </thead>
 
           <tbody>
-            {usuariosPagina.map((usuario) => (
+            {usuarios.map((usuario) => (
               <tr
                 key={usuario._id}
                 className="border-b border-slate-800 transition hover:bg-[#111c36]"
@@ -568,55 +569,44 @@ export default function AdminUsuarios() {
         </table>
       </div>
 
-      {/* ========================================
-          PAGINACIÓN
-      ======================================== */}
+      {cantidadPaginas > 1 && (
+        <div className="flex items-center justify-center gap-2 border-t border-slate-700 px-5 py-4">
+          <button
+            type="button"
+            disabled={paginaActual === 1}
+            onClick={() => cambiarPagina(paginaActual - 1)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            &lt;
+          </button>
 
-      {totalPaginas > 1 && (
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-700 bg-[#0b132b] px-5 py-4">
-          <p className="text-sm text-slate-400">
-            Mostrando{" "}
-            <span className="font-medium text-white">{indiceInicio + 1}</span> -{" "}
-            <span className="font-medium text-white">
-              {Math.min(indiceFin, usuarios.length)}
-            </span>{" "}
-            de <span className="font-medium text-white">{usuarios.length}</span>{" "}
-            usuarios
-          </p>
+          {Array.from({ length: cantidadPaginas }, (_, index) => index + 1).map(
+            (pagina) => (
+              <button
+                key={pagina}
+                type="button"
+                onClick={() => cambiarPagina(pagina)}
+                className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-semibold transition ${
+                  paginaActual === pagina
+                    ? "border-green-500 bg-green-500 text-slate-950"
+                    : "border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                {pagina}
+              </button>
+            ),
+          )}
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                setPaginaActual((pagina) => Math.max(pagina - 1, 1))
-              }
-              disabled={paginaActual === 1}
-              className="rounded-lg border border-slate-700 bg-[#111c36] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1a2948] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Anterior
-            </button>
-
-            <span className="rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white">
-              {paginaActual} / {totalPaginas}
-            </span>
-
-            <button
-              type="button"
-              onClick={() =>
-                setPaginaActual((pagina) => Math.min(pagina + 1, totalPaginas))
-              }
-              disabled={paginaActual === totalPaginas}
-              className="rounded-lg border border-slate-700 bg-[#111c36] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1a2948] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={paginaActual === cantidadPaginas}
+            onClick={() => cambiarPagina(paginaActual + 1)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            &gt;
+          </button>
         </div>
       )}
-
-      {/* ========================================
-          MODAL EDITAR USUARIO
-      ======================================== */}
 
       {usuarioEditando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">

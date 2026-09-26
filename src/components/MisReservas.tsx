@@ -34,16 +34,14 @@ export default function MisReservas() {
   const [cargando, setCargando] = useState<boolean>(true);
   const [procesando, setProcesando] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
-  const reservasPorPagina = 5;
-  const indiceUltimaReserva = paginaActual * reservasPorPagina;
-  const indicePrimeraReserva = indiceUltimaReserva - reservasPorPagina;
+  const [cantidadReservas, setCantidadReservas] = useState(0);
+  const reservasPorPagina = 6;
+  
+  
+  const cantidadPaginas = Math.ceil(
+  cantidadReservas / reservasPorPagina
+);
 
-  const reservasPagina = reservas.slice(
-    indicePrimeraReserva,
-    indiceUltimaReserva,
-  );
-
-  const cantidadPaginas = Math.ceil(reservas.length / reservasPorPagina);
   // ==============================
   // CARGAR RESERVAS
   // ==============================
@@ -52,9 +50,12 @@ export default function MisReservas() {
     try {
       setCargando(true);
 
-      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
-        credentials: "include",
-      });
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/reservas?pagina=${paginaActual}&limite=${reservasPorPagina}`,
+        {
+          credentials: "include",
+        },
+      );
 
       const resultado = await respuesta.json();
 
@@ -65,6 +66,7 @@ export default function MisReservas() {
       }
 
       setReservas(resultado.reservas || []);
+      setCantidadReservas(resultado.cantidadReservas || 0);
     } catch (error) {
       console.error("Error al obtener reservas:", error);
 
@@ -87,7 +89,7 @@ export default function MisReservas() {
 
   useEffect(() => {
     cargarReservas();
-  }, []);
+  }, [paginaActual]);
 
   // ==============================
   // FORMATEAR FECHA
@@ -390,7 +392,7 @@ export default function MisReservas() {
 
                 {/* CUERPO */}
                 <tbody className="divide-y divide-slate-800">
-                  {reservasPagina.map((reserva) => (
+                  {reservas.map((reserva) => (
                     <tr
                       key={reserva._id}
                       className="hover:bg-slate-800/40 transition-colors"

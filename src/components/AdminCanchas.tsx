@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
+import { CanchaCard } from "./panelAdmin/canchas/CanchasCard";
+import CanchasContext from "../context/CanchasContext";
+import { PaginadorBackend } from "./Paginador"; // Asegurá la ruta correcta de tu componente de botones
+import { usePaginacionBackend } from "../context/PaginacionContext"; // Usamos tu nuevo hook global
 
 interface Cancha {
   _id: string;
@@ -30,9 +34,12 @@ export default function AdminCanchas() {
   const [editando, setEditando] = useState<Cancha | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
-  const [paginaActual, setPaginaActual] = useState(1);
+  
   const [cantidadCanchas, setCantidadCanchas] = useState(0);
   const [limiteCanchas] = useState(6);
+
+  // 1. IMPORTAMOS EL ESTADO GLOBAL DE PAGINACIÓN PARA CANCHAS
+  const { paginaActual, setCantidadPaginas } = usePaginacionBackend("canchas");
 
   const {
     register,
@@ -51,14 +58,15 @@ export default function AdminCanchas() {
   });
 
   // ================================
-  // CARGAR CANCHAS
+  // CARGAR CANCHAS (Modificado para usar el contexto)
   // ================================
-  const cargarCanchas = async (pagina = 1) => {
+  const cargarCanchas = async () => {
     try {
       setCargando(true);
 
+      // Usamos 'paginaActual' provista de forma global por el hook
       const respuesta = await fetch(
-        `${API_URL}?pagina=${pagina}&limite=${limiteCanchas}`,
+        `${API_URL}?pagina=${paginaActual}&limite=${limiteCanchas}`,
         {
           credentials: "include",
         },
@@ -72,7 +80,12 @@ export default function AdminCanchas() {
 
       setCanchas(resultado.canchas || []);
       setCantidadCanchas(resultado.cantidadCanchas || 0);
-      setPaginaActual(resultado.pagina || pagina);
+
+      // 2. LE INCOPORAMOS AL CONTEXTO LAS PÁGINAS TOTALES QUE DEVOLVIÓ EL BACKEND
+      // Podés calcularlo con Math.ceil si tu API no te da un 'totalPaginas' directo
+      const paginasTotales = resultado.totalPaginas || Math.ceil((resultado.cantidadCanchas || 0) / limiteCanchas);
+      setCantidadPaginas(paginasTotales);
+
     } catch (error) {
       console.error("Error al cargar canchas:", error);
 
@@ -89,16 +102,12 @@ export default function AdminCanchas() {
     }
   };
 
+  // 3. SE DISPARA AUTOMÁTICAMENTE CADA VEZ QUE EL USUARIO CAMBIA DE PÁGINA EN EL CONTEXTO Global
   useEffect(() => {
     cargarCanchas();
-  }, []);
-  const cantidadPaginas = Math.ceil(cantidadCanchas / limiteCanchas);
+  }, [paginaActual]);
 
-  const cambiarPagina = (pagina: number) => {
-    if (pagina < 1 || pagina > cantidadPaginas) return;
-
-    cargarCanchas(pagina);
-  };
+  // ELIMINADO: 'cantidadPaginas' y 'cambiarPagina()' ya no van acá porque lo maneja el PaginadorBackend interno.
 
   // ================================
   // NUEVA CANCHA
@@ -118,6 +127,7 @@ export default function AdminCanchas() {
 
     setMostrarFormulario(true);
   };
+
   // ================================
   // EDITAR CANCHA
   // ================================
@@ -153,7 +163,6 @@ export default function AdminCanchas() {
       setGuardando(true);
 
       const url = editando ? `${API_URL}/${editando._id}` : API_URL;
-
       const formData = new FormData();
 
       formData.append("nombre", datos.nombre);
@@ -213,6 +222,7 @@ export default function AdminCanchas() {
       setGuardando(false);
     }
   };
+
   // ================================
   // ELIMINAR CANCHA
   // ================================
@@ -274,7 +284,12 @@ export default function AdminCanchas() {
     }
   };
 
+  // El bloque del return queda igual a como lo tenías, solo llamás al componente al final del listado:
+  // <PaginadorBackend seccion="canchas" />
+
+
   return (
+     <CanchasContext.Provider value={{ abrirFormularioEditar, eliminarCancha }}>
     <div className="space-y-8">
       {/* ENCABEZADO */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -383,120 +398,15 @@ export default function AdminCanchas() {
         ) : (
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {canchas.map((cancha) => (
-              <div
-                key={cancha._id}
-                className="bg-slate-950/50 border border-slate-800/80 rounded-2xl overflow-hidden hover:border-green-500/30 transition-all group"
-              >
-                <div className="h-48 bg-slate-800 overflow-hidden">
-                  <img
-                    src={cancha.imagen}
-                    alt={cancha.nombre}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                </div>
-
-                <div className="p-5">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-100">
-                        {cancha.nombre}
-                      </h3>
-
-                      <span className="inline-block mt-1 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-[11px] font-semibold">
-                        {cancha.tipo}
-                      </span>
-                    </div>
-
-                    <span
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${
-                        cancha.disponible
-                          ? "bg-green-500/10 border-green-500/20 text-green-400"
-                          : "bg-rose-500/10 border-rose-500/20 text-rose-400"
-                      }`}
-                    >
-                      {cancha.disponible ? "Disponible" : "No disponible"}
-                    </span>
-                  </div>
-
-                  <p className="text-slate-400 text-sm line-clamp-2 min-h-10">
-                    {cancha.descripcion}
-                  </p>
-
-                  <div className="mt-4 pt-4 border-t border-slate-800/80">
-                    <p className="text-xs text-slate-500">Precio</p>
-
-                    <p className="text-xl font-black text-green-400">
-                      ${cancha.precio.toLocaleString("es-AR")}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mt-5">
-                    <button
-                      type="button"
-                      onClick={() => abrirFormularioEditar(cancha)}
-                      className="px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition text-sm font-semibold"
-                    >
-                      ✏️ Editar
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => eliminarCancha(cancha)}
-                      className="px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition text-sm font-semibold"
-                    >
-                      🗑️ Eliminar
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <CanchaCard key={cancha._id} cancha={cancha} />
             ))}
           </div>
         )}
       </div>
 
-            {/* PAGINACIÓN */}
-      {cantidadPaginas > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <button
-            type="button"
-            disabled={paginaActual === 1}
-            onClick={() => cambiarPagina(paginaActual - 1)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            &lt;
-          </button>
+      {/* PAGINACIÓN */}
+      <PaginadorBackend seccion="canchas" />
 
-          {Array.from(
-            { length: cantidadPaginas },
-            (_, index) => index + 1,
-          ).map((pagina) => (
-            <button
-              key={pagina}
-              type="button"
-              onClick={() => cambiarPagina(pagina)}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${
-                paginaActual === pagina
-                  ? "bg-green-500 border-green-500 text-slate-950"
-                  : "bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800"
-              }`}
-            >
-              {pagina}
-            </button>
-          ))}
-
-          <button
-            type="button"
-            disabled={paginaActual === cantidadPaginas}
-            onClick={() => cambiarPagina(paginaActual + 1)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            &gt;
-          </button>
-        </div>
-      )}
 
       {/* MODAL */}
       {mostrarFormulario && (
@@ -761,5 +671,6 @@ export default function AdminCanchas() {
         </div>
       )}
     </div>
+    </CanchasContext.Provider>
   );
 }

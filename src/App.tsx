@@ -24,12 +24,14 @@ import CheckoutResultado from "./pages/CheckoutResultado";
 import QuienesSomos from "./pages/QuienesSomos";
 import MisCompras from "./components/MisCompras";
 import { CategoriaProvider } from "./context/CategoriaContext";
+import { PaginacionBackendProvider } from "./context/PaginacionContext";
 
 export default function App() {
   return (
     <AuthProvider>
       <CategoriaProvider>
         <ProductoProvider>
+          <PaginacionBackendProvider>
           <BrowserRouter>
             <ScrollToTop />
             <div className="min-h-screen bg-[#0b132b] flex flex-col justify-between">
@@ -119,6 +121,7 @@ export default function App() {
               <Footer />
             </div>
           </BrowserRouter>
+          </PaginacionBackendProvider>
         </ProductoProvider>
       </CategoriaProvider>
     </AuthProvider>

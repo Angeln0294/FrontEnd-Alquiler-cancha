@@ -25,12 +25,14 @@ import QuienesSomos from "./pages/QuienesSomos";
 import MisCompras from "./components/MisCompras";
 import { CategoriaProvider } from "./context/CategoriaContext";
 import { PaginacionBackendProvider } from "./context/PaginacionContext";
+import { TablaProvider } from "./context/TablaContext";
 
 export default function App() {
   return (
     <AuthProvider>
       <CategoriaProvider>
         <ProductoProvider>
+          <TablaProvider>
           <PaginacionBackendProvider>
           <BrowserRouter>
             <ScrollToTop />
@@ -122,6 +124,7 @@ export default function App() {
             </div>
           </BrowserRouter>
           </PaginacionBackendProvider>
+          </TablaProvider>
         </ProductoProvider>
       </CategoriaProvider>
     </AuthProvider>

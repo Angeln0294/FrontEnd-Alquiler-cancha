@@ -7,6 +7,8 @@ import type { SubmitHandler } from "react-hook-form";
 import Swal from "sweetalert2";
 import { PaginadorBackend } from "./Paginador";
 import { usePaginacionBackend } from "../context/PaginacionContext";
+import { TablaGenerica, type Columna } from "./TablaGenerica";
+import { useTabla } from "../context/TablaContext";
 interface Usuario {
   _id: string;
   nombre: string;
@@ -38,11 +40,17 @@ const swalTema = Swal.mixin({
     cancelButton: "rounded-lg",
   },
 });
-
+const COLUMNAS_USUARIOS: Columna[] = [
+  { id: "nombre", titulo: "Nombre" },
+  { id: "email", titulo: "Email" },
+  { id: "rol", titulo: "Rol" },
+  { id: "estado", titulo: "Estado" },
+  { id: "verificacion", titulo: "Verificación" },
+  { id: "acciones", titulo: "Acciones" },
+];
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [cargando, setCargando] = useState(true);
- 
+  const { setTablaCargando } = useTabla();
 
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
 
@@ -52,9 +60,6 @@ export default function AdminUsuarios() {
 
   const usuariosPorPagina = 6;
   const { paginaActual, setCantidadPaginas } = usePaginacionBackend("usuarios");
-
-
-
 
   const {
     register,
@@ -76,7 +81,7 @@ export default function AdminUsuarios() {
 
   const cargarUsuarios = async () => {
     try {
-      setCargando(true);
+       setTablaCargando(true);
 
       const respuesta = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/usuario?pagina=${paginaActual}&limite=${usuariosPorPagina}`,
@@ -94,7 +99,10 @@ export default function AdminUsuarios() {
       }
 
       setUsuarios(resultado.usuarios || []);
-      setCantidadPaginas(resultado.totalPaginas || Math.ceil((resultado.cantidadUsuarios || 0) / usuariosPorPagina));
+      setCantidadPaginas(
+        resultado.totalPaginas ||
+          Math.ceil((resultado.cantidadUsuarios || 0) / usuariosPorPagina),
+      );
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
 
@@ -106,7 +114,7 @@ export default function AdminUsuarios() {
         iconColor: "#ef4444",
       });
     } finally {
-      setCargando(false);
+       setTablaCargando(false);
     }
   };
 
@@ -365,7 +373,7 @@ export default function AdminUsuarios() {
         },
       );
 
-       const resultado = await respuesta.json();
+      const resultado = await respuesta.json();
 
       if (!respuesta.ok) {
         throw new Error(resultado.mensaje || "No se pudo eliminar el usuario");
@@ -382,7 +390,6 @@ export default function AdminUsuarios() {
 
       // 2. Volvemos a pedirle los usuarios al backend para que actualice la lista y el total de páginas
       await cargarUsuarios();
-      
     } catch (error) {
       console.error("Error al eliminar usuario:", error);
 
@@ -395,7 +402,6 @@ export default function AdminUsuarios() {
       });
     }
   };
-
 
   // ==========================================
   // ESTILOS
@@ -412,13 +418,7 @@ export default function AdminUsuarios() {
   // CARGANDO
   // ==========================================
 
-  if (cargando) {
-    return (
-      <div className="flex min-h-100 items-center justify-center">
-        <p className="text-slate-400">Cargando usuarios...</p>
-      </div>
-    );
-  }
+
 
   return (
     <div className="w-full">
@@ -439,37 +439,10 @@ export default function AdminUsuarios() {
       ======================================== */}
 
       <div className="overflow-x-auto rounded-xl border border-slate-700 bg-[#0b132b]">
-        <table className="w-full min-w-225 text-left">
-          <thead className="border-b border-slate-700 bg-[#111c36]">
-            <tr>
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Nombre
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Email
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Rol
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Estado
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Verificación
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {usuarios.map((usuario) => (
+        <TablaGenerica
+        columnas={COLUMNAS_USUARIOS}
+        datos={usuarios}
+        renderFila={(usuario) => (
               <tr
                 key={usuario._id}
                 className="border-b border-slate-800 transition hover:bg-[#111c36]"
@@ -552,15 +525,14 @@ export default function AdminUsuarios() {
                   </div>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
+             )}
+      />
       </div>
 
-     <div className="border-t border-slate-700 p-4">
-  <PaginadorBackend seccion="usuarios" />
-</div>
- 
+      <div className="border-t border-slate-700 p-4">
+        <PaginadorBackend seccion="usuarios" />
+      </div>
+
       {usuarioEditando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b132b] p-6 shadow-2xl">

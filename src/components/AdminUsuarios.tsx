@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 
 import Swal from "sweetalert2";
-
+import { PaginadorBackend } from "./Paginador";
+import { usePaginacionBackend } from "../context/PaginacionContext";
 interface Usuario {
   _id: string;
   nombre: string;
@@ -41,8 +42,8 @@ const swalTema = Swal.mixin({
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [paginaActual, setPaginaActual] = useState(1);
-  const [cantidadUsuarios, setCantidadUsuarios] = useState(0);
+ 
+
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
 
   // ==========================================
@@ -50,14 +51,11 @@ export default function AdminUsuarios() {
   // ==========================================
 
   const usuariosPorPagina = 6;
+  const { paginaActual, setCantidadPaginas } = usePaginacionBackend("usuarios");
 
-  const cantidadPaginas = Math.ceil(cantidadUsuarios / usuariosPorPagina);
 
-  const cambiarPagina = (pagina: number) => {
-    if (pagina < 1 || pagina > cantidadPaginas) return;
 
-    setPaginaActual(pagina);
-  };
+
   const {
     register,
     handleSubmit,
@@ -96,7 +94,7 @@ export default function AdminUsuarios() {
       }
 
       setUsuarios(resultado.usuarios || []);
-      setCantidadUsuarios(resultado.cantidadUsuarios || 0);
+      setCantidadPaginas(resultado.totalPaginas || Math.ceil((resultado.cantidadUsuarios || 0) / usuariosPorPagina));
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
 
@@ -367,28 +365,13 @@ export default function AdminUsuarios() {
         },
       );
 
-      const resultado = await respuesta.json();
+       const resultado = await respuesta.json();
 
       if (!respuesta.ok) {
         throw new Error(resultado.mensaje || "No se pudo eliminar el usuario");
       }
 
-      setUsuarios((usuariosActuales) => {
-        const usuariosActualizados = usuariosActuales.filter(
-          (u) => u._id !== usuario._id,
-        );
-
-        const nuevasPaginas = Math.ceil(
-          usuariosActualizados.length / usuariosPorPagina,
-        );
-
-        setPaginaActual((pagina) =>
-          Math.min(pagina, Math.max(nuevasPaginas, 1)),
-        );
-
-        return usuariosActualizados;
-      });
-
+      // 1. ELIMINAMOS LA MATEMÁTICA VIEJA DEL CLIENTE Y REFRESCAMOS DESDE EL BACKEND
       await swalTema.fire({
         icon: "success",
         title: "Usuario eliminado",
@@ -396,6 +379,10 @@ export default function AdminUsuarios() {
         confirmButtonText: "Continuar",
         iconColor: "#22c55e",
       });
+
+      // 2. Volvemos a pedirle los usuarios al backend para que actualice la lista y el total de páginas
+      await cargarUsuarios();
+      
     } catch (error) {
       console.error("Error al eliminar usuario:", error);
 
@@ -408,6 +395,7 @@ export default function AdminUsuarios() {
       });
     }
   };
+
 
   // ==========================================
   // ESTILOS
@@ -569,45 +557,10 @@ export default function AdminUsuarios() {
         </table>
       </div>
 
-      {cantidadPaginas > 1 && (
-        <div className="flex items-center justify-center gap-2 border-t border-slate-700 px-5 py-4">
-          <button
-            type="button"
-            disabled={paginaActual === 1}
-            onClick={() => cambiarPagina(paginaActual - 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            &lt;
-          </button>
-
-          {Array.from({ length: cantidadPaginas }, (_, index) => index + 1).map(
-            (pagina) => (
-              <button
-                key={pagina}
-                type="button"
-                onClick={() => cambiarPagina(pagina)}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-semibold transition ${
-                  paginaActual === pagina
-                    ? "border-green-500 bg-green-500 text-slate-950"
-                    : "border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                {pagina}
-              </button>
-            ),
-          )}
-
-          <button
-            type="button"
-            disabled={paginaActual === cantidadPaginas}
-            onClick={() => cambiarPagina(paginaActual + 1)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            &gt;
-          </button>
-        </div>
-      )}
-
+     <div className="border-t border-slate-700 p-4">
+  <PaginadorBackend seccion="usuarios" />
+</div>
+ 
       {usuarioEditando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b132b] p-6 shadow-2xl">

@@ -3,7 +3,7 @@ import FormularioProductoAdmin from "./FormularioProductoAdmin";
 import { TablaGenerica, type Columna } from "../components/TablaGenerica";
 import { PaginadorBackend } from "./Paginador";
 import { usePaginacionBackend } from "../context/PaginacionContext"; // Verificá que la ruta de importación de tu contexto sea la correcta
-
+import { useEffect } from "react";
 const COLUMNAS_PRODUCTOS: Columna[] = [
   { id: "imagen", titulo: "Imagen" },
   { id: "producto", titulo: "Producto" },
@@ -21,7 +21,7 @@ export default function AdminProductos() {
     eliminarProducto,
     limiteProductos,
     cantidadProductos,
-    // <- Extraemos la función de carga del contexto de productos
+    cargarProductos
   } = useProductos();
 
   // Traemos el estado y la función para forzar la página desde el contexto de paginación
@@ -31,6 +31,12 @@ export default function AdminProductos() {
   // EFECTO 1: FUERZA LA PÁGINA 1 EN AUTOMÁTICO AL ENTRAR
   // ==========================================
 
+
+useEffect(() => {
+  if (paginaActual) {
+    cargarProductos(paginaActual);
+  }
+}, [paginaActual]);
 
   const obtenerNombreCategoria = (
     categoria: string | { nombreCategoria: string },

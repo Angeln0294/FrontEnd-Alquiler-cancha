@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 
 // Definimos las secciones que usan paginación en tu app
-type SeccionPaginada = "canchas" | "productos" | "usuarios" | "reservas";
+type SeccionPaginada = "canchas" | "productos" | "usuarios" | "reservas" | "categorias";
 
 interface EstadoPaginacion {
   paginaActual: number;
@@ -23,6 +23,7 @@ export const PaginacionBackendProvider: React.FC<{ children: React.ReactNode }> 
     productos: { paginaActual: 1, cantidadPaginas: 1 },
     usuarios: { paginaActual: 1, cantidadPaginas: 1 },
     reservas: { paginaActual: 1, cantidadPaginas: 1 },
+    categorias: { paginaActual: 1, cantidadPaginas: 1 },
   });
 
   // Permite al backend actualizar cuántas páginas totales existen tras el fetch

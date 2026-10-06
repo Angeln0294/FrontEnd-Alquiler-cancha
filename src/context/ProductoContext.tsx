@@ -123,11 +123,6 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  useEffect(() => {
-    const paginaAAsignar = paginaActual || 1;
-
-    cargarProductos(paginaAAsignar);
-  }, [paginaActual]);
 
   // El useEffect de las categorías se ejecuta solo una vez al montar
   useEffect(() => {

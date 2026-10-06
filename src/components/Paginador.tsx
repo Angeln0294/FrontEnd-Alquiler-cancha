@@ -2,7 +2,7 @@ import React from "react";
 import { usePaginacionBackend } from "../context/PaginacionContext";
 
 interface PaginadorBackendProps {
-  seccion: "canchas" | "productos" | "usuarios" | "reservas";
+  seccion: "canchas" | "productos" | "usuarios" | "reservas" | "categorias";
 }
 
 export const PaginadorBackend: React.FC<PaginadorBackendProps> = ({ seccion }) => {

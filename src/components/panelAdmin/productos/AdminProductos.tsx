@@ -1,8 +1,8 @@
-import { useProductos } from "../context/ProductoContext";
-import FormularioProductoAdmin from "./FormularioProductoAdmin";
-import { TablaGenerica, type Columna } from "../components/TablaGenerica";
-import { PaginadorBackend } from "./Paginador";
-import { usePaginacionBackend } from "../context/PaginacionContext"; // Verificá que la ruta de importación de tu contexto sea la correcta
+import { useProductos } from "../../../context/ProductoContext";
+import FormularioProductoAdmin from "../../FormularioProductoAdmin";
+import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { PaginadorBackend } from "../../Paginador";
+import { usePaginacionBackend } from "../../../context/PaginacionContext"; // Verificá que la ruta de importación de tu contexto sea la correcta
 import { useEffect } from "react";
 const COLUMNAS_PRODUCTOS: Columna[] = [
   { id: "imagen", titulo: "Imagen" },

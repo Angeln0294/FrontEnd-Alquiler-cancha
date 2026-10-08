@@ -1,8 +1,8 @@
-import { useCategorias } from "../context/CategoriaContext";
-import FormularioCategoriaAdmin from "./FormularioCategoriaAdmin";
-import { TablaGenerica, type Columna } from "../components/TablaGenerica";
-import { PaginadorBackend } from "./Paginador";
-import { usePaginacionBackend } from "../context/PaginacionContext"; // Corregida ruta al igual que los anteriores
+import { useCategorias } from "../../../context/CategoriaContext";
+import FormularioCategoriaAdmin from "../../FormularioCategoriaAdmin";
+import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { PaginadorBackend } from "../../Paginador";
+import { usePaginacionBackend } from "../../../context/PaginacionContext"; // Corregida ruta al igual que los anteriores
 import { useEffect } from "react";
 
 const COLUMNAS_CATEGORIA: Columna[] = [

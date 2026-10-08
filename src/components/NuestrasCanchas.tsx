@@ -1,7 +1,9 @@
-// src/pages/NuestrasCanchas.tsx
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { PaginadorBackend } from "../components/Paginador";
+import { usePaginacionBackend } from "../context/PaginacionContext";
+import { CanchaCard } from "../components/CanchasCard";
 import Swal from "sweetalert2";
 
 export interface CanchaDetalle {
@@ -13,19 +15,23 @@ export interface CanchaDetalle {
   tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
   disponible: boolean;
 }
+
 export default function NuestrasCanchas() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { usuario } = useAuth();
+
   const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/canchas`;
 
   const [canchas, setCanchas] = useState<CanchaDetalle[]>([]);
   const [cargando, setCargando] = useState(true);
 
-  const [paginaActual, setPaginaActual] = useState(1);
-  const [cantidadCanchas, setCantidadCanchas] = useState(0);
+  // Cantidad de canchas que se muestran por página
+  const canchasPorPagina = 6;
 
-  const limiteCanchas = 8;
+  // El componente PaginadorBackend se encarga de cambiar la página
+  const { paginaActual, setCantidadPaginas } =
+    usePaginacionBackend("canchas");
 
   useEffect(() => {
     const cargarCanchas = async () => {
@@ -33,7 +39,7 @@ export default function NuestrasCanchas() {
         setCargando(true);
 
         const respuesta = await fetch(
-          `${API_URL}?pagina=${paginaActual}&limite=${limiteCanchas}`,
+          `${API_URL}?pagina=${paginaActual}&limite=${canchasPorPagina}`,
           {
             credentials: "include",
           },
@@ -43,14 +49,33 @@ export default function NuestrasCanchas() {
 
         if (!respuesta.ok) {
           throw new Error(
-            resultado.message || "No se pudieron cargar las canchas",
+            resultado.mensaje ||
+              resultado.message ||
+              "No se pudieron cargar las canchas",
           );
         }
 
         setCanchas(resultado.canchas || []);
-        setCantidadCanchas(resultado.cantidadCanchas || 0);
+
+        // Le informamos al contexto cuántas páginas existen
+        setCantidadPaginas(
+          resultado.totalPaginas ||
+            Math.ceil(
+              (resultado.cantidadCanchas || 0) / canchasPorPagina,
+            ),
+        );
       } catch (error) {
         console.error("Error al cargar las canchas:", error);
+
+        await Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudieron cargar las canchas.",
+          confirmButtonText: "Entendido",
+          background: "#0b132b",
+          color: "#ffffff",
+          confirmButtonColor: "#22c55e",
+        });
       } finally {
         setCargando(false);
       }
@@ -66,20 +91,7 @@ export default function NuestrasCanchas() {
         decodeURIComponent(canchaParam),
       );
     }
-  }, [searchParams, paginaActual]);
-
-  const cantidadPaginas = Math.ceil(cantidadCanchas / limiteCanchas);
-
-  const cambiarPagina = (pagina: number) => {
-    setPaginaActual(pagina);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
-  // Dentro de src/components/NuestrasCanchas.tsx
+  }, [paginaActual, searchParams]);
 
   if (cargando) {
     return (
@@ -88,130 +100,62 @@ export default function NuestrasCanchas() {
       </div>
     );
   }
+
   return (
     <div className="w-full bg-[#0b132b] text-white min-h-screen py-12 px-6 md:px-12 font-sans">
       <div className="max-w-6xl mx-auto space-y-12">
+
         <h2 className="text-3xl md:text-4xl font-extrabold text-center">
           Nuestras <span className="text-green-400">Canchas</span>
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {canchas.map((cancha) => (
-            <div
-              key={cancha._id}
-              className="bg-[#1e293b] rounded-2xl overflow-hidden border border-gray-800 shadow-xl flex flex-col justify-between hover:scale-[1.01] transition-all duration-300"
-            >
-              <div className="h-44 w-full bg-slate-900 overflow-hidden relative">
-                <img
-                  src={cancha.imagen}
-                  alt={cancha.nombre}
-                  className="w-full h-full object-cover opacity-80"
-                />
-                <span className="absolute top-4 left-4 bg-[#0b132b]/90 text-green-400 text-xs font-bold px-3 py-1 rounded-lg border border-gray-800">
-                  {cancha.tipo}
-                </span>
-              </div>
-              <div className="p-5 grow flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-bold mb-2">{cancha.nombre}</h3>
-                  <p className="text-gray-400 text-xs leading-relaxed mb-4">
-                    {cancha.descripcion}
-                  </p>
-                </div>
-                <div className="border-t border-gray-800/60 pt-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">
-                      Precio por hora
-                    </span>
-                    <span className="text-lg font-black text-green-400">
-                      {" "}
-                      ${cancha.precio.toLocaleString("es-AR")}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!usuario) {
-                        Swal.fire({
-                          icon: "warning",
-                          title: "Iniciá sesión",
-                          text: "Debés iniciar sesión para poder reservar una cancha.",
-                          confirmButtonText: "Iniciar sesión",
-                          background: "#1e293b",
-                          color: "#f8fafc",
-                          confirmButtonColor: "#22c55e",
-                        }).then((resultado) => {
-                          if (resultado.isConfirmed) {
-                            navigate("/login");
-                          }
-                        });
+  {canchas.map((cancha) => (
+    <CanchaCard
+      key={cancha._id}
+      cancha={cancha}
+      onReservar={(cancha) => {
+        if (!usuario) {
+          Swal.fire({
+            icon: "warning",
+            title: "Iniciá sesión",
+            text: "Debés iniciar sesión para poder reservar una cancha.",
+            confirmButtonText: "Iniciar sesión",
+            background: "#1e293b",
+            color: "#f8fafc",
+            confirmButtonColor: "#22c55e",
+          }).then((resultado) => {
+            if (resultado.isConfirmed) {
+              navigate("/login");
+            }
+          });
 
-                        return;
-                      }
+          return;
+        }
 
-                      navigate(
-                        `/reservar-turnos?canchaId=${encodeURIComponent(
-                          cancha._id,
-                        )}&cancha=${encodeURIComponent(
-                          cancha.nombre,
-                        )}&precio=${encodeURIComponent(
-                          cancha.precio,
-                        )}&imagen=${encodeURIComponent(cancha.imagen)}`,
-                      );
-                    }}
-                    className="font-black px-5 py-2.5 rounded-xl text-xs bg-gray-800 text-gray-300 hover:bg-green-500 hover:text-[#0b132b] cursor-pointer transition-colors"
-                  >
-                    RESERVAR CANCHA
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+        navigate(
+          `/reservar-turnos?canchaId=${encodeURIComponent(
+            cancha._id,
+          )}&cancha=${encodeURIComponent(
+            cancha.nombre,
+          )}&precio=${encodeURIComponent(
+            cancha.precio,
+          )}&imagen=${encodeURIComponent(
+            cancha.imagen,
+          )}`,
+        );
+      }}
+    />
+  ))}
+</div>
+
+        {/* Paginador reutilizable */}
+        <div className="border-t border-slate-700 p-4">
+          <PaginadorBackend seccion="canchas" />
         </div>
-        {/* PAGINACIÓN */}
-        {cantidadPaginas > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-10">
-            {/* ANTERIOR */}
-            <button
-              type="button"
-              disabled={paginaActual === 1}
-              onClick={() => cambiarPagina(paginaActual - 1)}
-              className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              &lt;
-            </button>
 
-            {/* NÚMEROS */}
-            {Array.from(
-              { length: cantidadPaginas },
-              (_, index) => index + 1,
-            ).map((pagina) => (
-              <button
-                key={pagina}
-                type="button"
-                onClick={() => cambiarPagina(pagina)}
-                className={`w-10 h-10 rounded-lg font-semibold transition ${
-                  pagina === paginaActual
-                    ? "bg-green-500 text-slate-950"
-                    : "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                {pagina}
-              </button>
-            ))}
-
-            {/* SIGUIENTE */}
-            <button
-              type="button"
-              disabled={paginaActual === cantidadPaginas}
-              onClick={() => cambiarPagina(paginaActual + 1)}
-              className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              &gt;
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
 }
+

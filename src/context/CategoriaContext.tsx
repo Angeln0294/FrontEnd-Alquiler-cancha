@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from "react";
-
+import { createContext, useContext, useState } from "react";
+import { useTabla } from "../context/TablaContext";
+import { usePaginacionBackend } from "../context/PaginacionContext"; // Importación oficial corregida
 import Swal from "sweetalert2";
 
 export interface Categoria {
@@ -11,21 +12,9 @@ interface CategoriaContextType {
   categorias: Categoria[];
   categoriaSeleccionada: Categoria | null;
   modalAbierto: boolean;
-  cargando: boolean;
   guardando: boolean;
-  
-   paginacion: {
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    pageSize: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
+  limiteCategorias: number;
   obtenerCategorias: (page?: number) => Promise<void>;
-
-
-  cargarCategorias: () => Promise<void>;
   abrirCrear: () => void;
   abrirEditar: (categoria: Categoria) => void;
   cerrarModal: () => void;
@@ -33,35 +22,29 @@ interface CategoriaContextType {
   eliminarCategoria: (id: string) => Promise<void>;
 }
 
-const CategoriaContext = createContext<CategoriaContextType | undefined>(
-  undefined,
-);
+const CategoriaContext = createContext<CategoriaContextType | undefined>(undefined);
 
 export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [categoriaSeleccionada, setCategoriaSeleccionada] =
-    useState<Categoria | null>(null);
-
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [paginacion, setPaginacion] = useState({
-    totalItems: 0,
-    totalPages: 1,
-    currentPage: 1,
-    pageSize: 6,
-    hasNextPage: false,
-    hasPrevPage: false,
-  });
-  // Obtener todas las categorías
-  const cargarCategorias = async (page = 1) => {
+  const [limiteCategorias] = useState(6);
+ 
+  const { setTablaCargando } = useTabla();
+ 
+  // 1. CONSUMIMOS LA PAGINACIÓN GLOBAL EN LUGAR DE ESTADOS LOCALES DE PAGINACIÓN
+  const { paginaActual, setCantidadPaginas } = usePaginacionBackend("categorias");
+ 
+  const obtenerCategorias = async (pagina = paginaActual || 1) => {
     try {
-      setCargando(true);
+      setTablaCargando(true);
+      const numeroPagina = pagina || 1;
+      
+      // Enviamos las queries correctas en inglés de acuerdo a tu API
+      const url = `${import.meta.env.VITE_BACKEND_URL}/api/categorias?page=${numeroPagina}&limit=${limiteCategorias}`;
 
-      // Agregamos el Query Parameter (?page=) a la URL de la petición
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias?page=${page}`,
-      );
+      const respuesta = await fetch(url);
 
       if (!respuesta.ok) {
         throw new Error("No se pudieron obtener las categorías");
@@ -69,45 +52,53 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
       const datos = await respuesta.json();
 
-      // CORRECCIÓN CLAVE:
-      // Guardamos el array de categorías por un lado y los metadatos por el otro
-      setCategorias(datos.categorias);
-      setPaginacion(datos.paginacion);
+      // Guardamos la lista de categorías extraídas del backend
+      setCategorias(datos.categorias || []);
+
+      // 🚀 ADAPTACIÓN AL FORMATO DE TU BACKEND:
+      // Tu API devuelve 'datos.paginacion.totalPages'. Si por algún motivo viniera vacío,
+      // usamos el 'totalItems' dividido por el límite para que nunca falle la interfaz.
+      const totalItemsBackend = datos.paginacion?.totalItems || datos.categorias?.length || 0;
+      const paginasTotales = datos.paginacion?.totalPages || Math.ceil(totalItemsBackend / limiteCategorias) || 1;
+      
+      // Le inyectamos el total real de páginas (un 2) al mismo hook global que usan productos y canchas
+      setCantidadPaginas(paginasTotales);
+      
     } catch (error) {
       console.error("Error al cargar categorías:", error);
+      setCategorias([]);
     } finally {
-      setCargando(false);
+      setTablaCargando(false);
     }
   };
 
-  // Cargar categorías cuando se monta el Provider
-  useEffect(() => {
-    cargarCategorias(1); // Arranca explícitamente en la página 1
-  }, []);
 
-  // Abrir modal para crear
+  // CÓDIGO CORREGIDO: El contexto NO dispara la carga automática para no pisarse con la vista.
+  // Dejamos que AdminCategorias maneje el llamado cuando el usuario entra a la pestaña.
+  // ==========================================
+  // MODALES (ABRIR Y CERRAR)
+  // ==========================================
   const abrirCrear = () => {
     setCategoriaSeleccionada(null);
     setModalAbierto(true);
   };
 
-  // Abrir modal para editar
   const abrirEditar = (categoria: Categoria) => {
     setCategoriaSeleccionada(categoria);
     setModalAbierto(true);
   };
 
-  // Cerrar modal
   const cerrarModal = () => {
     setModalAbierto(false);
     setCategoriaSeleccionada(null);
   };
 
-  // Crear o editar categoría
+  // ==========================================
+  // CREAR O EDITAR CATEGORÍA
+  // ==========================================
   const guardarCategoria = async (nombreCategoria: string) => {
     try {
       setGuardando(true);
-
       let respuesta;
 
       // EDITAR
@@ -120,9 +111,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
               "Content-Type": "application/json",
             },
             credentials: "include",
-            body: JSON.stringify({
-              nombreCategoria,
-            }),
+            body: JSON.stringify({ nombreCategoria }),
           },
         );
       }
@@ -136,17 +125,14 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
               "Content-Type": "application/json",
             },
             credentials: "include",
-            body: JSON.stringify({
-              nombreCategoria,
-            }),
+            body: JSON.stringify({ nombreCategoria }),
           },
         );
       }
+
       if (!respuesta.ok) {
         const error = await respuesta.json().catch(() => null);
-
         console.log("ERROR DEL BACKEND:", error);
-
         throw new Error(
           error?.message ||
             error?.mensaje ||
@@ -155,21 +141,15 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
         );
       }
 
-      // Volvemos a cargar las categorías
-      await cargarCategorias();
-
-      // Cerramos el modal
+      // Volvemos a cargar las categorías con el paginado actual
+      await obtenerCategorias();
       cerrarModal();
     } catch (error) {
       console.error("Error al guardar categoría:", error);
-
       await Swal.fire({
         icon: "error",
         title: "Error al guardar",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Ocurrió un error al guardar la categoría",
+        text: error instanceof Error ? error.message : "Ocurrió un error al guardar la categoría",
         confirmButtonText: "Aceptar",
         background: "#1e293b",
         color: "#f8fafc",
@@ -180,7 +160,9 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Eliminar categoría
+  // ==========================================
+  // ELIMINAR CATEGORÍA
+  // ==========================================
   const eliminarCategoria = async (id: string) => {
     const confirmar = await Swal.fire({
       icon: "warning",
@@ -209,25 +191,16 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
       if (!respuesta.ok) {
         const error = await respuesta.json().catch(() => null);
-
-        throw new Error(
-          error?.message ||
-            error?.mensaje ||
-            "No se pudo eliminar la categoría",
-        );
+        throw new Error(error?.message || error?.mensaje || "No se pudo eliminar la categoría");
       }
 
-      await cargarCategorias();
+      await obtenerCategorias();
     } catch (error) {
       console.error("Error al eliminar categoría:", error);
-
       await Swal.fire({
         icon: "error",
         title: "Error al eliminar",
-        text:
-          error instanceof Error
-            ? error.message
-            : "No se pudo eliminar la categoría",
+        text: error instanceof Error ? error.message : "No se pudo eliminar la categoría",
         confirmButtonText: "Aceptar",
         background: "#1e293b",
         color: "#f8fafc",
@@ -236,22 +209,23 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ==========================================
+  // PROVIDER VALUE INJECTION
+  // ==========================================
   return (
     <CategoriaContext.Provider
       value={{
         categorias,
         categoriaSeleccionada,
         modalAbierto,
-        cargando,
         guardando,
-        cargarCategorias,
+        limiteCategorias,
+        obtenerCategorias,
         abrirCrear,
         abrirEditar,
         cerrarModal,
         guardarCategoria,
         eliminarCategoria,
-        paginacion,
-      obtenerCategorias: cargarCategorias
       }}
     >
       {children}
@@ -259,14 +233,13 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ==========================================
+  // HOOK DE CONSUMO PERSONALIZADO
+  // ==========================================
 export function useCategorias() {
   const context = useContext(CategoriaContext);
-
   if (!context) {
-    throw new Error(
-      "useCategorias debe utilizarse dentro de CategoriaProvider",
-    );
+    throw new Error("useCategorias debe utilizarse dentro de CategoriaProvider");
   }
-
   return context;
 }

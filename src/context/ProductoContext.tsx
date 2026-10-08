@@ -58,7 +58,7 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [cantidadProductos, setCantidadProductos] = useState(0);
-  const [limiteProductos] = useState(6);
+  const [limiteProductos] = useState(8);
 
   const { setTablaCargando } = useTabla();
 
@@ -116,13 +116,16 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
       );
       if (!respuesta.ok)
         throw new Error("No se pudieron obtener las categorías");
+
       const datos = await respuesta.json();
-      setCategorias(datos);
+
+      
+      setCategorias(datos.categorias || datos);
     } catch (error) {
       console.error("Error al cargar categorías:", error);
+      setCategorias([]); // En caso de error, aseguramos que sea un array vacío
     }
   };
-
 
   // El useEffect de las categorías se ejecuta solo una vez al montar
   useEffect(() => {

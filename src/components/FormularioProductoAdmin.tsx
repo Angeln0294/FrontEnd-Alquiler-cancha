@@ -15,10 +15,13 @@ interface FormularioProducto {
 export default function FormularioProductoAdmin() {
   const { productoSeleccionado, guardando, cerrarModal, guardarProducto } =
     useProductos();
+ const {
+  categorias,
+  obtenerTodasLasCategorias,
+} = useCategorias();
 
   const [imagen, setImagen] = useState<File | null>(null);
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
-  const { categorias } = useCategorias();
   const {
     register,
     handleSubmit,
@@ -36,7 +39,9 @@ export default function FormularioProductoAdmin() {
       descripcion: "",
     },
   });
-
+useEffect(() => {
+  obtenerTodasLasCategorias();
+}, [obtenerTodasLasCategorias]);
   // ================================
   // CARGAR DATOS AL EDITAR
   // ================================

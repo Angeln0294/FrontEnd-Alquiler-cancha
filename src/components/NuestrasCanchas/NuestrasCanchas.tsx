@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { PaginadorBackend } from "../components/Paginador";
-import { usePaginacionBackend } from "../context/PaginacionContext";
-import { CanchaCard } from "../components/CanchasCard";
+import { useAuth } from "../../context/AuthContext";
+import { PaginadorBackend } from "../Paginador";
+import { usePaginacionBackend } from "../../context/PaginacionContext";
+import { CanchaCard } from "./CanchasCard";
 import Swal from "sweetalert2";
 
 export interface CanchaDetalle {

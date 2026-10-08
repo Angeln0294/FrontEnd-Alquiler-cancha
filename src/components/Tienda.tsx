@@ -1,84 +1,68 @@
 import { useEffect, useState } from "react";
 import { useProductos } from "../context/ProductoContext";
+import { useCategorias } from "../context/CategoriaContext";
 import { useCarrito } from "../context/CarritoContext";
 import { useAuth } from "../context/AuthContext";
+import { usePaginacionBackend } from "../context/PaginacionContext";
+import { PaginadorBackend } from "../components/Paginador";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 export default function Tienda() {
-  const {
-    productos,
-    categorias,
-    cargando,
-    cantidadProductos,
-    paginaActual,
-    limiteProductos,
-    cargarProductos,
-  } = useProductos();
+  const { productos, cargarProductos, limiteProductos } =
+    useProductos();
 
+  const { paginaActual, cambiarPagina } = usePaginacionBackend("productos");
+
+  const { categorias, obtenerTodasLasCategorias, } = useCategorias();
   const { usuario } = useAuth();
-
   const navigate = useNavigate();
-
   const { agregarAlCarrito, cantidadTotal } = useCarrito();
 
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
-  // =========================
-  // BUSCAR PRODUCTOS
-  // =========================
+  // CARGAR PRODUCTOS CUANDO CAMBIA LA PÁGINA
+  // =====================================================
+  useEffect(() => {
+    cargarProductos(paginaActual, busqueda, limiteProductos);
+  }, [paginaActual]);
 
+  useEffect(() => { obtenerTodasLasCategorias(); }, [obtenerTodasLasCategorias]);
+
+  // =====================================================
+  // BUSCAR PRODUCTOS
+  // =====================================================
   useEffect(() => {
     const tiempo = setTimeout(() => {
+      // Si estamos en otra página, volvemos a la 1
+      if (paginaActual !== 1) {
+        cambiarPagina(1);
+        return;
+      }
+
+      // Ya estamos en página 1 → hacemos la búsqueda
       cargarProductos(1, busqueda, limiteProductos);
     }, 400);
 
     return () => clearTimeout(tiempo);
   }, [busqueda]);
 
-  // =========================
-  // FILTRAR POR CATEGORÍA
-  // =========================
-
+  // =====================================================
+  // FILTRO POR CATEGORÍA
+  // =====================================================
   const productosFiltrados = productos.filter((producto) => {
-    if (!categoriaSeleccionada) {
-      return true;
-    }
+    if (!categoriaSeleccionada) return true;
 
     return producto.categoria?._id === categoriaSeleccionada;
   });
 
-  // =========================
-  // CAMBIAR PÁGINA
-  // =========================
-
-  const cambiarPagina = (pagina: number) => {
-    cargarProductos(pagina, busqueda, limiteProductos);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
-  // =========================
-  // CANTIDAD DE PÁGINAS
-  // =========================
-
-  const cantidadPaginas = Math.ceil(cantidadProductos / limiteProductos);
-
-  // =========================
-  // RENDER
-  // =========================
-
   return (
     <div className="min-h-screen bg-slate-950 text-white px-6 py-10">
       <div className="max-w-7xl mx-auto">
-        {/* ========================= */}
-        {/* ENCABEZADO */}
-        {/* ========================= */}
-
+        {/* =====================================================
+            ENCABEZADO
+        ===================================================== */}
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <h1 className="text-4xl font-black tracking-tight">Tienda 🛒</h1>
@@ -117,13 +101,11 @@ export default function Tienda() {
           </button>
         </div>
 
-        {/* ========================= */}
-        {/* FILTROS */}
-        {/* ========================= */}
-
+        {/* =====================================================
+            FILTROS
+        ===================================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {/* BUSCADOR */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-300 mb-2">
               Buscar producto
@@ -139,7 +121,6 @@ export default function Tienda() {
           </div>
 
           {/* CATEGORÍA */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-300 mb-2">
               Categoría
@@ -162,15 +143,10 @@ export default function Tienda() {
           </div>
         </div>
 
-        {/* ========================= */}
-        {/* PRODUCTOS */}
-        {/* ========================= */}
-
-        {cargando ? (
-          <div className="text-center py-20 text-slate-400">
-            Cargando productos...
-          </div>
-        ) : productosFiltrados.length === 0 ? (
+        {/* =====================================================
+            PRODUCTOS
+        ===================================================== */}
+        {productosFiltrados.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-5xl mb-4">🔎</div>
 
@@ -184,10 +160,7 @@ export default function Tienda() {
           </div>
         ) : (
           <>
-            {/* ========================= */}
-            {/* GRID DE CARDS */}
-            {/* ========================= */}
-
+            {/* GRID DE PRODUCTOS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {productosFiltrados.map((producto) => (
                 <div
@@ -195,7 +168,6 @@ export default function Tienda() {
                   className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl hover:border-green-500/40 transition"
                 >
                   {/* IMAGEN */}
-
                   <div className="h-56 bg-slate-950">
                     <img
                       src={producto.imagen}
@@ -205,7 +177,6 @@ export default function Tienda() {
                   </div>
 
                   {/* INFORMACIÓN */}
-
                   <div className="p-5">
                     <p className="text-xs text-purple-400 font-semibold mb-2">
                       {producto.categoria?.nombreCategoria}
@@ -219,8 +190,6 @@ export default function Tienda() {
                       {producto.descripcion}
                     </p>
 
-                    {/* PRECIO + BOTÓN */}
-
                     <div className="flex items-center justify-between gap-3 mt-5">
                       <span className="text-xl font-black text-green-400">
                         ${producto.precio}
@@ -229,7 +198,6 @@ export default function Tienda() {
                       <button
                         type="button"
                         onClick={async () => {
-                          // NO ESTÁ LOGUEADO
                           if (!usuario) {
                             await Swal.fire({
                               icon: "warning",
@@ -245,7 +213,6 @@ export default function Tienda() {
                             return;
                           }
 
-                          // USUARIO NORMAL
                           await agregarAlCarrito(producto._id);
 
                           Swal.fire({
@@ -254,14 +221,11 @@ export default function Tienda() {
                             text: `${producto.nombreProducto} fue agregado al carrito.`,
                             background: "#1e293b",
                             color: "#ffffff",
-
                             showCancelButton: true,
                             confirmButtonText: "🛒 Ver carrito",
                             cancelButtonText: "Seguir comprando",
-
                             confirmButtonColor: "#00d26a",
                             cancelButtonColor: "#00d26a",
-
                             reverseButtons: true,
                           }).then((resultado) => {
                             if (resultado.isConfirmed) {
@@ -279,55 +243,12 @@ export default function Tienda() {
               ))}
             </div>
 
-            {/* ========================= */}
-            {/* PAGINACIÓN */}
-            {/* ========================= */}
-
-            {cantidadPaginas > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-10">
-                {/* ANTERIOR */}
-
-                <button
-                  type="button"
-                  disabled={paginaActual === 1}
-                  onClick={() => cambiarPagina(paginaActual - 1)}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  ‹
-                </button>
-
-                {/* NÚMEROS */}
-
-                {Array.from(
-                  { length: cantidadPaginas },
-                  (_, index) => index + 1,
-                ).map((pagina) => (
-                  <button
-                    key={pagina}
-                    type="button"
-                    onClick={() => cambiarPagina(pagina)}
-                    className={`w-10 h-10 rounded-lg font-semibold transition ${
-                      pagina === paginaActual
-                        ? "bg-green-500 text-slate-950"
-                        : "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800"
-                    }`}
-                  >
-                    {pagina}
-                  </button>
-                ))}
-
-                {/* SIGUIENTE */}
-
-                <button
-                  type="button"
-                  disabled={paginaActual === cantidadPaginas}
-                  onClick={() => cambiarPagina(paginaActual + 1)}
-                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  &gt;
-                </button>
-              </div>
-            )}
+            {/* =====================================================
+                PAGINADOR BACKEND
+            ===================================================== */}
+            <div className="border-t border-slate-800 mt-8 pt-4">
+              <PaginadorBackend seccion="productos" />
+            </div>
           </>
         )}
       </div>

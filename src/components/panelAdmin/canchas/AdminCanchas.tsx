@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
-import { CanchaCard } from "./panelAdmin/canchas/CanchasCard";
-import CanchasContext from "../context/CanchasContext";
-import { PaginadorBackend } from "./Paginador"; // Asegurá la ruta correcta de tu componente de botones
-import { usePaginacionBackend } from "../context/PaginacionContext"; // Usamos tu nuevo hook global
+import { CanchaCard } from "./CanchasCardAdmin";
+import CanchasContext from "../../../context/CanchasContext";
+import { PaginadorBackend } from "../../Paginador"; // Asegurá la ruta correcta de tu componente de botones
+import { usePaginacionBackend } from "../../../context/PaginacionContext"; // Usamos tu nuevo hook global
 
 interface Cancha {
   _id: string;

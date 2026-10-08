@@ -5,10 +5,10 @@ import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 
 import Swal from "sweetalert2";
-import { PaginadorBackend } from "./Paginador";
-import { usePaginacionBackend } from "../context/PaginacionContext";
-import { TablaGenerica, type Columna } from "./TablaGenerica";
-import { useTabla } from "../context/TablaContext";
+import { PaginadorBackend } from "../../Paginador";
+import { usePaginacionBackend } from "../../../context/PaginacionContext";
+import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { useTabla } from "../../../context/TablaContext";
 interface Usuario {
   _id: string;
   nombre: string;
@@ -122,9 +122,6 @@ export default function AdminUsuarios() {
     cargarUsuarios();
   }, [paginaActual]);
 
-  // ==========================================
-  // ABRIR MODAL EDITAR
-  // ==========================================
 
   const abrirEditar = (usuario: Usuario) => {
     setUsuarioEditando(usuario);
@@ -138,19 +135,13 @@ export default function AdminUsuarios() {
     });
   };
 
-  // ==========================================
-  // CERRAR MODAL
-  // ==========================================
-
+  
   const cerrarModal = () => {
     setUsuarioEditando(null);
     reset();
   };
 
-  // ==========================================
-  // GUARDAR CAMBIOS
-  // ==========================================
-
+  
   const guardarCambios: SubmitHandler<FormularioUsuario> = async (datos) => {
     if (!usuarioEditando) return;
 

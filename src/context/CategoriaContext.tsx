@@ -1,6 +1,7 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useTabla } from "../context/TablaContext";
 import { usePaginacionBackend } from "../context/PaginacionContext"; // Importación oficial corregida
+
 import Swal from "sweetalert2";
 
 export interface Categoria {
@@ -15,34 +16,39 @@ interface CategoriaContextType {
   guardando: boolean;
   limiteCategorias: number;
   obtenerCategorias: (page?: number) => Promise<void>;
+  obtenerTodasLasCategorias: () => Promise<void>;
   abrirCrear: () => void;
   abrirEditar: (categoria: Categoria) => void;
   cerrarModal: () => void;
   guardarCategoria: (nombreCategoria: string) => Promise<void>;
   eliminarCategoria: (id: string) => Promise<void>;
 }
-
-const CategoriaContext = createContext<CategoriaContextType | undefined>(undefined);
-
+const CategoriaContext = createContext<CategoriaContextType | undefined>(
+  undefined,
+);
 export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] =
+    useState<Categoria | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [limiteCategorias] = useState(6);
- 
+
   const { setTablaCargando } = useTabla();
- 
+
   // 1. CONSUMIMOS LA PAGINACIÓN GLOBAL EN LUGAR DE ESTADOS LOCALES DE PAGINACIÓN
-  const { paginaActual, setCantidadPaginas } = usePaginacionBackend("categorias");
- 
+  const { paginaActual, setCantidadPaginas } =
+    usePaginacionBackend("categorias");
+
   const obtenerCategorias = async (pagina = paginaActual || 1) => {
     try {
       setTablaCargando(true);
+
       const numeroPagina = pagina || 1;
-      
-      // Enviamos las queries correctas en inglés de acuerdo a tu API
-      const url = `${import.meta.env.VITE_BACKEND_URL}/api/categorias?page=${numeroPagina}&limit=${limiteCategorias}`;
+
+      const url =
+        `${import.meta.env.VITE_BACKEND_URL}/api/categorias` +
+        `?page=${numeroPagina}&limit=${limiteCategorias}`;
 
       const respuesta = await fetch(url);
 
@@ -52,18 +58,17 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
       const datos = await respuesta.json();
 
-      // Guardamos la lista de categorías extraídas del backend
       setCategorias(datos.categorias || []);
 
-      // 🚀 ADAPTACIÓN AL FORMATO DE TU BACKEND:
-      // Tu API devuelve 'datos.paginacion.totalPages'. Si por algún motivo viniera vacío,
-      // usamos el 'totalItems' dividido por el límite para que nunca falle la interfaz.
-      const totalItemsBackend = datos.paginacion?.totalItems || datos.categorias?.length || 0;
-      const paginasTotales = datos.paginacion?.totalPages || Math.ceil(totalItemsBackend / limiteCategorias) || 1;
-      
-      // Le inyectamos el total real de páginas (un 2) al mismo hook global que usan productos y canchas
+      const totalItemsBackend =
+        datos.paginacion?.totalItems || datos.categorias?.length || 0;
+
+      const paginasTotales =
+        datos.paginacion?.totalPages ||
+        Math.ceil(totalItemsBackend / limiteCategorias) ||
+        1;
+
       setCantidadPaginas(paginasTotales);
-      
     } catch (error) {
       console.error("Error al cargar categorías:", error);
       setCategorias([]);
@@ -71,13 +76,29 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       setTablaCargando(false);
     }
   };
+const obtenerTodasLasCategorias = useCallback(async () => {
+  try {
+    const respuesta = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/categorias?limit=1000`,
+    );
 
+    if (!respuesta.ok) {
+      throw new Error("No se pudieron obtener todas las categorías");
+    }
 
-  // CÓDIGO CORREGIDO: El contexto NO dispara la carga automática para no pisarse con la vista.
-  // Dejamos que AdminCategorias maneje el llamado cuando el usuario entra a la pestaña.
-  // ==========================================
-  // MODALES (ABRIR Y CERRAR)
-  // ==========================================
+    const datos = await respuesta.json();
+
+    setCategorias(datos.categorias || []);
+  } catch (error) {
+    console.error("Error al cargar todas las categorías:", error);
+    setCategorias([]);
+  }
+}, []);
+  // Cargar categorías automáticamente al iniciar el contexto
+  useEffect(() => {
+    obtenerCategorias(1);
+  }, []);
+
   const abrirCrear = () => {
     setCategoriaSeleccionada(null);
     setModalAbierto(true);
@@ -149,7 +170,10 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       await Swal.fire({
         icon: "error",
         title: "Error al guardar",
-        text: error instanceof Error ? error.message : "Ocurrió un error al guardar la categoría",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error al guardar la categoría",
         confirmButtonText: "Aceptar",
         background: "#1e293b",
         color: "#f8fafc",
@@ -191,7 +215,11 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
       if (!respuesta.ok) {
         const error = await respuesta.json().catch(() => null);
-        throw new Error(error?.message || error?.mensaje || "No se pudo eliminar la categoría");
+        throw new Error(
+          error?.message ||
+            error?.mensaje ||
+            "No se pudo eliminar la categoría",
+        );
       }
 
       await obtenerCategorias();
@@ -200,7 +228,10 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       await Swal.fire({
         icon: "error",
         title: "Error al eliminar",
-        text: error instanceof Error ? error.message : "No se pudo eliminar la categoría",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo eliminar la categoría",
         confirmButtonText: "Aceptar",
         background: "#1e293b",
         color: "#f8fafc",
@@ -220,6 +251,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
         modalAbierto,
         guardando,
         limiteCategorias,
+        obtenerTodasLasCategorias,
         obtenerCategorias,
         abrirCrear,
         abrirEditar,
@@ -234,12 +266,14 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 }
 
 // ==========================================
-  // HOOK DE CONSUMO PERSONALIZADO
-  // ==========================================
+// HOOK DE CONSUMO PERSONALIZADO
+// ==========================================
 export function useCategorias() {
   const context = useContext(CategoriaContext);
   if (!context) {
-    throw new Error("useCategorias debe utilizarse dentro de CategoriaProvider");
+    throw new Error(
+      "useCategorias debe utilizarse dentro de CategoriaProvider",
+    );
   }
   return context;
 }

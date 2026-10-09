@@ -83,7 +83,7 @@ export default function VerificarEmail() {
       setReenviando(true);
 
       const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/reenviar-codigo`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/reenviar-codigo`,
         {
           method: "POST",
           headers: {

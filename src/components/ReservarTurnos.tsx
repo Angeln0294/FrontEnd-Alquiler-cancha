@@ -14,13 +14,11 @@ export default function ReservasPage() {
   const navigate = useNavigate();
   const { usuario, cargando: cargandoUsuario } = useAuth();
 
-  // Datos recibidos desde la tarjeta de la cancha
   const canchaId = searchParams.get("canchaId");
   const nombreCanchaUrl = searchParams.get("cancha") || "Cancha 5 - Fútbol 7";
   const precioCanchaUrl = searchParams.get("precio") || "12000";
   const imagenCanchaUrl = searchParams.get("imagen") || "";
 
-  // Calendario
   const [fechaSeleccionada, setFechaSeleccionada] = useState(() => {
     const hoy = new Date();
 
@@ -84,83 +82,74 @@ export default function ReservasPage() {
   };
 
   const [reservando, setReservando] = useState(false);
-  // Turnos
+
   const [turnos, setTurnos] = useState<HorarioTurno[]>([]);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState<string | null>(
     null,
   );
   const [cargandoTurnos, setCargandoTurnos] = useState(false);
 
-  // --------------------------------------------------
-// OBTENER DISPONIBILIDAD
-// --------------------------------------------------
-
-useEffect(() => {
-  if (cargandoUsuario) {
-    return;
-  }
-
-  if (!usuario) {
-    Swal.fire({
-      icon: "warning",
-      title: "Iniciá sesión",
-      text: "Debés iniciar sesión para poder reservar una cancha.",
-      confirmButtonText: "Iniciar sesión",
-      background: "#1e293b",
-      color: "#f8fafc",
-      confirmButtonColor: "#22c55e",
-    }).then((resultado) => {
-      if (resultado.isConfirmed) {
-        navigate("/login");
-      }
-    });
-
-    return;
-  }
-
-}, [usuario, cargandoUsuario, navigate]);
-
-useEffect(() => {
-  const cargarDisponibilidad = async () => {
-    if (!canchaId) {
-      console.error("No se recibió el ID de la cancha");
+  useEffect(() => {
+    if (cargandoUsuario) {
       return;
     }
 
-    try {
-      setCargandoTurnos(true);
-      setTurnoSeleccionado(null);
+    if (!usuario) {
+      Swal.fire({
+        icon: "warning",
+        title: "Iniciá sesión",
+        text: "Debés iniciar sesión para poder reservar una cancha.",
+        confirmButtonText: "Iniciar sesión",
+        background: "#1e293b",
+        color: "#f8fafc",
+        confirmButtonColor: "#22c55e",
+      }).then((resultado) => {
+        if (resultado.isConfirmed) {
+          navigate("/login");
+        }
+      });
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
-        {
-          credentials: "include",
-        },
-      );
+      return;
+    }
+  }, [usuario, cargandoUsuario, navigate]);
 
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudo obtener la disponibilidad",
-        );
+  useEffect(() => {
+    const cargarDisponibilidad = async () => {
+      if (!canchaId) {
+        console.error("No se recibió el ID de la cancha");
+        return;
       }
 
-      setTurnos(resultado.turnos || []);
-    } catch (error) {
-      console.error("Error al obtener disponibilidad:", error);
-      setTurnos([]);
-    } finally {
-      setCargandoTurnos(false);
-    }
-  };
+      try {
+        setCargandoTurnos(true);
+        setTurnoSeleccionado(null);
 
-  cargarDisponibilidad();
-}, [canchaId, fechaSeleccionada]);
+        const respuesta = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
+          {
+            credentials: "include",
+          },
+        );
 
-  // --------------------------------------------------
-  // PRECIO
-  // --------------------------------------------------
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+          throw new Error(
+            resultado.mensaje || "No se pudo obtener la disponibilidad",
+          );
+        }
+
+        setTurnos(resultado.turnos || []);
+      } catch (error) {
+        console.error("Error al obtener disponibilidad:", error);
+        setTurnos([]);
+      } finally {
+        setCargandoTurnos(false);
+      }
+    };
+
+    cargarDisponibilidad();
+  }, [canchaId, fechaSeleccionada]);
 
   const precioNumero = Number(precioCanchaUrl);
 
@@ -171,17 +160,9 @@ useEffect(() => {
 
   const precioFinalFormateado = `$${precioFinalNumero.toLocaleString("es-AR")}`;
 
-  // --------------------------------------------------
-  // TURNO ACTUAL
-  // --------------------------------------------------
-
   const turnoActual = turnos.find(
     (turno) => turno.horaInicio === turnoSeleccionado,
   );
-
-  // --------------------------------------------------
-  // SELECCIONAR TURNO
-  // --------------------------------------------------
 
   const handleSeleccionarTurno = (horaInicio: string) => {
     setTurnoSeleccionado(horaInicio);
@@ -193,21 +174,22 @@ useEffect(() => {
 
     try {
       setReservando(true);
-    
 
-      // 1. Crear la reserva
-      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/reservas`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            cancha: canchaId,
+            fecha: fechaSeleccionada,
+            horaInicio: turnoSeleccionado,
+          }),
         },
-        credentials: "include",
-        body: JSON.stringify({
-          cancha: canchaId,
-          fecha: fechaSeleccionada,
-          horaInicio: turnoSeleccionado,
-        }),
-      });
+      );
 
       const resultado = await respuesta.json();
 
@@ -221,9 +203,8 @@ useEffect(() => {
         throw new Error("La reserva fue creada, pero no se recibió su ID");
       }
 
-      // 2. Crear preferencia de Mercado Pago
       const respuestaPago = await fetch(
-       `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia-reserva`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia-reserva`,
         {
           method: "POST",
           headers: {
@@ -244,7 +225,6 @@ useEffect(() => {
         );
       }
 
-      // 3. Mostrar confirmación
       const confirmacion = await Swal.fire({
         icon: "success",
         title: "¡Reserva creada correctamente!",
@@ -258,13 +238,11 @@ useEffect(() => {
         color: "#f8fafc",
       });
 
-      // 4. Redirigir a Mercado Pago
       if (confirmacion.isConfirmed) {
         window.location.href = resultadoPago.init_point;
         return;
       }
 
-      // Si el usuario decide pagar más tarde
       setTurnoSeleccionado(null);
 
       const disponibilidad = await fetch(
@@ -301,8 +279,6 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans animate-fadeIn">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* VOLVER */}
-
         <button
           type="button"
           onClick={() => navigate("/canchas")}
@@ -315,14 +291,8 @@ useEffect(() => {
           Reserva de Cancha
         </h1>
 
-        {/* CONTENIDO */}
-
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* COLUMNA IZQUIERDA */}
-
           <div className="lg:col-span-5 space-y-6">
-            {/* INFORMACIÓN CANCHA */}
-
             <div className="bg-[#1e293b] rounded-2xl overflow-hidden border border-slate-800 shadow-xl">
               <div className="w-full h-56 bg-slate-900 overflow-hidden">
                 {imagenCanchaUrl ? (
@@ -351,8 +321,6 @@ useEffect(() => {
                 </p>
               </div>
             </div>
-
-            {/* CALENDARIO */}
 
             <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-xl">
               <div className="flex justify-between items-center mb-4">
@@ -393,13 +361,9 @@ useEffect(() => {
               </div>
 
               <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                {/* ESPACIOS ANTES DEL PRIMER DÍA */}
-
                 {Array.from({ length: primerDiaDelMes }).map((_, index) => (
                   <span key={`vacio-${index}`} className="py-2" />
                 ))}
-
-                {/* DÍAS DEL MES */}
 
                 {Array.from({ length: diasDelMes }, (_, i) => i + 1).map(
                   (dia) => {
@@ -437,11 +401,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* COLUMNA DERECHA */}
-
           <div className="lg:col-span-7 bg-[#1e293b] p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-between space-y-6 h-full">
-            {/* HORARIOS */}
-
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
                 Seleccionar Horario
@@ -464,8 +424,6 @@ useEffect(() => {
                   {turnos.map((turno) => {
                     const seleccionado = turno.horaInicio === turnoSeleccionado;
 
-                    // TURNO OCUPADO
-
                     if (!turno.disponible) {
                       return (
                         <div
@@ -482,8 +440,6 @@ useEffect(() => {
                         </div>
                       );
                     }
-
-                    // TURNO SELECCIONADO
 
                     if (seleccionado) {
                       return (
@@ -504,8 +460,6 @@ useEffect(() => {
                       );
                     }
 
-                    // TURNO DISPONIBLE
-
                     return (
                       <button
                         key={turno.horaInicio}
@@ -520,8 +474,6 @@ useEffect(() => {
                 </div>
               )}
             </div>
-
-            {/* RESUMEN */}
 
             <div className="bg-[#0b132b] p-5 rounded-xl border border-slate-800 space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800/60 pb-2">
@@ -557,16 +509,12 @@ useEffect(() => {
                   </span>
                 </div>
 
-                {/* PROMO */}
-
                 {esHorarioPromo && (
                   <div className="flex justify-between items-center text-[10px] text-green-400 font-bold bg-green-500/10 px-2 py-1.5 rounded-lg border border-green-500/20 uppercase tracking-wider">
                     <span>¡Promo Nocturna Aplicada!</span>
                     <span>-20% OFF</span>
                   </div>
                 )}
-
-                {/* TOTAL */}
 
                 <div className="flex justify-between items-center text-sm pt-3 border-t border-slate-800/80">
                   <span className="text-slate-300 font-black">Total:</span>
@@ -576,8 +524,6 @@ useEffect(() => {
                   </span>
                 </div>
               </div>
-
-              {/* CONFIRMAR */}
 
               <button
                 type="button"

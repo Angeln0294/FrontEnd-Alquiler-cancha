@@ -22,17 +22,16 @@ export default function FormularioCategoriaAdmin() {
     },
   });
 
-  // Cargar los datos cuando estamos editando
   useEffect(() => {
     if (categoriaSeleccionada) {
       reset({
         nombreCategoria: categoriaSeleccionada.nombreCategoria,
       });
-    } 
+    }
   }, [categoriaSeleccionada, reset]);
 
   const manejarSubmit = async (datos: FormularioCategoria) => {
-     console.log("DATOS DEL FORMULARIO:", datos);
+    console.log("DATOS DEL FORMULARIO:", datos);
     await guardarCategoria(datos.nombreCategoria.trim());
   };
 
@@ -45,7 +44,6 @@ export default function FormularioCategoriaAdmin() {
         className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ENCABEZADO */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white">
@@ -68,7 +66,6 @@ export default function FormularioCategoriaAdmin() {
           </button>
         </div>
 
-        {/* FORMULARIO */}
         <form onSubmit={handleSubmit(manejarSubmit)}>
           <div className="mb-6">
             <label
@@ -110,7 +107,6 @@ export default function FormularioCategoriaAdmin() {
             </p>
           </div>
 
-          {/* BOTONES */}
           <div className="flex justify-end gap-3">
             <button
               type="button"

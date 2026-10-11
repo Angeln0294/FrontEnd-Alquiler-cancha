@@ -7,7 +7,9 @@ interface TablaContextType {
 
 const TablaContext = createContext<TablaContextType | undefined>(undefined);
 
-export const TablaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TablaProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [tablaCargando, setTablaCargando] = useState(false);
 
   return (
@@ -24,4 +26,3 @@ export const useTabla = () => {
   }
   return context;
 };
-

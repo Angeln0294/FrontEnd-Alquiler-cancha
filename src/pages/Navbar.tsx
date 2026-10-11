@@ -20,7 +20,6 @@ export default function Navbar(): React.JSX.Element {
 
   return (
     <nav className="bg-[#0b132b] text-white px-6 py-4 md:px-12 flex flex-wrap items-center justify-between sticky top-0 z-50 shadow-md">
-      {/* Brand / Logo */}
       <Link
         to="/"
         className="flex items-center gap-2 cursor-pointer no-underline text-white"
@@ -35,7 +34,6 @@ export default function Navbar(): React.JSX.Element {
         </span>
       </Link>
 
-      {/* Menú de Hamburguesa */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="md:hidden text-white focus:outline-none cursor-pointer"
@@ -64,7 +62,6 @@ export default function Navbar(): React.JSX.Element {
         </svg>
       </button>
 
-      {/* Links de Navegación */}
       <div
         className={`${
           isOpen ? "block" : "hidden"
@@ -81,7 +78,6 @@ export default function Navbar(): React.JSX.Element {
             </Link>
           </li>
 
-          {/* Registro solamente si NO está logueado */}
           {!usuario && (
             <li>
               <Link
@@ -126,7 +122,6 @@ export default function Navbar(): React.JSX.Element {
         </ul>
       </div>
 
-      {/* Login / Mi Cuenta / Panel Admin */}
       <div
         className={`${
           isOpen ? "block" : "hidden"
@@ -144,7 +139,6 @@ export default function Navbar(): React.JSX.Element {
             </Link>
           )}
 
-          {/* Panel Admin */}
           {usuario?.rol === "admin" && (
             <Link
               to="/admin"
@@ -155,7 +149,6 @@ export default function Navbar(): React.JSX.Element {
             </Link>
           )}
 
-          {/* Mi Cuenta */}
           {usuario && (
             <div className="relative inline-block">
               <button
@@ -169,7 +162,6 @@ export default function Navbar(): React.JSX.Element {
                 </div>
               </button>
 
-              {/* Dropdown */}
               {isAccountOpen && (
                 <div className="absolute right-0 mt-2 w-52 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-2 z-50 text-left">
                   {/* Saludo */}
@@ -199,7 +191,7 @@ export default function Navbar(): React.JSX.Element {
                     to="/mis-compras"
                     className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                   🛍️ Mis compras
+                    🛍️ Mis compras
                   </Link>
 
                   {usuario?.rol !== "admin" && (

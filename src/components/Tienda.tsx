@@ -9,12 +9,11 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 export default function Tienda() {
-  const { productos, cargarProductos, limiteProductos } =
-    useProductos();
+  const { productos, cargarProductos, limiteProductos } = useProductos();
 
   const { paginaActual, cambiarPagina } = usePaginacionBackend("productos");
 
-  const { categorias, obtenerTodasLasCategorias, } = useCategorias();
+  const { categorias, obtenerTodasLasCategorias } = useCategorias();
   const { usuario } = useAuth();
   const navigate = useNavigate();
   const { agregarAlCarrito, cantidadTotal } = useCarrito();
@@ -22,17 +21,14 @@ export default function Tienda() {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
-  // CARGAR PRODUCTOS CUANDO CAMBIA LA PÁGINA
-  // =====================================================
   useEffect(() => {
     cargarProductos(paginaActual, busqueda, limiteProductos);
   }, [paginaActual]);
 
-  useEffect(() => { obtenerTodasLasCategorias(); }, [obtenerTodasLasCategorias]);
+  useEffect(() => {
+    obtenerTodasLasCategorias();
+  }, [obtenerTodasLasCategorias]);
 
-  // =====================================================
-  // BUSCAR PRODUCTOS
-  // =====================================================
   useEffect(() => {
     const tiempo = setTimeout(() => {
       // Si estamos en otra página, volvemos a la 1
@@ -48,9 +44,6 @@ export default function Tienda() {
     return () => clearTimeout(tiempo);
   }, [busqueda]);
 
-  // =====================================================
-  // FILTRO POR CATEGORÍA
-  // =====================================================
   const productosFiltrados = productos.filter((producto) => {
     if (!categoriaSeleccionada) return true;
 
@@ -60,9 +53,6 @@ export default function Tienda() {
   return (
     <div className="min-h-screen bg-slate-950 text-white px-6 py-10">
       <div className="max-w-7xl mx-auto">
-        {/* =====================================================
-            ENCABEZADO
-        ===================================================== */}
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <h1 className="text-4xl font-black tracking-tight">Tienda 🛒</h1>
@@ -101,11 +91,7 @@ export default function Tienda() {
           </button>
         </div>
 
-        {/* =====================================================
-            FILTROS
-        ===================================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {/* BUSCADOR */}
           <div>
             <label className="block text-sm font-semibold text-slate-300 mb-2">
               Buscar producto
@@ -120,7 +106,6 @@ export default function Tienda() {
             />
           </div>
 
-          {/* CATEGORÍA */}
           <div>
             <label className="block text-sm font-semibold text-slate-300 mb-2">
               Categoría
@@ -143,9 +128,6 @@ export default function Tienda() {
           </div>
         </div>
 
-        {/* =====================================================
-            PRODUCTOS
-        ===================================================== */}
         {productosFiltrados.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-5xl mb-4">🔎</div>
@@ -160,14 +142,12 @@ export default function Tienda() {
           </div>
         ) : (
           <>
-            {/* GRID DE PRODUCTOS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {productosFiltrados.map((producto) => (
                 <div
                   key={producto._id}
                   className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl hover:border-green-500/40 transition"
                 >
-                  {/* IMAGEN */}
                   <div className="h-56 bg-slate-950">
                     <img
                       src={producto.imagen}
@@ -176,7 +156,6 @@ export default function Tienda() {
                     />
                   </div>
 
-                  {/* INFORMACIÓN */}
                   <div className="p-5">
                     <p className="text-xs text-purple-400 font-semibold mb-2">
                       {producto.categoria?.nombreCategoria}
@@ -243,9 +222,6 @@ export default function Tienda() {
               ))}
             </div>
 
-            {/* =====================================================
-                PAGINADOR BACKEND
-            ===================================================== */}
             <div className="border-t border-slate-800 mt-8 pt-4">
               <PaginadorBackend seccion="productos" />
             </div>

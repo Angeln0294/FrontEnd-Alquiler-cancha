@@ -26,12 +26,9 @@ export default function NuestrasCanchas() {
   const [canchas, setCanchas] = useState<CanchaDetalle[]>([]);
   const [cargando, setCargando] = useState(true);
 
-  // Cantidad de canchas que se muestran por página
   const canchasPorPagina = 6;
 
-  // El componente PaginadorBackend se encarga de cambiar la página
-  const { paginaActual, setCantidadPaginas } =
-    usePaginacionBackend("canchas");
+  const { paginaActual, setCantidadPaginas } = usePaginacionBackend("canchas");
 
   useEffect(() => {
     const cargarCanchas = async () => {
@@ -57,12 +54,9 @@ export default function NuestrasCanchas() {
 
         setCanchas(resultado.canchas || []);
 
-        // Le informamos al contexto cuántas páginas existen
         setCantidadPaginas(
           resultado.totalPaginas ||
-            Math.ceil(
-              (resultado.cantidadCanchas || 0) / canchasPorPagina,
-            ),
+            Math.ceil((resultado.cantidadCanchas || 0) / canchasPorPagina),
         );
       } catch (error) {
         console.error("Error al cargar las canchas:", error);
@@ -104,58 +98,52 @@ export default function NuestrasCanchas() {
   return (
     <div className="w-full bg-[#0b132b] text-white min-h-screen py-12 px-6 md:px-12 font-sans">
       <div className="max-w-6xl mx-auto space-y-12">
-
         <h2 className="text-3xl md:text-4xl font-extrabold text-center">
           Nuestras <span className="text-green-400">Canchas</span>
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-  {canchas.map((cancha) => (
-    <CanchaCard
-      key={cancha._id}
-      cancha={cancha}
-      onReservar={(cancha) => {
-        if (!usuario) {
-          Swal.fire({
-            icon: "warning",
-            title: "Iniciá sesión",
-            text: "Debés iniciar sesión para poder reservar una cancha.",
-            confirmButtonText: "Iniciar sesión",
-            background: "#1e293b",
-            color: "#f8fafc",
-            confirmButtonColor: "#22c55e",
-          }).then((resultado) => {
-            if (resultado.isConfirmed) {
-              navigate("/login");
-            }
-          });
+          {canchas.map((cancha) => (
+            <CanchaCard
+              key={cancha._id}
+              cancha={cancha}
+              onReservar={(cancha) => {
+                if (!usuario) {
+                  Swal.fire({
+                    icon: "warning",
+                    title: "Iniciá sesión",
+                    text: "Debés iniciar sesión para poder reservar una cancha.",
+                    confirmButtonText: "Iniciar sesión",
+                    background: "#1e293b",
+                    color: "#f8fafc",
+                    confirmButtonColor: "#22c55e",
+                  }).then((resultado) => {
+                    if (resultado.isConfirmed) {
+                      navigate("/login");
+                    }
+                  });
 
-          return;
-        }
+                  return;
+                }
 
-        navigate(
-          `/reservar-turnos?canchaId=${encodeURIComponent(
-            cancha._id,
-          )}&cancha=${encodeURIComponent(
-            cancha.nombre,
-          )}&precio=${encodeURIComponent(
-            cancha.precio,
-          )}&imagen=${encodeURIComponent(
-            cancha.imagen,
-          )}`,
-        );
-      }}
-    />
-  ))}
-</div>
+                navigate(
+                  `/reservar-turnos?canchaId=${encodeURIComponent(
+                    cancha._id,
+                  )}&cancha=${encodeURIComponent(
+                    cancha.nombre,
+                  )}&precio=${encodeURIComponent(
+                    cancha.precio,
+                  )}&imagen=${encodeURIComponent(cancha.imagen)}`,
+                );
+              }}
+            />
+          ))}
+        </div>
 
-        {/* Paginador reutilizable */}
         <div className="border-t border-slate-700 p-4">
           <PaginadorBackend seccion="canchas" />
         </div>
-
       </div>
     </div>
   );
 }
-

@@ -2,7 +2,7 @@ import { useProductos } from "../../../context/ProductoContext";
 import FormularioProductoAdmin from "../../FormularioProductoAdmin";
 import { TablaGenerica, type Columna } from "../../TablaGenerica";
 import { PaginadorBackend } from "../../Paginador";
-import { usePaginacionBackend } from "../../../context/PaginacionContext"; // Verificá que la ruta de importación de tu contexto sea la correcta
+import { usePaginacionBackend } from "../../../context/PaginacionContext";
 import { useEffect } from "react";
 const COLUMNAS_PRODUCTOS: Columna[] = [
   { id: "imagen", titulo: "Imagen" },
@@ -21,22 +21,16 @@ export default function AdminProductos() {
     eliminarProducto,
     limiteProductos,
     cantidadProductos,
-    cargarProductos
+    cargarProductos,
   } = useProductos();
 
-  // Traemos el estado y la función para forzar la página desde el contexto de paginación
-  const { paginaActual} = usePaginacionBackend("productos"); 
+  const { paginaActual } = usePaginacionBackend("productos");
 
-  // ==========================================
-  // EFECTO 1: FUERZA LA PÁGINA 1 EN AUTOMÁTICO AL ENTRAR
-  // ==========================================
-
-
-useEffect(() => {
-  if (paginaActual) {
-    cargarProductos(paginaActual);
-  }
-}, [paginaActual]);
+  useEffect(() => {
+    if (paginaActual) {
+      cargarProductos(paginaActual);
+    }
+  }, [paginaActual]);
 
   const obtenerNombreCategoria = (
     categoria: string | { nombreCategoria: string },
@@ -56,7 +50,6 @@ useEffect(() => {
 
   return (
     <div className="space-y-6">
-      {/* ENCABEZADO */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight">
@@ -76,14 +69,16 @@ useEffect(() => {
         </button>
       </div>
 
-      {/* TABLA */}
       <div className="bg-linear-to-b from-slate-900/90 to-[#0b0f19] border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl">
         {productos.length === 0 ? (
-          /* SIN PRODUCTOS */
           <div className="p-10 text-center">
             <div className="text-5xl mb-4">🛒</div>
-            <h2 className="text-lg font-bold text-slate-200">No hay productos</h2>
-            <p className="text-sm text-slate-500 mt-2">Todavía no hay productos registrados.</p>
+            <h2 className="text-lg font-bold text-slate-200">
+              No hay productos
+            </h2>
+            <p className="text-sm text-slate-500 mt-2">
+              Todavía no hay productos registrados.
+            </p>
             <button
               type="button"
               onClick={abrirCrear}
@@ -93,7 +88,6 @@ useEffect(() => {
             </button>
           </div>
         ) : (
-          /* TABLA DE PRODUCTOS */
           <div className="overflow-x-auto">
             <TablaGenerica
               columnas={COLUMNAS_PRODUCTOS}
@@ -103,7 +97,6 @@ useEffect(() => {
                   key={producto._id}
                   className="border-b border-slate-800/60 hover:bg-slate-800/30 transition"
                 >
-                  {/* IMAGEN */}
                   <td className="px-6 py-4">
                     <img
                       src={obtenerImagen(producto.imagen)}
@@ -112,25 +105,27 @@ useEffect(() => {
                     />
                   </td>
 
-                  {/* NOMBRE */}
                   <td className="px-6 py-4">
-                    <p className="font-semibold text-slate-200">{producto.nombreProducto}</p>
-                    <p className="text-xs text-slate-500 mt-1">{producto.descripcion}</p>
+                    <p className="font-semibold text-slate-200">
+                      {producto.nombreProducto}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {producto.descripcion}
+                    </p>
                   </td>
 
-                  {/* PRECIO */}
                   <td className="px-6 py-4">
-                    <span className="font-bold text-green-400">${producto.precio}</span>
+                    <span className="font-bold text-green-400">
+                      ${producto.precio}
+                    </span>
                   </td>
 
-                  {/* CATEGORIA */}
                   <td className="px-6 py-4">
                     <span className="px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold">
                       {obtenerNombreCategoria(producto.categoria)}
                     </span>
                   </td>
 
-                  {/* ACCIONES */}
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <button
@@ -155,7 +150,6 @@ useEffect(() => {
               )}
             />
 
-            {/* NUEVA PAGINACIÓN GLOBAL REUTILIZABLE DESDE EL BACKEND */}
             <div className="border-t border-slate-800 p-4">
               <PaginadorBackend seccion="productos" />
             </div>
@@ -163,16 +157,14 @@ useEffect(() => {
         )}
       </div>
 
-      {/* INFORMACIÓN DE PRODUCTOS */}
       {cantidadProductos > 0 && (
         <p className="text-center text-xs text-slate-500">
           Mostrando {((paginaActual || 1) - 1) * limiteProductos + 1} -{" "}
-          {Math.min((paginaActual || 1) * limiteProductos, cantidadProductos)} de{" "}
-          {cantidadProductos} productos
+          {Math.min((paginaActual || 1) * limiteProductos, cantidadProductos)}{" "}
+          de {cantidadProductos} productos
         </p>
       )}
 
-      {/* MODAL */}
       {modalAbierto && <FormularioProductoAdmin />}
     </div>
   );

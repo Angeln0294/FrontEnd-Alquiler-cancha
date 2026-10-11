@@ -5,7 +5,6 @@ import { useProductos } from "../context/ProductoContext";
 import { useCarrito } from "../context/CarritoContext";
 import Swal from "sweetalert2";
 
-// 📋 Interfaces estrictas para el tipado de TypeScript
 interface Anuncio {
   id: number;
   titulo: string;
@@ -34,7 +33,6 @@ export default function Inicio() {
   const [canchas, setCanchas] = useState<Cancha[]>([]);
   const [cargandoCanchas, setCargandoCanchas] = useState(true);
 
-  // 📢 Lista de las promociones del banner
   const anuncios: Anuncio[] = [
     {
       id: 1,
@@ -59,7 +57,6 @@ export default function Inicio() {
     },
   ];
 
-  // 🔄 Efecto para rotar la publicidad automáticamente cada 5 segundos
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % anuncios.length);
@@ -72,9 +69,12 @@ export default function Inicio() {
       try {
         setCargandoCanchas(true);
 
-        const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, {
-          credentials: "include",
-        });
+        const respuesta = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/canchas`,
+          {
+            credentials: "include",
+          },
+        );
 
         const resultado = await respuesta.json();
 
@@ -97,7 +97,6 @@ export default function Inicio() {
 
   return (
     <div className="w-full bg-[#0b132b] text-white min-h-screen pb-16">
-      {/* 📢 1. BANNER DE PUBLICIDAD ROTATIVO */}
       <div className="w-full px-6 md:px-12 pt-8 max-w-7xl mx-auto">
         <div
           className={`w-full rounded-3xl bg-linear-to-r ${anuncios[currentSlide].colorBg} p-8 md:p-12 relative overflow-hidden shadow-2xl transition-all duration-700 ease-in-out border border-gray-800 flex flex-col md:flex-row justify-between items-center gap-6 min-h-55`}
@@ -133,7 +132,6 @@ export default function Inicio() {
         </div>
       </div>
 
-      {/* ⚽ 2. SECCIÓN DE RESERVAS DE CANCHAS (3 UNIDADES) */}
       <section className="w-full px-6 md:px-12 pt-16 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
@@ -201,7 +199,6 @@ export default function Inicio() {
                           ${cancha.precio.toLocaleString("es-AR")}
                         </p>
                       </div>
-                      
 
                       <button
                         type="button"
@@ -254,7 +251,7 @@ export default function Inicio() {
           </button>
         </div>
       </section>
-      {/* 🛍️ 3. NUEVA SECCIÓN: PRODUCTOS DESTACADOS DE LA TIENDA (3 UNIDADES) */}
+
       <section className="w-full px-6 md:px-12 pt-20 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">

@@ -33,10 +33,6 @@ export default function MisCompras() {
 
   const cantidadPaginas = Math.ceil(compras.length / comprasPorPagina);
 
-  // ==============================
-  // CARGAR COMPRAS
-  // ==============================
-
   const cargarCompras = async () => {
     try {
       setCargando(true);
@@ -81,10 +77,6 @@ export default function MisCompras() {
     cargarCompras();
   }, []);
 
-  // ==============================
-  // FORMATEAR FECHA
-  // ==============================
-
   const formatearFecha = (fecha: string) => {
     return new Date(fecha).toLocaleDateString("es-AR", {
       day: "2-digit",
@@ -93,10 +85,6 @@ export default function MisCompras() {
     });
   };
 
-  // ==============================
-  // FORMATEAR PRECIO
-  // ==============================
-
   const formatearPrecio = (precio: number) => {
     return precio.toLocaleString("es-AR", {
       style: "currency",
@@ -104,10 +92,6 @@ export default function MisCompras() {
       minimumFractionDigits: 0,
     });
   };
-
-  // ==============================
-  // ESTADO
-  // ==============================
 
   const obtenerClaseEstado = (estado: Orden["estado"]) => {
     switch (estado) {
@@ -147,10 +131,6 @@ export default function MisCompras() {
     }
   };
 
-  // ==============================
-  // CARGANDO
-  // ==============================
-
   if (cargando) {
     return (
       <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans">
@@ -162,10 +142,6 @@ export default function MisCompras() {
       </div>
     );
   }
-
-  // ==============================
-  // PÁGINA
-  // ==============================
 
   return (
     <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans">
@@ -192,8 +168,6 @@ export default function MisCompras() {
           </button>
         </div>
 
-        {/* SIN COMPRAS */}
-
         {compras.length === 0 ? (
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl p-10 text-center shadow-xl">
             <div className="text-5xl mb-5">🛍️</div>
@@ -215,8 +189,6 @@ export default function MisCompras() {
             </button>
           </div>
         ) : (
-          /* LISTADO */
-
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-225 text-sm">
@@ -246,24 +218,17 @@ export default function MisCompras() {
                   </tr>
                 </thead>
 
-                {/* CUERPO */}
-
                 <tbody>
                   {comprasPagina.map((compra) => (
                     <tr
                       key={compra._id}
                       className="border-b-2 border-slate-700 transition-colors hover:bg-slate-800/40"
-                      
                     >
-                      {/* FECHA */}
-
                       <td className="px-5 py-6 align-top">
                         <span className="text-sm text-slate-200 font-medium">
                           {formatearFecha(compra.createdAt)}
                         </span>
                       </td>
-
-                      {/* PRODUCTOS */}
 
                       <td className="px-5 py-6 align-top">
                         <div className="space-y-3">
@@ -284,8 +249,6 @@ export default function MisCompras() {
                         </div>
                       </td>
 
-                      {/* CANTIDAD */}
-
                       <td className="px-5 py-6 align-top">
                         <div className="space-y-3">
                           {compra.items.map((item, index) => (
@@ -299,15 +262,11 @@ export default function MisCompras() {
                         </div>
                       </td>
 
-                      {/* TOTAL */}
-
                       <td className="px-5 py-6 align-top">
                         <span className="text-sm font-black text-green-400">
                           {formatearPrecio(compra.montoTotal)}
                         </span>
                       </td>
-
-                      {/* ESTADO */}
 
                       <td className="px-5 py-6 text-center align-top">
                         <span
@@ -325,8 +284,6 @@ export default function MisCompras() {
 
               {cantidadPaginas > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-10 pb-6">
-                  {/* ANTERIOR */}
-
                   <button
                     type="button"
                     disabled={paginaActual === 1}
@@ -335,8 +292,6 @@ export default function MisCompras() {
                   >
                     ‹
                   </button>
-
-                  {/* NÚMEROS DE PÁGINA */}
 
                   {Array.from({ length: cantidadPaginas }, (_, index) => {
                     const pagina = index + 1;
@@ -356,8 +311,6 @@ export default function MisCompras() {
                       </button>
                     );
                   })}
-
-                  {/* SIGUIENTE */}
 
                   <button
                     type="button"

@@ -14,7 +14,6 @@ interface CanchaCardProps {
 }
 
 export const CanchaCard: React.FC<CanchaCardProps> = ({ cancha }) => {
-  // Consumimos las acciones sin usar props intermedias
   const { abrirFormularioEditar, eliminarCancha } = useCanchasAdmin();
 
   return (
@@ -33,7 +32,9 @@ export const CanchaCard: React.FC<CanchaCardProps> = ({ cancha }) => {
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <h3 className="text-lg font-bold text-slate-100">{cancha.nombre}</h3>
+            <h3 className="text-lg font-bold text-slate-100">
+              {cancha.nombre}
+            </h3>
             <span className="inline-block mt-1 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-[11px] font-semibold">
               {cancha.tipo}
             </span>

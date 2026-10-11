@@ -12,7 +12,11 @@ interface TablaGenericaProps<T> {
   renderFila: (item: T) => React.ReactNode;
 }
 
-export function TablaGenerica<T>({ columnas, datos, renderFila }: TablaGenericaProps<T>) {
+export function TablaGenerica<T>({
+  columnas,
+  datos,
+  renderFila,
+}: TablaGenericaProps<T>) {
   const { tablaCargando } = useTabla();
 
   return (
@@ -21,7 +25,10 @@ export function TablaGenerica<T>({ columnas, datos, renderFila }: TablaGenericaP
         <thead className="border-b border-slate-700 bg-[#111c36]">
           <tr>
             {columnas.map((col) => (
-              <th key={col.id} className="px-5 py-4 text-sm font-semibold text-slate-300">
+              <th
+                key={col.id}
+                className="px-5 py-4 text-sm font-semibold text-slate-300"
+              >
                 {col.titulo}
               </th>
             ))}
@@ -38,7 +45,10 @@ export function TablaGenerica<T>({ columnas, datos, renderFila }: TablaGenericaP
             </tr>
           ) : datos.length === 0 ? (
             <tr>
-              <td colSpan={columnas.length} className="px-5 py-12 text-center text-sm text-slate-400">
+              <td
+                colSpan={columnas.length}
+                className="px-5 py-12 text-center text-sm text-slate-400"
+              >
                 No se encontraron registros.
               </td>
             </tr>

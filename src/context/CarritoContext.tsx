@@ -1,9 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import Swal from "sweetalert2";
 
@@ -31,10 +26,7 @@ export interface Carrito {
 interface CarritoContextType {
   carrito: Carrito | null;
   cargando: boolean;
-  agregarAlCarrito: (
-    productoId: string,
-    cantidad?: number
-  ) => Promise<void>;
+  agregarAlCarrito: (productoId: string, cantidad?: number) => Promise<void>;
   restarCantidad: (productoId: string) => Promise<void>;
   sumarCantidad: (productoId: string) => Promise<void>;
   eliminarProducto: (productoId: string) => Promise<void>;
@@ -45,21 +37,11 @@ interface CarritoContextType {
   precioTotal: number;
 }
 
-const CarritoContext = createContext<
-  CarritoContextType | undefined
->(undefined);
+const CarritoContext = createContext<CarritoContextType | undefined>(undefined);
 
-export function CarritoProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function CarritoProvider({ children }: { children: React.ReactNode }) {
   const [carrito, setCarrito] = useState<Carrito | null>(null);
   const [cargando, setCargando] = useState(false);
-
-  // =================================
-  // OBTENER CARRITO
-  // =================================
 
   const obtenerCarrito = async () => {
     try {
@@ -69,7 +51,7 @@ export function CarritoProvider({
         `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
         {
           credentials: "include",
-        }
+        },
       );
 
       if (!respuesta.ok) {
@@ -79,7 +61,6 @@ export function CarritoProvider({
       const datos = await respuesta.json();
 
       setCarrito(datos);
-
     } catch (error) {
       console.error("Error al obtener carrito:", error);
     } finally {
@@ -87,14 +68,7 @@ export function CarritoProvider({
     }
   };
 
-  // =================================
-  // AGREGAR PRODUCTO
-  // =================================
-
-  const agregarAlCarrito = async (
-    productoId: string,
-    cantidad = 1
-  ) => {
+  const agregarAlCarrito = async (productoId: string, cantidad = 1) => {
     try {
       const respuesta = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
@@ -108,184 +82,146 @@ export function CarritoProvider({
             producto: productoId,
             cantidad,
           }),
-        }
+        },
       );
 
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
         throw new Error(
-          datos?.mensaje ||
-            "No se pudo agregar el producto al carrito"
+          datos?.mensaje || "No se pudo agregar el producto al carrito",
         );
       }
 
       setCarrito(datos.carrito);
-
     } catch (error) {
       console.error("Error al agregar al carrito:", error);
 
       Swal.fire({
-  icon: "error",
-  title: "Error",
-  text:
-    error instanceof Error
-      ? error.message
-      : "No se pudo agregar el producto al carrito",
-});
+        icon: "error",
+        title: "Error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo agregar el producto al carrito",
+      });
     }
   };
 
-  // =================================
-  // RESTAR CANTIDAD
-  // =================================
-
-  const restarCantidad = async (
-    productoId: string
-  ) => {
+  const restarCantidad = async (productoId: string) => {
     try {
       const respuesta = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/carrito/restar/${productoId}`,
         {
           method: "PATCH",
           credentials: "include",
-        }
+        },
       );
 
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(
-          datos?.mensaje ||
-            "No se pudo actualizar la cantidad"
-        );
+        throw new Error(datos?.mensaje || "No se pudo actualizar la cantidad");
       }
 
       setCarrito(datos.carrito);
-
     } catch (error) {
-      console.error(
-        "Error al restar cantidad:",
-        error
-      );
+      console.error("Error al restar cantidad:", error);
 
       Swal.fire({
-  icon: "error",
-  title: "Error",
-  text:
-    error instanceof Error
-      ? error.message
-      : "No se pudo actualizar la cantidad",
-});
+        icon: "error",
+        title: "Error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo actualizar la cantidad",
+      });
     }
   };
 
   const sumarCantidad = async (productoId: string) => {
-  try {
-    const respuesta = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    try {
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            producto: productoId,
+            cantidad: 1,
+          }),
         },
-        credentials: "include",
-        body: JSON.stringify({
-          producto: productoId,
-          cantidad: 1,
-        }),
-      }
-    );
-
-    const datos = await respuesta.json();
-
-    if (!respuesta.ok) {
-      throw new Error(
-        datos?.mensaje || "No se pudo aumentar la cantidad"
       );
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(datos?.mensaje || "No se pudo aumentar la cantidad");
+      }
+
+      setCarrito(datos.carrito);
+    } catch (error) {
+      console.error("Error al aumentar cantidad:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo aumentar la cantidad",
+      });
     }
+  };
 
-    setCarrito(datos.carrito);
-
-  } catch (error) {
-    console.error("Error al aumentar cantidad:", error);
-
-   Swal.fire({
-  icon: "error",
-  title: "Error",
-  text:
-    error instanceof Error
-      ? error.message
-      : "No se pudo aumentar la cantidad",
-});
-  }
-};
-
-  // =================================
-  // ELIMINAR PRODUCTO
-  // =================================
-
-  const eliminarProducto = async (
-    productoId: string
-  ) => {
+  const eliminarProducto = async (productoId: string) => {
     try {
       const respuesta = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/carrito/producto/${productoId}`,
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(
-          datos?.mensaje ||
-            "No se pudo eliminar el producto"
-        );
+        throw new Error(datos?.mensaje || "No se pudo eliminar el producto");
       }
 
       await obtenerCarrito();
-
     } catch (error) {
-      console.error(
-        "Error al eliminar producto:",
-        error
-      );
+      console.error("Error al eliminar producto:", error);
 
       Swal.fire({
-  icon: "error",
-  title: "Error",
-  text:
-    error instanceof Error
-      ? error.message
-      : "No se pudo eliminar el producto",
-});
+        icon: "error",
+        title: "Error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo eliminar el producto",
+      });
     }
   };
-
-  // =================================
-  // VACIAR CARRITO
-  // =================================
 
   const vaciarCarrito = async () => {
     try {
       const respuesta = await fetch(
-       `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(
-          datos?.mensaje ||
-            "No se pudo vaciar el carrito"
-        );
+        throw new Error(datos?.mensaje || "No se pudo vaciar el carrito");
       }
 
       setCarrito((actual) =>
@@ -294,94 +230,66 @@ export function CarritoProvider({
               ...actual,
               items: [],
             }
-          : null
+          : null,
       );
-
     } catch (error) {
-      console.error(
-        "Error al vaciar carrito:",
-        error
-      );
-Swal.fire({
-  icon: "error",
-  title: "Error",
-  text:
-    error instanceof Error
-      ? error.message
-      : "No se pudo vaciar el carrito",
-});
+      console.error("Error al vaciar carrito:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo vaciar el carrito",
+      });
     }
   };
 
   const pagarCarrito = async () => {
-  try {
-    const respuesta = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia`,
-      {
-        method: "POST",
-        credentials: "include",
-      }
-    );
-
-    const datos = await respuesta.json();
-
-    if (!respuesta.ok) {
-      throw new Error(
-        datos?.mensaje || "No se pudo iniciar el pago"
+    try {
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
       );
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(datos?.mensaje || "No se pudo iniciar el pago");
+      }
+
+      window.location.href = datos.init_point;
+    } catch (error) {
+      console.error("Error al iniciar el pago:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error instanceof Error ? error.message : "No se pudo iniciar el pago",
+      });
     }
-
-    window.location.href = datos.init_point;
-
-  } catch (error) {
-    console.error("Error al iniciar el pago:", error);
-
-   Swal.fire({
-  icon: "error",
-  title: "Error",
-  text:
-    error instanceof Error
-      ? error.message
-      : "No se pudo iniciar el pago",
-});
-  }
-};
-
-  // =================================
-  // CARGAR CARRITO
-  // =================================
+  };
 
   useEffect(() => {
     obtenerCarrito();
   }, []);
 
-  // =================================
-  // CANTIDAD TOTAL
-  // =================================
-
   const cantidadTotal =
-  carrito?.items
-    .filter((item) => item.producto)
-    .reduce(
-      (total, item) =>
-        total + item.cantidad,
-      0
-    ) || 0;
-
-  // =================================
-  // PRECIO TOTAL
-  // =================================
+    carrito?.items
+      .filter((item) => item.producto)
+      .reduce((total, item) => total + item.cantidad, 0) || 0;
 
   const precioTotal =
-  carrito?.items
-    .filter((item) => item.producto)
-    .reduce(
-      (total, item) =>
-        total +
-        item.producto.precio *
-          item.cantidad,
-      0
-    ) || 0;
+    carrito?.items
+      .filter((item) => item.producto)
+      .reduce(
+        (total, item) => total + item.producto.precio * item.cantidad,
+        0,
+      ) || 0;
 
   return (
     <CarritoContext.Provider
@@ -408,9 +316,7 @@ export function useCarrito() {
   const context = useContext(CarritoContext);
 
   if (!context) {
-    throw new Error(
-      "useCarrito debe utilizarse dentro de CarritoProvider"
-    );
+    throw new Error("useCarrito debe utilizarse dentro de CarritoProvider");
   }
 
   return context;

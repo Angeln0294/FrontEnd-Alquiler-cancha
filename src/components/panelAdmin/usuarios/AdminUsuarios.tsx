@@ -54,10 +54,6 @@ export default function AdminUsuarios() {
 
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
 
-  // ==========================================
-  // PAGINACIÓN
-  // ==========================================
-
   const usuariosPorPagina = 6;
   const { paginaActual, setCantidadPaginas } = usePaginacionBackend("usuarios");
 
@@ -75,13 +71,9 @@ export default function AdminUsuarios() {
   const apellidoActual = watch("apellido", "");
   const emailActual = watch("email", "");
 
-  // ==========================================
-  // OBTENER USUARIOS
-  // ==========================================
-
   const cargarUsuarios = async () => {
     try {
-       setTablaCargando(true);
+      setTablaCargando(true);
 
       const respuesta = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/usuario?pagina=${paginaActual}&limite=${usuariosPorPagina}`,
@@ -114,14 +106,13 @@ export default function AdminUsuarios() {
         iconColor: "#ef4444",
       });
     } finally {
-       setTablaCargando(false);
+      setTablaCargando(false);
     }
   };
 
   useEffect(() => {
     cargarUsuarios();
   }, [paginaActual]);
-
 
   const abrirEditar = (usuario: Usuario) => {
     setUsuarioEditando(usuario);
@@ -135,13 +126,11 @@ export default function AdminUsuarios() {
     });
   };
 
-  
   const cerrarModal = () => {
     setUsuarioEditando(null);
     reset();
   };
 
-  
   const guardarCambios: SubmitHandler<FormularioUsuario> = async (datos) => {
     if (!usuarioEditando) return;
 
@@ -194,10 +183,6 @@ export default function AdminUsuarios() {
       });
     }
   };
-
-  // ==========================================
-  // CAMBIAR ROL
-  // ==========================================
 
   const cambiarRol = async (
     usuario: Usuario,
@@ -266,10 +251,6 @@ export default function AdminUsuarios() {
     }
   };
 
-  // ==========================================
-  // CAMBIAR ESTADO
-  // ==========================================
-
   const cambiarEstado = async (usuario: Usuario, nuevoEstado: boolean) => {
     if (usuario.activo === nuevoEstado) return;
 
@@ -336,10 +317,6 @@ export default function AdminUsuarios() {
     }
   };
 
-  // ==========================================
-  // ELIMINAR USUARIO
-  // ==========================================
-
   const eliminarUsuario = async (usuario: Usuario) => {
     const confirmacion = await swalTema.fire({
       icon: "warning",
@@ -370,7 +347,6 @@ export default function AdminUsuarios() {
         throw new Error(resultado.mensaje || "No se pudo eliminar el usuario");
       }
 
-      // 1. ELIMINAMOS LA MATEMÁTICA VIEJA DEL CLIENTE Y REFRESCAMOS DESDE EL BACKEND
       await swalTema.fire({
         icon: "success",
         title: "Usuario eliminado",
@@ -379,7 +355,6 @@ export default function AdminUsuarios() {
         iconColor: "#22c55e",
       });
 
-      // 2. Volvemos a pedirle los usuarios al backend para que actualice la lista y el total de páginas
       await cargarUsuarios();
     } catch (error) {
       console.error("Error al eliminar usuario:", error);
@@ -394,10 +369,6 @@ export default function AdminUsuarios() {
     }
   };
 
-  // ==========================================
-  // ESTILOS
-  // ==========================================
-
   const inputBase =
     "w-full rounded-lg border bg-[#111c36] px-4 py-3 text-white outline-none transition placeholder:text-slate-500";
 
@@ -405,18 +376,8 @@ export default function AdminUsuarios() {
 
   const inputError = `${inputBase} border-red-500 focus:border-red-500`;
 
-  // ==========================================
-  // CARGANDO
-  // ==========================================
-
-
-
   return (
     <div className="w-full">
-      {/* ========================================
-          ENCABEZADO
-      ======================================== */}
-
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Gestión de usuarios</h1>
 
@@ -425,99 +386,87 @@ export default function AdminUsuarios() {
         </p>
       </div>
 
-      {/* ========================================
-          TABLA / GRID
-      ======================================== */}
-
       <div className="overflow-x-auto rounded-xl border border-slate-700 bg-[#0b132b]">
         <TablaGenerica
-        columnas={COLUMNAS_USUARIOS}
-        datos={usuarios}
-        renderFila={(usuario) => (
-              <tr
-                key={usuario._id}
-                className="border-b border-slate-800 transition hover:bg-[#111c36]"
-              >
-                <td className="px-5 py-4 text-white">
-                  <div>
-                    <p className="font-medium">
-                      {usuario.nombre} {usuario.apellido}
-                    </p>
-                  </div>
-                </td>
+          columnas={COLUMNAS_USUARIOS}
+          datos={usuarios}
+          renderFila={(usuario) => (
+            <tr
+              key={usuario._id}
+              className="border-b border-slate-800 transition hover:bg-[#111c36]"
+            >
+              <td className="px-5 py-4 text-white">
+                <div>
+                  <p className="font-medium">
+                    {usuario.nombre} {usuario.apellido}
+                  </p>
+                </div>
+              </td>
 
-                <td className="px-5 py-4 text-slate-400">{usuario.email}</td>
+              <td className="px-5 py-4 text-slate-400">{usuario.email}</td>
 
-                {/* ROL */}
+              <td className="px-5 py-4">
+                <select
+                  value={usuario.rol}
+                  onChange={(e) =>
+                    cambiarRol(usuario, e.target.value as "usuario" | "admin")
+                  }
+                  className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                >
+                  <option value="usuario">Usuario</option>
 
-                <td className="px-5 py-4">
-                  <select
-                    value={usuario.rol}
-                    onChange={(e) =>
-                      cambiarRol(usuario, e.target.value as "usuario" | "admin")
-                    }
-                    className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                  <option value="admin">Admin</option>
+                </select>
+              </td>
+
+              <td className="px-5 py-4">
+                <select
+                  value={usuario.activo ? "activo" : "inactivo"}
+                  onChange={(e) =>
+                    cambiarEstado(usuario, e.target.value === "activo")
+                  }
+                  className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                >
+                  <option value="activo">Activo</option>
+
+                  <option value="inactivo">Inactivo</option>
+                </select>
+              </td>
+
+              <td className="px-5 py-4">
+                {usuario.emailVerificado ? (
+                  <span className="text-sm font-medium text-green-500">
+                    Verificado
+                  </span>
+                ) : (
+                  <span className="text-sm font-medium text-red-500">
+                    No verificado
+                  </span>
+                )}
+              </td>
+
+              <td className="px-5 py-4">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => abrirEditar(usuario)}
+                    className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-600"
                   >
-                    <option value="usuario">Usuario</option>
+                    Editar
+                  </button>
 
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-
-                {/* ESTADO */}
-
-                <td className="px-5 py-4">
-                  <select
-                    value={usuario.activo ? "activo" : "inactivo"}
-                    onChange={(e) =>
-                      cambiarEstado(usuario, e.target.value === "activo")
-                    }
-                    className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                  <button
+                    type="button"
+                    onClick={() => eliminarUsuario(usuario)}
+                    className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
                   >
-                    <option value="activo">Activo</option>
-
-                    <option value="inactivo">Inactivo</option>
-                  </select>
-                </td>
-
-                {/* VERIFICACIÓN */}
-
-                <td className="px-5 py-4">
-                  {usuario.emailVerificado ? (
-                    <span className="text-sm font-medium text-green-500">
-                      Verificado
-                    </span>
-                  ) : (
-                    <span className="text-sm font-medium text-red-500">
-                      No verificado
-                    </span>
-                  )}
-                </td>
-
-                {/* ACCIONES */}
-
-                <td className="px-5 py-4">
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => abrirEditar(usuario)}
-                      className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-600"
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => eliminarUsuario(usuario)}
-                      className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </td>
-              </tr>
-             )}
-      />
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )}
+        />
       </div>
 
       <div className="border-t border-slate-700 p-4">
@@ -548,8 +497,6 @@ export default function AdminUsuarios() {
                 ×
               </button>
             </div>
-
-            {/* FORMULARIO */}
 
             <form onSubmit={handleSubmit(guardarCambios)} className="space-y-5">
               {/* NOMBRE */}
@@ -591,8 +538,6 @@ export default function AdminUsuarios() {
                 )}
               </div>
 
-              {/* APELLIDO */}
-
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-medium text-white">
@@ -630,8 +575,6 @@ export default function AdminUsuarios() {
                   </p>
                 )}
               </div>
-
-              {/* EMAIL */}
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
@@ -671,8 +614,6 @@ export default function AdminUsuarios() {
                 )}
               </div>
 
-              {/* ROL */}
-
               <div>
                 <label className="mb-2 block text-sm font-medium text-white">
                   Rol
@@ -684,8 +625,6 @@ export default function AdminUsuarios() {
                   <option value="admin">Administrador</option>
                 </select>
               </div>
-
-              {/* ESTADO */}
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-white">
@@ -703,8 +642,6 @@ export default function AdminUsuarios() {
                   <option value="false">Inactivo</option>
                 </select>
               </div>
-
-              {/* BOTONES */}
 
               <div className="flex justify-end gap-3 border-t border-slate-700 pt-5">
                 <button

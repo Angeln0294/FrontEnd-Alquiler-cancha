@@ -1,6 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useTabla } from "../context/TablaContext";
-import { usePaginacionBackend } from "../context/PaginacionContext"; // Importación oficial corregida
+import { usePaginacionBackend } from "../context/PaginacionContext";
 
 import Swal from "sweetalert2";
 
@@ -36,7 +42,6 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
   const { setTablaCargando } = useTabla();
 
-  // 1. CONSUMIMOS LA PAGINACIÓN GLOBAL EN LUGAR DE ESTADOS LOCALES DE PAGINACIÓN
   const { paginaActual, setCantidadPaginas } =
     usePaginacionBackend("categorias");
 
@@ -76,25 +81,25 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       setTablaCargando(false);
     }
   };
-const obtenerTodasLasCategorias = useCallback(async () => {
-  try {
-    const respuesta = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/categorias?limit=1000`,
-    );
+  const obtenerTodasLasCategorias = useCallback(async () => {
+    try {
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/categorias?limit=1000`,
+      );
 
-    if (!respuesta.ok) {
-      throw new Error("No se pudieron obtener todas las categorías");
+      if (!respuesta.ok) {
+        throw new Error("No se pudieron obtener todas las categorías");
+      }
+
+      const datos = await respuesta.json();
+
+      setCategorias(datos.categorias || []);
+    } catch (error) {
+      console.error("Error al cargar todas las categorías:", error);
+      setCategorias([]);
     }
+  }, []);
 
-    const datos = await respuesta.json();
-
-    setCategorias(datos.categorias || []);
-  } catch (error) {
-    console.error("Error al cargar todas las categorías:", error);
-    setCategorias([]);
-  }
-}, []);
-  // Cargar categorías automáticamente al iniciar el contexto
   useEffect(() => {
     obtenerCategorias(1);
   }, []);
@@ -114,15 +119,11 @@ const obtenerTodasLasCategorias = useCallback(async () => {
     setCategoriaSeleccionada(null);
   };
 
-  // ==========================================
-  // CREAR O EDITAR CATEGORÍA
-  // ==========================================
   const guardarCategoria = async (nombreCategoria: string) => {
     try {
       setGuardando(true);
       let respuesta;
 
-      // EDITAR
       if (categoriaSeleccionada) {
         respuesta = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/categorias/${categoriaSeleccionada._id}`,
@@ -135,9 +136,7 @@ const obtenerTodasLasCategorias = useCallback(async () => {
             body: JSON.stringify({ nombreCategoria }),
           },
         );
-      }
-      // CREAR
-      else {
+      } else {
         respuesta = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/categorias`,
           {
@@ -162,7 +161,6 @@ const obtenerTodasLasCategorias = useCallback(async () => {
         );
       }
 
-      // Volvemos a cargar las categorías con el paginado actual
       await obtenerCategorias();
       cerrarModal();
     } catch (error) {
@@ -184,9 +182,6 @@ const obtenerTodasLasCategorias = useCallback(async () => {
     }
   };
 
-  // ==========================================
-  // ELIMINAR CATEGORÍA
-  // ==========================================
   const eliminarCategoria = async (id: string) => {
     const confirmar = await Swal.fire({
       icon: "warning",
@@ -240,9 +235,6 @@ const obtenerTodasLasCategorias = useCallback(async () => {
     }
   };
 
-  // ==========================================
-  // PROVIDER VALUE INJECTION
-  // ==========================================
   return (
     <CategoriaContext.Provider
       value={{
@@ -265,9 +257,6 @@ const obtenerTodasLasCategorias = useCallback(async () => {
   );
 }
 
-// ==========================================
-// HOOK DE CONSUMO PERSONALIZADO
-// ==========================================
 export function useCategorias() {
   const context = useContext(CategoriaContext);
   if (!context) {

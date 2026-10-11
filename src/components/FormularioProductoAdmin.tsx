@@ -15,10 +15,7 @@ interface FormularioProducto {
 export default function FormularioProductoAdmin() {
   const { productoSeleccionado, guardando, cerrarModal, guardarProducto } =
     useProductos();
- const {
-  categorias,
-  obtenerTodasLasCategorias,
-} = useCategorias();
+  const { categorias, obtenerTodasLasCategorias } = useCategorias();
 
   const [imagen, setImagen] = useState<File | null>(null);
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
@@ -39,12 +36,10 @@ export default function FormularioProductoAdmin() {
       descripcion: "",
     },
   });
-useEffect(() => {
-  obtenerTodasLasCategorias();
-}, [obtenerTodasLasCategorias]);
-  // ================================
-  // CARGAR DATOS AL EDITAR
-  // ================================
+  useEffect(() => {
+    obtenerTodasLasCategorias();
+  }, [obtenerTodasLasCategorias]);
+
   useEffect(() => {
     if (productoSeleccionado) {
       const categoriaId =
@@ -76,9 +71,6 @@ useEffect(() => {
     }
   }, [productoSeleccionado, reset, clearErrors]);
 
-  // ================================
-  // IMAGEN
-  // ================================
   const manejarImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
     const archivo = e.target.files?.[0];
 
@@ -96,7 +88,6 @@ useEffect(() => {
       return;
     }
 
-    // Máximo 2 MB
     if (archivo.size > 2 * 1024 * 1024) {
       setImagen(null);
       setVistaPrevia(null);
@@ -122,16 +113,10 @@ useEffect(() => {
     });
   };
 
-  // ================================
-  // ERRORES
-  // ================================
   const manejarErrores = (errores: FieldErrors<FormularioProducto>) => {
     console.log("ERRORES DEL FORMULARIO:", errores);
   };
 
-  // ================================
-  // GUARDAR
-  // ================================
   const manejarSubmit = async (datos: FormularioProducto) => {
     console.log("DATOS DEL FORMULARIO:", datos);
 
@@ -189,10 +174,6 @@ useEffect(() => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0b0f19] border border-slate-800 rounded-3xl shadow-2xl">
-        {/* ================================
-            HEADER
-        ================================= */}
-
         <div className="p-6 border-b border-slate-800 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-slate-100">
@@ -214,18 +195,10 @@ useEffect(() => {
           </button>
         </div>
 
-        {/* ================================
-            FORMULARIO
-        ================================= */}
-
         <form
           onSubmit={handleSubmit(manejarSubmit, manejarErrores)}
           className="p-6 space-y-5"
         >
-          {/* ================================
-              NOMBRE
-          ================================= */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-300 mb-2">
               Nombre del producto
@@ -259,13 +232,7 @@ useEffect(() => {
             )}
           </div>
 
-          {/* ================================
-              PRECIO + CATEGORIA
-          ================================= */}
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* PRECIO */}
-
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">
                 Precio
@@ -294,8 +261,6 @@ useEffect(() => {
                 </p>
               )}
             </div>
-
-            {/* CATEGORIA */}
 
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">
@@ -329,10 +294,6 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* ================================
-              IMAGEN
-          ================================= */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-300 mb-2">
               Imagen del producto
@@ -359,8 +320,6 @@ useEffect(() => {
               </p>
             )}
 
-            {/* VISTA PREVIA */}
-
             {vistaPrevia && (
               <div className="mt-4">
                 <p className="text-xs text-slate-400 mb-2">Vista previa</p>
@@ -375,10 +334,6 @@ useEffect(() => {
               </div>
             )}
           </div>
-
-          {/* ================================
-              DESCRIPCION
-          ================================= */}
 
           <div>
             <label className="block text-sm font-semibold text-slate-300 mb-2">
@@ -412,10 +367,6 @@ useEffect(() => {
               </p>
             )}
           </div>
-
-          {/* ================================
-              BOTONES
-          ================================= */}
 
           <div className="flex flex-col-reverse sm:flex-row gap-3 pt-3">
             <button

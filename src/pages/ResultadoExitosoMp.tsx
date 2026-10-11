@@ -11,9 +11,7 @@ export default function CheckoutResultado() {
         <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
           <div className="text-6xl mb-5">✅</div>
 
-          <h1 className="text-3xl font-black">
-            ¡Pago realizado!
-          </h1>
+          <h1 className="text-3xl font-black">¡Pago realizado!</h1>
 
           <p className="text-slate-400 mt-3">
             Tu pago fue aprobado correctamente.
@@ -36,9 +34,7 @@ export default function CheckoutResultado() {
         <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
           <div className="text-6xl mb-5">⏳</div>
 
-          <h1 className="text-3xl font-black">
-            Pago pendiente
-          </h1>
+          <h1 className="text-3xl font-black">Pago pendiente</h1>
 
           <p className="text-slate-400 mt-3">
             Tu pago todavía está pendiente de confirmación.
@@ -60,13 +56,9 @@ export default function CheckoutResultado() {
       <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
         <div className="text-6xl mb-5">❌</div>
 
-        <h1 className="text-3xl font-black">
-          El pago no se pudo realizar
-        </h1>
+        <h1 className="text-3xl font-black">El pago no se pudo realizar</h1>
 
-        <p className="text-slate-400 mt-3">
-          Hubo un problema con el pago.
-        </p>
+        <p className="text-slate-400 mt-3">Hubo un problema con el pago.</p>
 
         <Link
           to="/carrito"

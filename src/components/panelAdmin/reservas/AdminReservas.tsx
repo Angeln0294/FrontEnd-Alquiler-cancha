@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
@@ -63,18 +62,9 @@ export default function AdminReservas() {
 
   const { setTablaCargando } = useTabla();
 
-  // ==========================================
-  // PAGINACIÓN
-  // ==========================================
-
   const reservasPorPagina = 6;
 
-  const { paginaActual, setCantidadPaginas } =
-    usePaginacionBackend("reservas");
-
-  // ==========================================
-  // OBTENER RESERVAS
-  // ==========================================
+  const { paginaActual, setCantidadPaginas } = usePaginacionBackend("reservas");
 
   const cargarReservas = async () => {
     try {
@@ -97,12 +87,9 @@ export default function AdminReservas() {
 
       setReservas(resultado.reservas || []);
 
-      // Igual que AdminUsuarios
       setCantidadPaginas(
         resultado.totalPaginas ||
-          Math.ceil(
-            (resultado.cantidadReservas || 0) / reservasPorPagina,
-          ),
+          Math.ceil((resultado.cantidadReservas || 0) / reservasPorPagina),
       );
     } catch (error) {
       console.error("Error al cargar reservas:", error);
@@ -122,10 +109,6 @@ export default function AdminReservas() {
   useEffect(() => {
     cargarReservas();
   }, [paginaActual]);
-
-  // ==========================================
-  // CAMBIAR ESTADO
-  // ==========================================
 
   const cambiarEstado = async (
     reserva: Reserva,
@@ -155,10 +138,8 @@ export default function AdminReservas() {
       showCancelButton: true,
       confirmButtonText: "Sí, continuar",
       cancelButtonText: "Cancelar",
-      iconColor:
-        nuevoEstado === "cancelada" ? "#ef4444" : "#22c55e",
-      confirmButtonColor:
-        nuevoEstado === "cancelada" ? "#ef4444" : "#22c55e",
+      iconColor: nuevoEstado === "cancelada" ? "#ef4444" : "#22c55e",
+      confirmButtonColor: nuevoEstado === "cancelada" ? "#ef4444" : "#22c55e",
     });
 
     if (!confirmacion.isConfirmed) {
@@ -180,9 +161,7 @@ export default function AdminReservas() {
       const resultado = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudo actualizar el estado",
-        );
+        throw new Error(resultado.mensaje || "No se pudo actualizar el estado");
       }
 
       setReservas((reservasActuales) =>
@@ -223,10 +202,6 @@ export default function AdminReservas() {
     }
   };
 
-  // ==========================================
-  // FORMATEAR FECHA
-  // ==========================================
-
   const formatearFecha = (fecha: string) => {
     const fechaLocal = new Date(fecha);
 
@@ -236,10 +211,6 @@ export default function AdminReservas() {
       year: "numeric",
     });
   };
-
-  // ==========================================
-  // ESTADO
-  // ==========================================
 
   const obtenerClaseEstado = (estado: Reserva["estado"]) => {
     switch (estado) {
@@ -254,10 +225,6 @@ export default function AdminReservas() {
     }
   };
 
-  // ==========================================
-  // ESTADÍSTICAS
-  // ==========================================
-
   const pendientes = reservas.filter(
     (reserva) => reserva.estado === "pendiente",
   ).length;
@@ -270,17 +237,8 @@ export default function AdminReservas() {
     (reserva) => reserva.estado === "cancelada",
   ).length;
 
-  // ==========================================
-  // RENDER
-  // ==========================================
-
   return (
     <div className="w-full">
-
-      {/* ========================================
-          ENCABEZADO
-      ======================================== */}
-
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">
           Gestión de reservas 📅
@@ -291,20 +249,11 @@ export default function AdminReservas() {
         </p>
       </div>
 
-      {/* ========================================
-          ESTADÍSTICAS
-      ======================================== */}
-
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-        {/* TOTAL */}
-
         <div className="rounded-xl border border-slate-700 bg-[#0b132b] p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-400">
-                Total reservas
-              </p>
+              <p className="text-sm text-slate-400">Total reservas</p>
 
               <p className="mt-2 text-3xl font-bold text-white">
                 {reservas.length}
@@ -317,14 +266,10 @@ export default function AdminReservas() {
           </div>
         </div>
 
-        {/* PENDIENTES */}
-
         <div className="rounded-xl border border-yellow-500/20 bg-[#0b132b] p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-400">
-                Pendientes
-              </p>
+              <p className="text-sm text-slate-400">Pendientes</p>
 
               <p className="mt-2 text-3xl font-bold text-yellow-400">
                 {pendientes}
@@ -337,14 +282,10 @@ export default function AdminReservas() {
           </div>
         </div>
 
-        {/* CONFIRMADAS */}
-
         <div className="rounded-xl border border-green-500/20 bg-[#0b132b] p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-400">
-                Confirmadas
-              </p>
+              <p className="text-sm text-slate-400">Confirmadas</p>
 
               <p className="mt-2 text-3xl font-bold text-green-400">
                 {confirmadas}
@@ -357,14 +298,10 @@ export default function AdminReservas() {
           </div>
         </div>
 
-        {/* CANCELADAS */}
-
         <div className="rounded-xl border border-rose-500/20 bg-[#0b132b] p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-400">
-                Canceladas
-              </p>
+              <p className="text-sm text-slate-400">Canceladas</p>
 
               <p className="mt-2 text-3xl font-bold text-rose-400">
                 {canceladas}
@@ -376,21 +313,12 @@ export default function AdminReservas() {
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* ========================================
-          TABLA
-      ======================================== */}
-
       <div className="overflow-x-auto rounded-xl border border-slate-700 bg-[#0b132b]">
-
         {reservas.length === 0 ? (
           <div className="px-5 py-12 text-center">
-
-            <div className="text-4xl">
-              📅
-            </div>
+            <div className="text-4xl">📅</div>
 
             <p className="mt-3 font-semibold text-white">
               No hay reservas registradas
@@ -399,7 +327,6 @@ export default function AdminReservas() {
             <p className="mt-1 text-sm text-slate-500">
               Las reservas realizadas aparecerán aquí.
             </p>
-
           </div>
         ) : (
           <TablaGenerica
@@ -410,14 +337,10 @@ export default function AdminReservas() {
                 key={reserva._id}
                 className="border-b border-slate-800 transition hover:bg-[#111c36]"
               >
-
-                {/* USUARIO */}
-
                 <td className="px-5 py-4">
                   <div>
                     <p className="font-medium text-white">
-                      {reserva.usuario.nombre}{" "}
-                      {reserva.usuario.apellido}
+                      {reserva.usuario.nombre} {reserva.usuario.apellido}
                     </p>
 
                     <p className="mt-1 text-xs text-slate-500">
@@ -425,8 +348,6 @@ export default function AdminReservas() {
                     </p>
                   </div>
                 </td>
-
-                {/* CANCHA */}
 
                 <td className="px-5 py-4">
                   <p className="font-medium text-white">
@@ -438,13 +359,9 @@ export default function AdminReservas() {
                   </p>
                 </td>
 
-                {/* FECHA */}
-
                 <td className="px-5 py-4 text-slate-300">
                   {formatearFecha(reserva.fecha)}
                 </td>
-
-                {/* HORARIO */}
 
                 <td className="px-5 py-4">
                   <span className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white">
@@ -452,15 +369,11 @@ export default function AdminReservas() {
                   </span>
                 </td>
 
-                {/* PRECIO */}
-
                 <td className="px-5 py-4">
                   <span className="font-bold text-green-400">
                     ${reserva.precio.toLocaleString("es-AR")}
                   </span>
                 </td>
-
-                {/* ESTADO */}
 
                 <td className="px-5 py-4">
                   <select
@@ -497,22 +410,15 @@ export default function AdminReservas() {
                     </option>
                   </select>
                 </td>
-
               </tr>
             )}
           />
         )}
-
       </div>
-
-      {/* ========================================
-          PAGINACIÓN
-      ======================================== */}
 
       <div className="border-t border-slate-700 p-4">
         <PaginadorBackend seccion="reservas" />
       </div>
-
     </div>
   );
 }

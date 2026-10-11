@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { useTabla } from "../context/TablaContext";
-import { usePaginacionBackend } from "../context/PaginacionContext"; // 1. IMPORTAMOS TU CONTEXTO GLOBAL
+import { usePaginacionBackend } from "../context/PaginacionContext";
 
 export interface Categoria {
   _id: string;
@@ -62,11 +62,9 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
 
   const { setTablaCargando } = useTabla();
 
-  // 2. CONSUMIMOS LA PAGINACIÓN GLOBAL EN LUGAR DEL USE_STATE LOCAL
   const { paginaActual, setCantidadPaginas } =
     usePaginacionBackend("productos");
 
-  // 3. LA FUNCIÓN TOMA POR DEFECTO LA PAGINA ACTUAL DEL CONTEXTO GLOBAL
   const cargarProductos = async (
     pagina = paginaActual || 1,
     termino = "",
@@ -95,7 +93,6 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
       setProductos(datos.productos || []);
       setCantidadProductos(datos.cantidadProductos || 0);
 
-      // 4. LE AVISAMOS AL CONTEXTO LAS PÁGINAS TOTALES QUE DEVOLVIÓ TU SERVIDOR
       const paginasTotales =
         datos.totalPaginas ||
         Math.ceil((datos.cantidadProductos || 0) / limite);
@@ -119,21 +116,17 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
 
       const datos = await respuesta.json();
 
-      
       setCategorias(datos.categorias || datos);
     } catch (error) {
       console.error("Error al cargar categorías:", error);
-      setCategorias([]); // En caso de error, aseguramos que sea un array vacío
+      setCategorias([]);
     }
   };
 
-  // El useEffect de las categorías se ejecuta solo una vez al montar
   useEffect(() => {
     cargarCategorias();
   }, []);
-  // ==========================================
-  // MODALES (ABRIR Y CERRAR)
-  // ==========================================
+
   const abrirCrear = () => {
     setProductoSeleccionado(null);
     setModalAbierto(true);
@@ -149,9 +142,6 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     setProductoSeleccionado(null);
   };
 
-  // ==========================================
-  // GUARDAR PRODUCTO (CREAR / EDITAR)
-  // ==========================================
   const guardarProducto = async (datosProducto: DatosProducto) => {
     try {
       setGuardando(true);
@@ -178,9 +168,7 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
             credentials: "include",
           },
         );
-      }
-      // CREAR
-      else {
+      } else {
         respuesta = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/producto`,
           {
@@ -210,7 +198,6 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
         throw new Error(mensaje);
       }
 
-      // Actualizamos la lista con la página actual
       await cargarProductos();
       cerrarModal();
     } catch (error) {
@@ -221,9 +208,6 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // ==========================================
-  // ELIMINAR PRODUCTO
-  // ==========================================
   const eliminarProducto = async (id: string) => {
     const resultado = await Swal.fire({
       icon: "warning",
@@ -261,9 +245,6 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // ==========================================
-  // RENDERIZADO DEL PROVIDER
-  // ==========================================
   return (
     <ProductoContext.Provider
       value={{

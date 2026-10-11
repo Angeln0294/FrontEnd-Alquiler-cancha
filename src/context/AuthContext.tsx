@@ -34,32 +34,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [cargando, setCargando] = useState(true);
 
   const cargarUsuario = async (): Promise<Usuario | null> => {
-  try {
-    const respuesta = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/usuario/me`,
-      {
-        credentials: "include",
-      }
-    );
+    try {
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/me`,
+        {
+          credentials: "include",
+        },
+      );
 
-    if (!respuesta.ok) {
+      if (!respuesta.ok) {
+        setUsuario(null);
+        return null;
+      }
+
+      const resultado = await respuesta.json();
+
+      setUsuario(resultado.usuario);
+
+      return resultado.usuario;
+    } catch (error) {
+      console.error("Error al obtener usuario:", error);
       setUsuario(null);
       return null;
+    } finally {
+      setCargando(false);
     }
-
-    const resultado = await respuesta.json();
-
-    setUsuario(resultado.usuario);
-
-    return resultado.usuario;
-  } catch (error) {
-    console.error("Error al obtener usuario:", error);
-    setUsuario(null);
-    return null;
-  } finally {
-    setCargando(false);
-  }
-};
+  };
   const cerrarSesion = async () => {
     try {
       await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/logout`, {

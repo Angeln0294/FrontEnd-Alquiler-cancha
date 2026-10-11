@@ -36,15 +36,8 @@ export default function MisReservas() {
   const [paginaActual, setPaginaActual] = useState(1);
   const [cantidadReservas, setCantidadReservas] = useState(0);
   const reservasPorPagina = 6;
-  
-  
-  const cantidadPaginas = Math.ceil(
-  cantidadReservas / reservasPorPagina
-);
 
-  // ==============================
-  // CARGAR RESERVAS
-  // ==============================
+  const cantidadPaginas = Math.ceil(cantidadReservas / reservasPorPagina);
 
   const cargarReservas = async () => {
     try {
@@ -91,10 +84,6 @@ export default function MisReservas() {
     cargarReservas();
   }, [paginaActual]);
 
-  // ==============================
-  // FORMATEAR FECHA
-  // ==============================
-
   const formatearFecha = (fecha: string) => {
     const fechaFormateada = new Date(fecha);
 
@@ -104,10 +93,6 @@ export default function MisReservas() {
       year: "numeric",
     });
   };
-
-  // ==============================
-  // CANCELAR RESERVA
-  // ==============================
 
   const cancelarReserva = async (reserva: Reserva) => {
     const confirmacion = await Swal.fire({
@@ -195,10 +180,6 @@ export default function MisReservas() {
     }
   };
 
-  // ==============================
-  // PAGAR RESERVA
-  // ==============================
-
   const pagarReserva = async (reserva: Reserva) => {
     try {
       setProcesando(reserva._id);
@@ -250,10 +231,6 @@ export default function MisReservas() {
     }
   };
 
-  // ==============================
-  // ESTADO
-  // ==============================
-
   const obtenerClaseEstado = (estado: Reserva["estado"]) => {
     switch (estado) {
       case "confirmada":
@@ -286,10 +263,6 @@ export default function MisReservas() {
     }
   };
 
-  // ==============================
-  // CARGANDO
-  // ==============================
-
   if (cargando) {
     return (
       <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans">
@@ -301,10 +274,6 @@ export default function MisReservas() {
       </div>
     );
   }
-
-  // ==============================
-  // PÁGINA
-  // ==============================
 
   return (
     <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans">
@@ -330,7 +299,6 @@ export default function MisReservas() {
           </button>
         </div>
 
-        {/* SIN RESERVAS */}
         {reservas.length === 0 ? (
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl p-10 text-center shadow-xl">
             <div className="text-5xl mb-5">⚽</div>
@@ -352,12 +320,10 @@ export default function MisReservas() {
             </button>
           </div>
         ) : (
-          /* TABLA */
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
             {/* Scroll horizontal para celulares */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-225 text-sm">
-                {/* CABECERA */}
                 <thead className="bg-[#16213d] border-b border-slate-800">
                   <tr>
                     <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
@@ -390,49 +356,42 @@ export default function MisReservas() {
                   </tr>
                 </thead>
 
-                {/* CUERPO */}
                 <tbody className="divide-y divide-slate-800">
                   {reservas.map((reserva) => (
                     <tr
                       key={reserva._id}
                       className="hover:bg-slate-800/40 transition-colors"
                     >
-                      {/* CANCHA */}
                       <td className="px-5 py-5">
                         <p className="font-bold text-white">
                           {reserva.cancha?.nombre || "Cancha"}
                         </p>
                       </td>
 
-                      {/* TIPO */}
                       <td className="px-5 py-5">
                         <span className="text-xs text-slate-400">
                           {reserva.cancha?.tipo || "-"}
                         </span>
                       </td>
 
-                      {/* FECHA */}
                       <td className="px-5 py-5">
                         <span className="text-sm text-slate-200 font-medium">
                           {formatearFecha(reserva.fecha)}
                         </span>
                       </td>
 
-                      {/* HORARIO */}
                       <td className="px-5 py-5">
                         <span className="text-sm text-slate-200 font-medium">
                           {reserva.horaInicio} - {reserva.horaFin}
                         </span>
                       </td>
 
-                      {/* TOTAL */}
                       <td className="px-5 py-5">
                         <span className="text-sm font-black text-green-400">
                           ${reserva.precio.toLocaleString("es-AR")}
                         </span>
                       </td>
 
-                      {/* ESTADO */}
                       <td className="px-5 py-5 text-center">
                         <span
                           className={`inline-flex px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${obtenerClaseEstado(
@@ -443,7 +402,6 @@ export default function MisReservas() {
                         </span>
                       </td>
 
-                      {/* ACCIONES */}
                       <td className="px-5 py-5">
                         {reserva.estado === "cancelada" ? (
                           <div className="text-center">
@@ -453,7 +411,6 @@ export default function MisReservas() {
                           </div>
                         ) : (
                           <div className="flex items-center justify-center gap-2">
-                            {/* PAGAR */}
                             {reserva.estado === "pendiente" && (
                               <button
                                 type="button"
@@ -467,7 +424,6 @@ export default function MisReservas() {
                               </button>
                             )}
 
-                            {/* CANCELAR */}
                             <button
                               type="button"
                               disabled={procesando === reserva._id}

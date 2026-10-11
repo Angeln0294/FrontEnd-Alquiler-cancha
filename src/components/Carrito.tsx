@@ -27,9 +27,7 @@ export default function Carrito() {
         <div className="max-w-5xl mx-auto text-center py-20">
           <div className="text-6xl mb-5">🛒</div>
 
-          <h1 className="text-3xl font-black">
-            Tu carrito está vacío
-          </h1>
+          <h1 className="text-3xl font-black">Tu carrito está vacío</h1>
 
           <p className="text-slate-400 mt-3">
             Agregá productos desde nuestra tienda.
@@ -42,32 +40,18 @@ export default function Carrito() {
   return (
     <div className="min-h-screen bg-slate-950 text-white px-6 py-10">
       <div className="max-w-6xl mx-auto">
-
-        {/* TÍTULO */}
-
-        <h1 className="text-4xl font-black mb-8">
-          Mi carrito 🛒
-        </h1>
-
-        {/* TABLA */}
+        <h1 className="text-4xl font-black mb-8">Mi carrito 🛒</h1>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-
-          {/* Para que la tabla pueda desplazarse horizontalmente en pantallas chicas */}
-
           <div className="overflow-x-auto">
-
             <table className="w-full min-w-212.5">
-
-              {/* ENCABEZADO */}
-
               <thead className="bg-slate-800/60 border-b border-slate-800">
                 <tr>
                   <th className="text-left px-6 py-4 text-sm font-bold text-slate-300">
                     Producto
                   </th>
 
-                   <th className="text-left px-6 py-4 text-sm font-bold text-slate-300">
+                  <th className="text-left px-6 py-4 text-sm font-bold text-slate-300">
                     Nombre
                   </th>
 
@@ -89,10 +73,7 @@ export default function Carrito() {
                 </tr>
               </thead>
 
-              {/* PRODUCTOS */}
-
               <tbody>
-
                 {carrito.items
                   .filter((item) => item.producto)
                   .map((item) => (
@@ -100,22 +81,15 @@ export default function Carrito() {
                       key={item.producto._id}
                       className="border-b border-slate-800 hover:bg-slate-800/40 transition"
                     >
-
-                      {/* PRODUCTO + IMAGEN */}
-
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-4">
-
                           <img
                             src={item.producto.imagen}
                             alt={item.producto.nombreProducto}
                             className="w-16 h-16 object-cover rounded-xl border border-slate-700"
                           />
-
                         </div>
                       </td>
-
-                      {/* NOMBRE */}
 
                       <td className="px-6 py-5">
                         <h2 className="font bold text-slate-100">
@@ -123,24 +97,17 @@ export default function Carrito() {
                         </h2>
                       </td>
 
-                      {/* DESCRIPCIÓN */}
-
                       <td className="px-6 py-5">
                         <p className="text-sm text-slate-400 max-w-xs">
                           {item.producto.descripcion}
                         </p>
                       </td>
 
-                      {/* CANTIDAD */}
-
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-center gap-3">
-
                           <button
                             type="button"
-                            onClick={() =>
-                              restarCantidad(item.producto._id)
-                            }
+                            onClick={() => restarCantidad(item.producto._id)}
                             className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-white font-bold hover:bg-slate-700 transition"
                           >
                             −
@@ -152,18 +119,13 @@ export default function Carrito() {
 
                           <button
                             type="button"
-                            onClick={() =>
-                              sumarCantidad(item.producto._id)
-                            }
+                            onClick={() => sumarCantidad(item.producto._id)}
                             className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-white font-bold hover:bg-slate-700 transition"
                           >
                             +
                           </button>
-
                         </div>
                       </td>
-
-                      {/* PRECIO */}
 
                       <td className="px-6 py-5 text-center">
                         <span className="font-black text-green-400">
@@ -171,60 +133,38 @@ export default function Carrito() {
                         </span>
                       </td>
 
-                      {/* ELIMINAR */}
-
                       <td className="px-6 py-5 text-center">
-
                         <button
                           type="button"
-                          onClick={() =>
-                            eliminarProducto(item.producto._id)
-                          }
+                          onClick={() => eliminarProducto(item.producto._id)}
                           className="px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-semibold text-sm hover:bg-red-500/20 hover:text-red-300 transition"
                         >
                           Eliminar
                         </button>
-
                       </td>
-
                     </tr>
                   ))}
-
               </tbody>
-
             </table>
-
           </div>
-
         </div>
 
-        {/* RESUMEN */}
-
         <div className="mt-8 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-
           <div className="flex justify-between items-center">
-            <span className="text-slate-400">
-              Productos
-            </span>
+            <span className="text-slate-400">Productos</span>
 
-            <span className="font-bold">
-              {cantidadTotal}
-            </span>
+            <span className="font-bold">{cantidadTotal}</span>
           </div>
 
           <div className="border-t border-slate-800 my-5" />
 
           <div className="flex justify-between items-center">
-            <span className="text-xl font-bold">
-              Total
-            </span>
+            <span className="text-xl font-bold">Total</span>
 
             <span className="text-3xl font-black text-green-400">
               ${precioTotal.toLocaleString("es-AR")}
             </span>
           </div>
-
-          {/* BOTÓN VACIAR */}
 
           <button
             type="button"
@@ -234,8 +174,6 @@ export default function Carrito() {
             Vaciar carrito
           </button>
 
-          {/* BOTÓN PAGAR */}
-
           <button
             type="button"
             onClick={pagarCarrito}
@@ -243,9 +181,7 @@ export default function Carrito() {
           >
             Pagar con Mercado Pago 💳
           </button>
-
         </div>
-
       </div>
     </div>
   );

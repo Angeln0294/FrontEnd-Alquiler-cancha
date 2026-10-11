@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
+import { PaginadorBackend } from "../../Paginador";
+import { usePaginacionBackend } from "../../../context/PaginacionContext";
+import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { useTabla } from "../../../context/TablaContext";
+
 interface UsuarioReserva {
   _id: string;
   nombre: string;
@@ -27,6 +32,15 @@ interface Reserva {
   createdAt?: string;
 }
 
+const COLUMNAS_RESERVAS: Columna[] = [
+  { id: "usuario", titulo: "Usuario" },
+  { id: "cancha", titulo: "Cancha" },
+  { id: "fecha", titulo: "Fecha" },
+  { id: "horario", titulo: "Horario" },
+  { id: "precio", titulo: "Precio" },
+  { id: "estado", titulo: "Estado" },
+];
+
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/reservas`;
 
 const swalTema = Swal.mixin({
@@ -45,26 +59,23 @@ const swalTema = Swal.mixin({
 
 export default function AdminReservas() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
-  const [cargando, setCargando] = useState(true);
 
-  const [paginaActual, setPaginaActual] = useState(1);
+  const { setTablaCargando } = useTabla();
 
-  const reservasPorPagina = 5;
+  const reservasPorPagina = 6;
 
-const totalPaginas = Math.ceil(reservas.length / reservasPorPagina);
-
-const indiceInicio = (paginaActual - 1) * reservasPorPagina;
-const indiceFin = indiceInicio + reservasPorPagina;
-
-const reservasPagina = reservas.slice(indiceInicio, indiceFin);
+  const { paginaActual, setCantidadPaginas } = usePaginacionBackend("reservas");
 
   const cargarReservas = async () => {
     try {
-      setCargando(true);
+      setTablaCargando(true);
 
-      const respuesta = await fetch(API_URL, {
-        credentials: "include",
-      });
+      const respuesta = await fetch(
+        `${API_URL}?pagina=${paginaActual}&limite=${reservasPorPagina}`,
+        {
+          credentials: "include",
+        },
+      );
 
       const resultado = await respuesta.json();
 
@@ -75,6 +86,11 @@ const reservasPagina = reservas.slice(indiceInicio, indiceFin);
       }
 
       setReservas(resultado.reservas || []);
+
+      setCantidadPaginas(
+        resultado.totalPaginas ||
+          Math.ceil((resultado.cantidadReservas || 0) / reservasPorPagina),
+      );
     } catch (error) {
       console.error("Error al cargar reservas:", error);
 
@@ -86,19 +102,17 @@ const reservasPagina = reservas.slice(indiceInicio, indiceFin);
         iconColor: "#ef4444",
       });
     } finally {
-      setCargando(false);
+      setTablaCargando(false);
     }
   };
 
- 
-
   useEffect(() => {
     cargarReservas();
-  }, []);
+  }, [paginaActual]);
 
   const cambiarEstado = async (
     reserva: Reserva,
-    nuevoEstado: "pendiente" | "confirmada" | "cancelada",
+    nuevoEstado: Reserva["estado"],
   ) => {
     if (reserva.estado === nuevoEstado) return;
 
@@ -223,14 +237,6 @@ const reservasPagina = reservas.slice(indiceInicio, indiceFin);
     (reserva) => reserva.estado === "cancelada",
   ).length;
 
-  if (cargando) {
-    return (
-      <div className="flex min-h-100 items-center justify-center">
-        <p className="text-slate-400">Cargando reservas...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full">
       <div className="mb-6">
@@ -244,8 +250,6 @@ const reservasPagina = reservas.slice(indiceInicio, indiceFin);
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {/* TOTAL */}
-
         <div className="rounded-xl border border-slate-700 bg-[#0b132b] p-5">
           <div className="flex items-center justify-between">
             <div>
@@ -261,8 +265,6 @@ const reservasPagina = reservas.slice(indiceInicio, indiceFin);
             </div>
           </div>
         </div>
-
-        {/* PENDIENTES */}
 
         <div className="rounded-xl border border-yellow-500/20 bg-[#0b132b] p-5">
           <div className="flex items-center justify-between">
@@ -280,8 +282,6 @@ const reservasPagina = reservas.slice(indiceInicio, indiceFin);
           </div>
         </div>
 
-        {/* CONFIRMADAS */}
-
         <div className="rounded-xl border border-green-500/20 bg-[#0b132b] p-5">
           <div className="flex items-center justify-between">
             <div>
@@ -297,8 +297,6 @@ const reservasPagina = reservas.slice(indiceInicio, indiceFin);
             </div>
           </div>
         </div>
-
-        {/* CANCELADAS */}
 
         <div className="rounded-xl border border-rose-500/20 bg-[#0b132b] p-5">
           <div className="flex items-center justify-between">
@@ -318,165 +316,108 @@ const reservasPagina = reservas.slice(indiceInicio, indiceFin);
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-700 bg-[#0b132b]">
-        <table className="w-full min-w-275 text-left">
-          <thead className="border-b border-slate-700 bg-[#111c36]">
-            <tr>
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Usuario
-              </th>
+        {reservas.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <div className="text-4xl">📅</div>
 
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Cancha
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Fecha
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Horario
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Precio
-              </th>
-
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Estado
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-  {reservas.length === 0 ? (
-    <tr>
-      <td colSpan={6} className="px-5 py-12 text-center">
-        <div className="text-4xl">📅</div>
-
-        <p className="mt-3 font-semibold text-white">
-          No hay reservas registradas
-        </p>
-
-        <p className="mt-1 text-sm text-slate-500">
-          Las reservas realizadas aparecerán aquí.
-        </p>
-      </td>
-    </tr>
-  ) : (
-    reservasPagina.map((reserva) => (
-      <tr
-        key={reserva._id}
-        className="border-b border-slate-800 transition hover:bg-[#111c36]"
-      >
-        <td className="px-5 py-4">
-          <div>
-            <p className="font-medium text-white">
-              {reserva.usuario.nombre} {reserva.usuario.apellido}
+            <p className="mt-3 font-semibold text-white">
+              No hay reservas registradas
             </p>
 
-            <p className="mt-1 text-xs text-slate-500">
-              {reserva.usuario.email}
+            <p className="mt-1 text-sm text-slate-500">
+              Las reservas realizadas aparecerán aquí.
             </p>
           </div>
-        </td>
+        ) : (
+          <TablaGenerica
+            columnas={COLUMNAS_RESERVAS}
+            datos={reservas}
+            renderFila={(reserva) => (
+              <tr
+                key={reserva._id}
+                className="border-b border-slate-800 transition hover:bg-[#111c36]"
+              >
+                <td className="px-5 py-4">
+                  <div>
+                    <p className="font-medium text-white">
+                      {reserva.usuario.nombre} {reserva.usuario.apellido}
+                    </p>
 
-        <td className="px-5 py-4">
-          <p className="font-medium text-white">
-            {reserva.cancha.nombre}
-          </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {reserva.usuario.email}
+                    </p>
+                  </div>
+                </td>
 
-          <p className="mt-1 text-xs text-green-400">
-            {reserva.cancha.tipo}
-          </p>
-        </td>
+                <td className="px-5 py-4">
+                  <p className="font-medium text-white">
+                    {reserva.cancha.nombre}
+                  </p>
 
-        <td className="px-5 py-4 text-slate-300">
-          {formatearFecha(reserva.fecha)}
-        </td>
+                  <p className="mt-1 text-xs text-green-400">
+                    {reserva.cancha.tipo}
+                  </p>
+                </td>
 
-        <td className="px-5 py-4">
-          <span className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white">
-            {reserva.horaInicio} - {reserva.horaFin}
-          </span>
-        </td>
+                <td className="px-5 py-4 text-slate-300">
+                  {formatearFecha(reserva.fecha)}
+                </td>
 
-        <td className="px-5 py-4">
-          <span className="font-bold text-green-400">
-            ${reserva.precio.toLocaleString("es-AR")}
-          </span>
-        </td>
+                <td className="px-5 py-4">
+                  <span className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white">
+                    {reserva.horaInicio} - {reserva.horaFin}
+                  </span>
+                </td>
 
-        <td className="px-5 py-4">
-          <select
-            value={reserva.estado}
-            onChange={(e) =>
-              cambiarEstado(
-                reserva,
-                e.target.value as Reserva["estado"],
-              )
-            }
-            className={`rounded-lg border px-3 py-2 text-sm font-medium outline-none bg-[#0b132b] ${obtenerClaseEstado(
-              reserva.estado,
-            )}`}
-          >
-            <option
-              value="pendiente"
-              className="bg-[#0b132b] text-white"
-            >
-              Pendiente
-            </option>
+                <td className="px-5 py-4">
+                  <span className="font-bold text-green-400">
+                    ${reserva.precio.toLocaleString("es-AR")}
+                  </span>
+                </td>
 
-            <option
-              value="confirmada"
-              className="bg-[#0b132b] text-white"
-            >
-              Confirmada
-            </option>
+                <td className="px-5 py-4">
+                  <select
+                    value={reserva.estado}
+                    onChange={(e) =>
+                      cambiarEstado(
+                        reserva,
+                        e.target.value as Reserva["estado"],
+                      )
+                    }
+                    className={`rounded-lg border bg-[#0b132b] px-3 py-2 text-sm font-medium outline-none ${obtenerClaseEstado(
+                      reserva.estado,
+                    )}`}
+                  >
+                    <option
+                      value="pendiente"
+                      className="bg-[#0b132b] text-white"
+                    >
+                      Pendiente
+                    </option>
 
-            <option
-              value="cancelada"
-              className="bg-[#0b132b] text-white"
-            >
-              Cancelada
-            </option>
-          </select>
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
-        </table>
+                    <option
+                      value="confirmada"
+                      className="bg-[#0b132b] text-white"
+                    >
+                      Confirmada
+                    </option>
 
-      {totalPaginas > 1 && (
-  <div className="flex items-center justify-between border-t border-slate-700 px-5 py-4">
-    <button
-      onClick={() => setPaginaActual((pagina) => pagina - 1)}
-      disabled={paginaActual === 1}
-      className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      ← Anterior
-    </button>
+                    <option
+                      value="cancelada"
+                      className="bg-[#0b132b] text-white"
+                    >
+                      Cancelada
+                    </option>
+                  </select>
+                </td>
+              </tr>
+            )}
+          />
+        )}
+      </div>
 
-    <div className="text-sm text-slate-400">
-      Página{" "}
-      <span className="font-semibold text-white">
-        {paginaActual}
-      </span>{" "}
-      de{" "}
-      <span className="font-semibold text-white">
-        {totalPaginas}
-      </span>
-    </div>
-
-    <button
-      onClick={() => setPaginaActual((pagina) => pagina + 1)}
-      disabled={paginaActual === totalPaginas}
-      className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      Siguiente →
-    </button>
-  </div>
-)}
+      <div className="border-t border-slate-700 p-4">
+        <PaginadorBackend seccion="reservas" />
       </div>
     </div>
   );

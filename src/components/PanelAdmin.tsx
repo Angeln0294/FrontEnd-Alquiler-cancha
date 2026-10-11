@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
-import AdminUsuarios from "./AdminUsuarios";
-import AdminCanchas from "./AdminCanchas";
-import AdminReservas from "./AdminReservas";
-import AdminCategorias from "./AdminCategorias";
-import AdminProductos from "./AdminProductos";
+import AdminUsuarios from "./panelAdmin/usuarios/AdminUsuarios";
+import AdminCanchas from "./panelAdmin/canchas/AdminCanchas";
+import AdminReservas from "./panelAdmin/reservas/AdminReservas";
+import AdminCategorias from "./panelAdmin/categorias/AdminCategorias";
+import AdminProductos from "./panelAdmin/productos/AdminProductos";
 
 import { CategoriaProvider } from "../context/CategoriaContext";
 import { useAuth } from "../context/AuthContext";
@@ -70,8 +70,7 @@ export default function PanelAdmin() {
   const { cerrarSesion } = useAuth();
 
   const [menuAbierto, setMenuAbierto] = useState(false);
-  const [seccionActiva, setSeccionActiva] =
-    useState<Seccion>("dashboard");
+  const [seccionActiva, setSeccionActiva] = useState<Seccion>("dashboard");
 
   const [datos, setDatos] = useState<DatosDashboard>({
     usuarios: [],
@@ -81,10 +80,6 @@ export default function PanelAdmin() {
 
   const [cargandoDashboard, setCargandoDashboard] = useState(true);
   const [errorDashboard, setErrorDashboard] = useState(false);
-
-  // ==========================================
-  // CARGAR DATOS DEL DASHBOARD
-  // ==========================================
 
   const cargarDatosDashboard = async () => {
     try {
@@ -119,19 +114,14 @@ export default function PanelAdmin() {
       const resultadoReservas = await respuestaReservas.json();
 
       setDatos({
-        usuarios: Array.isArray(resultadoUsuarios)
-          ? resultadoUsuarios
-          : [],
+        usuarios: Array.isArray(resultadoUsuarios) ? resultadoUsuarios : [],
 
         canchas: resultadoCanchas.canchas || [],
 
         reservas: resultadoReservas.reservas || [],
       });
     } catch (error) {
-      console.error(
-        "Error al cargar datos del dashboard:",
-        error
-      );
+      console.error("Error al cargar datos del dashboard:", error);
 
       setErrorDashboard(true);
     } finally {
@@ -143,62 +133,53 @@ export default function PanelAdmin() {
     cargarDatosDashboard();
   }, []);
 
-  // ==========================================
-  // ESTADÍSTICAS
-  // ==========================================
-
   const totalUsuarios = datos.usuarios.length;
 
   const usuariosActivos = datos.usuarios.filter(
-    (usuario) => usuario.activo
+    (usuario) => usuario.activo,
   ).length;
 
   const usuariosVerificados = datos.usuarios.filter(
-    (usuario) => usuario.emailVerificado
+    (usuario) => usuario.emailVerificado,
   ).length;
 
   const administradores = datos.usuarios.filter(
-    (usuario) => usuario.rol === "admin"
+    (usuario) => usuario.rol === "admin",
   ).length;
 
   const totalCanchas = datos.canchas.length;
 
   const canchasDisponibles = datos.canchas.filter(
-    (cancha) => cancha.disponible
+    (cancha) => cancha.disponible,
   ).length;
 
-  const canchasNoDisponibles =
-    totalCanchas - canchasDisponibles;
+  const canchasNoDisponibles = totalCanchas - canchasDisponibles;
 
   const futbol5 = datos.canchas.filter(
-    (cancha) => cancha.tipo === "Fútbol 5"
+    (cancha) => cancha.tipo === "Fútbol 5",
   ).length;
 
   const futbol7 = datos.canchas.filter(
-    (cancha) => cancha.tipo === "Fútbol 7"
+    (cancha) => cancha.tipo === "Fútbol 7",
   ).length;
 
   const futbol11 = datos.canchas.filter(
-    (cancha) => cancha.tipo === "Fútbol 11"
+    (cancha) => cancha.tipo === "Fútbol 11",
   ).length;
 
   const totalReservas = datos.reservas.length;
 
   const reservasPendientes = datos.reservas.filter(
-    (reserva) => reserva.estado === "pendiente"
+    (reserva) => reserva.estado === "pendiente",
   ).length;
 
   const reservasConfirmadas = datos.reservas.filter(
-    (reserva) => reserva.estado === "confirmada"
+    (reserva) => reserva.estado === "confirmada",
   ).length;
 
   const reservasCanceladas = datos.reservas.filter(
-    (reserva) => reserva.estado === "cancelada"
+    (reserva) => reserva.estado === "cancelada",
   ).length;
-
-  // ==========================================
-  // RESERVAS DE LOS ÚLTIMOS 7 DÍAS
-  // ==========================================
 
   const obtenerReservasUltimos7Dias = () => {
     const hoy = new Date();
@@ -217,12 +198,7 @@ export default function PanelAdmin() {
     });
   };
 
-  const reservasUltimos7Dias =
-    obtenerReservasUltimos7Dias();
-
-  // ==========================================
-  // DATOS PARA GRÁFICO SEMANAL
-  // ==========================================
+  const reservasUltimos7Dias = obtenerReservasUltimos7Dias();
 
   const obtenerDatosSemana = () => {
     const hoy = new Date();
@@ -240,10 +216,7 @@ export default function PanelAdmin() {
       const cantidad = datos.reservas.filter((reserva) => {
         const fechaReserva = new Date(reserva.fecha);
 
-        return (
-          fechaReserva >= fecha &&
-          fechaReserva < siguienteDia
-        );
+        return fechaReserva >= fecha && fechaReserva < siguienteDia;
       }).length;
 
       return {
@@ -260,12 +233,8 @@ export default function PanelAdmin() {
 
   const maxReservasSemana = Math.max(
     ...datosSemana.map((dia) => dia.cantidad),
-    1
+    1,
   );
-
-  // ==========================================
-  // RESERVAS RECIENTES
-  // ==========================================
 
   const reservasRecientes = [...datos.reservas]
     .sort((a, b) => {
@@ -281,10 +250,6 @@ export default function PanelAdmin() {
     })
     .slice(0, 5);
 
-  // ==========================================
-  // FORMATEAR FECHA
-  // ==========================================
-
   const formatearFecha = (fecha: string) => {
     return new Date(fecha).toLocaleDateString("es-AR", {
       day: "2-digit",
@@ -293,13 +258,7 @@ export default function PanelAdmin() {
     });
   };
 
-  // ==========================================
-  // CLASE ESTADO
-  // ==========================================
-
-  const obtenerClaseEstado = (
-    estado: Reserva["estado"]
-  ) => {
+  const obtenerClaseEstado = (estado: Reserva["estado"]) => {
     switch (estado) {
       case "confirmada":
         return "bg-green-500/10 border-green-500/20 text-green-400";
@@ -311,10 +270,6 @@ export default function PanelAdmin() {
         return "bg-yellow-500/10 border-yellow-500/20 text-yellow-400";
     }
   };
-
-  // ==========================================
-  // MENÚ
-  // ==========================================
 
   const cambiarSeccion = (seccion: Seccion) => {
     setSeccionActiva(seccion);
@@ -359,18 +314,9 @@ export default function PanelAdmin() {
     },
   ];
 
-  // ==========================================
-  // RENDER
-  // ==========================================
-
   return (
     <div className="min-h-screen bg-[#030712] text-white">
       <div className="flex min-h-screen">
-
-        {/* =====================================
-            SIDEBAR
-        ===================================== */}
-
         <aside
           className={`
             fixed left-0 top-0 z-50
@@ -379,28 +325,18 @@ export default function PanelAdmin() {
             bg-[#0b0f19]
             transition-transform duration-300
             lg:translate-x-0
-            ${
-              menuAbierto
-                ? "translate-x-0"
-                : "-translate-x-full"
-            }
+            ${menuAbierto ? "translate-x-0" : "-translate-x-full"}
           `}
         >
-          {/* LOGO */}
-
           <div className="flex h-20 items-center border-b border-slate-800 px-6">
             <div>
               <p className="text-xl font-black">
                 Canchas <span className="text-green-400">Ya</span>
               </p>
 
-              <p className="text-xs text-slate-500">
-                Panel de administración
-              </p>
+              <p className="text-xs text-slate-500">Panel de administración</p>
             </div>
           </div>
-
-          {/* MENÚ */}
 
           <nav className="p-4">
             <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
@@ -425,17 +361,13 @@ export default function PanelAdmin() {
                     }
                   `}
                 >
-                  <span className="text-lg">
-                    {item.icono}
-                  </span>
+                  <span className="text-lg">{item.icono}</span>
 
                   {item.nombre}
                 </button>
               ))}
             </div>
           </nav>
-
-          {/* PARTE INFERIOR */}
 
           <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 p-4">
             <button
@@ -449,10 +381,6 @@ export default function PanelAdmin() {
           </div>
         </aside>
 
-        {/* =====================================
-            OVERLAY MOBILE
-        ===================================== */}
-
         {menuAbierto && (
           <button
             type="button"
@@ -462,22 +390,12 @@ export default function PanelAdmin() {
           />
         )}
 
-        {/* =====================================
-            CONTENIDO PRINCIPAL
-        ===================================== */}
-
         <main className="w-full lg:ml-72">
-
-          {/* HEADER */}
-
           <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-800 bg-[#030712]/90 px-5 backdrop-blur-xl lg:px-8">
-
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() =>
-                  setMenuAbierto(!menuAbierto)
-                }
+                onClick={() => setMenuAbierto(!menuAbierto)}
                 className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-lg lg:hidden"
               >
                 ☰
@@ -489,10 +407,8 @@ export default function PanelAdmin() {
                 </p>
 
                 <h2 className="font-bold">
-                  {menuItems.find(
-                    (item) =>
-                      item.id === seccionActiva
-                  )?.nombre || "Dashboard"}
+                  {menuItems.find((item) => item.id === seccionActiva)
+                    ?.nombre || "Dashboard"}
                 </h2>
               </div>
             </div>
@@ -506,19 +422,9 @@ export default function PanelAdmin() {
             </button>
           </header>
 
-          {/* CONTENIDO */}
-
           <div className="p-5 lg:p-8">
-
-            {/* =================================
-                DASHBOARD
-            ================================= */}
-
             {seccionActiva === "dashboard" && (
               <div className="space-y-8">
-
-                {/* TÍTULO */}
-
                 <div>
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-400">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
@@ -533,8 +439,6 @@ export default function PanelAdmin() {
                     Información actual de Canchas Ya.
                   </p>
                 </div>
-
-                {/* ERROR */}
 
                 {errorDashboard && (
                   <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-5">
@@ -552,25 +456,14 @@ export default function PanelAdmin() {
                   </div>
                 )}
 
-                {/* =================================
-                    TARJETAS PRINCIPALES
-                ================================= */}
-
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-
-                  {/* USUARIOS */}
-
                   <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-green-500/20 to-emerald-500/5 p-6 shadow-xl shadow-black/30">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm text-slate-400">
-                          Usuarios
-                        </p>
+                        <p className="text-sm text-slate-400">Usuarios</p>
 
                         <p className="mt-2 text-4xl font-black">
-                          {cargandoDashboard
-                            ? "..."
-                            : totalUsuarios}
+                          {cargandoDashboard ? "..." : totalUsuarios}
                         </p>
 
                         <p className="mt-2 text-xs text-green-400">
@@ -584,19 +477,13 @@ export default function PanelAdmin() {
                     </div>
                   </div>
 
-                  {/* CANCHAS */}
-
                   <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-blue-500/20 to-indigo-500/5 p-6 shadow-xl shadow-black/30">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm text-slate-400">
-                          Canchas
-                        </p>
+                        <p className="text-sm text-slate-400">Canchas</p>
 
                         <p className="mt-2 text-4xl font-black">
-                          {cargandoDashboard
-                            ? "..."
-                            : totalCanchas}
+                          {cargandoDashboard ? "..." : totalCanchas}
                         </p>
 
                         <p className="mt-2 text-xs text-blue-400">
@@ -610,19 +497,13 @@ export default function PanelAdmin() {
                     </div>
                   </div>
 
-                  {/* RESERVAS */}
-
                   <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-yellow-500/20 to-orange-500/5 p-6 shadow-xl shadow-black/30">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm text-slate-400">
-                          Reservas
-                        </p>
+                        <p className="text-sm text-slate-400">Reservas</p>
 
                         <p className="mt-2 text-4xl font-black">
-                          {cargandoDashboard
-                            ? "..."
-                            : totalReservas}
+                          {cargandoDashboard ? "..." : totalReservas}
                         </p>
 
                         <p className="mt-2 text-xs text-yellow-400">
@@ -636,19 +517,13 @@ export default function PanelAdmin() {
                     </div>
                   </div>
 
-                  {/* CONFIRMADAS */}
-
                   <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-purple-500/20 to-violet-500/5 p-6 shadow-xl shadow-black/30">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm text-slate-400">
-                          Confirmadas
-                        </p>
+                        <p className="text-sm text-slate-400">Confirmadas</p>
 
                         <p className="mt-2 text-4xl font-black">
-                          {cargandoDashboard
-                            ? "..."
-                            : reservasConfirmadas}
+                          {cargandoDashboard ? "..." : reservasConfirmadas}
                         </p>
 
                         <p className="mt-2 text-xs text-purple-400">
@@ -663,16 +538,8 @@ export default function PanelAdmin() {
                   </div>
                 </div>
 
-                {/* =================================
-                    SEGUNDA FILA
-                ================================= */}
-
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-
-                  {/* RESERVAS SEMANA */}
-
                   <div className="xl:col-span-2 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
-
                     <div className="flex items-start justify-between">
                       <div>
                         <h2 className="text-lg font-bold">
@@ -690,16 +557,13 @@ export default function PanelAdmin() {
                     </div>
 
                     <div className="mt-8 flex h-64 items-end justify-between gap-3">
-
                       {datosSemana.map((dia) => {
                         const altura =
                           dia.cantidad === 0
                             ? 4
                             : Math.max(
-                                (dia.cantidad /
-                                  maxReservasSemana) *
-                                  100,
-                                8
+                                (dia.cantidad / maxReservasSemana) * 100,
+                                8,
                               );
 
                         return (
@@ -729,22 +593,14 @@ export default function PanelAdmin() {
                     </div>
                   </div>
 
-                  {/* ESTADO RESERVAS */}
-
                   <div className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
-
-                    <h2 className="text-lg font-bold">
-                      Estado de reservas
-                    </h2>
+                    <h2 className="text-lg font-bold">Estado de reservas</h2>
 
                     <p className="mt-1 text-xs text-slate-500">
                       Distribución actual.
                     </p>
 
                     <div className="mt-8 space-y-6">
-
-                      {/* PENDIENTES */}
-
                       <div>
                         <div className="mb-2 flex justify-between">
                           <span className="text-sm text-slate-300">
@@ -763,17 +619,13 @@ export default function PanelAdmin() {
                               width:
                                 totalReservas > 0
                                   ? `${
-                                      (reservasPendientes /
-                                        totalReservas) *
-                                      100
+                                      (reservasPendientes / totalReservas) * 100
                                     }%`
                                   : "0%",
                             }}
                           />
                         </div>
                       </div>
-
-                      {/* CONFIRMADAS */}
 
                       <div>
                         <div className="mb-2 flex justify-between">
@@ -793,8 +645,7 @@ export default function PanelAdmin() {
                               width:
                                 totalReservas > 0
                                   ? `${
-                                      (reservasConfirmadas /
-                                        totalReservas) *
+                                      (reservasConfirmadas / totalReservas) *
                                       100
                                     }%`
                                   : "0%",
@@ -802,8 +653,6 @@ export default function PanelAdmin() {
                           />
                         </div>
                       </div>
-
-                      {/* CANCELADAS */}
 
                       <div>
                         <div className="mb-2 flex justify-between">
@@ -823,35 +672,22 @@ export default function PanelAdmin() {
                               width:
                                 totalReservas > 0
                                   ? `${
-                                      (reservasCanceladas /
-                                        totalReservas) *
-                                      100
+                                      (reservasCanceladas / totalReservas) * 100
                                     }%`
                                   : "0%",
                             }}
                           />
                         </div>
                       </div>
-
                     </div>
                   </div>
                 </div>
 
-                {/* =================================
-                    TERCERA FILA
-                ================================= */}
-
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-
-                  {/* USUARIOS */}
-
                   <div className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
-
                     <div className="flex items-center justify-between">
                       <div>
-                        <h2 className="text-lg font-bold">
-                          Usuarios
-                        </h2>
+                        <h2 className="text-lg font-bold">Usuarios</h2>
 
                         <p className="mt-1 text-xs text-slate-500">
                           Estado de las cuentas.
@@ -860,9 +696,7 @@ export default function PanelAdmin() {
 
                       <button
                         type="button"
-                        onClick={() =>
-                          cambiarSeccion("usuarios")
-                        }
+                        onClick={() => cambiarSeccion("usuarios")}
                         className="text-xs font-semibold text-green-400 hover:text-green-300"
                       >
                         Ver usuarios →
@@ -870,7 +704,6 @@ export default function PanelAdmin() {
                     </div>
 
                     <div className="mt-6 space-y-5">
-
                       <div>
                         <div className="mb-2 flex justify-between">
                           <span className="text-sm text-slate-300">
@@ -889,9 +722,7 @@ export default function PanelAdmin() {
                               width:
                                 totalUsuarios > 0
                                   ? `${
-                                      (usuariosActivos /
-                                        totalUsuarios) *
-                                      100
+                                      (usuariosActivos / totalUsuarios) * 100
                                     }%`
                                   : "0%",
                             }}
@@ -917,8 +748,7 @@ export default function PanelAdmin() {
                               width:
                                 totalUsuarios > 0
                                   ? `${
-                                      (usuariosVerificados /
-                                        totalUsuarios) *
+                                      (usuariosVerificados / totalUsuarios) *
                                       100
                                     }%`
                                   : "0%",
@@ -928,7 +758,6 @@ export default function PanelAdmin() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 pt-2">
-
                         <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
                           <p className="text-xs text-slate-500">
                             Administradores
@@ -940,28 +769,20 @@ export default function PanelAdmin() {
                         </div>
 
                         <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-                          <p className="text-xs text-slate-500">
-                            Inactivos
-                          </p>
+                          <p className="text-xs text-slate-500">Inactivos</p>
 
                           <p className="mt-1 text-2xl font-black text-rose-400">
                             {totalUsuarios - usuariosActivos}
                           </p>
                         </div>
-
                       </div>
                     </div>
                   </div>
 
-                  {/* CANCHAS */}
-
                   <div className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
-
                     <div className="flex items-center justify-between">
                       <div>
-                        <h2 className="text-lg font-bold">
-                          Estado de canchas
-                        </h2>
+                        <h2 className="text-lg font-bold">Estado de canchas</h2>
 
                         <p className="mt-1 text-xs text-slate-500">
                           Distribución de las canchas registradas.
@@ -970,9 +791,7 @@ export default function PanelAdmin() {
 
                       <button
                         type="button"
-                        onClick={() =>
-                          cambiarSeccion("canchas")
-                        }
+                        onClick={() => cambiarSeccion("canchas")}
                         className="text-xs font-semibold text-green-400 hover:text-green-300"
                       >
                         Ver canchas →
@@ -980,11 +799,8 @@ export default function PanelAdmin() {
                     </div>
 
                     <div className="mt-6 grid grid-cols-2 gap-3">
-
                       <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-4">
-                        <p className="text-xs text-slate-500">
-                          Disponibles
-                        </p>
+                        <p className="text-xs text-slate-500">Disponibles</p>
 
                         <p className="mt-1 text-2xl font-black text-green-400">
                           {canchasDisponibles}
@@ -992,27 +808,21 @@ export default function PanelAdmin() {
                       </div>
 
                       <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4">
-                        <p className="text-xs text-slate-500">
-                          No disponibles
-                        </p>
+                        <p className="text-xs text-slate-500">No disponibles</p>
 
                         <p className="mt-1 text-2xl font-black text-rose-400">
                           {canchasNoDisponibles}
                         </p>
                       </div>
-
                     </div>
 
                     <div className="mt-5 space-y-4">
-
                       <div className="flex items-center justify-between rounded-xl bg-slate-950/50 px-4 py-3">
                         <span className="text-sm text-slate-300">
                           ⚽ Fútbol 5
                         </span>
 
-                        <span className="font-bold text-white">
-                          {futbol5}
-                        </span>
+                        <span className="font-bold text-white">{futbol5}</span>
                       </div>
 
                       <div className="flex items-center justify-between rounded-xl bg-slate-950/50 px-4 py-3">
@@ -1020,9 +830,7 @@ export default function PanelAdmin() {
                           ⚽ Fútbol 7
                         </span>
 
-                        <span className="font-bold text-white">
-                          {futbol7}
-                        </span>
+                        <span className="font-bold text-white">{futbol7}</span>
                       </div>
 
                       <div className="flex items-center justify-between rounded-xl bg-slate-950/50 px-4 py-3">
@@ -1030,26 +838,16 @@ export default function PanelAdmin() {
                           ⚽ Fútbol 11
                         </span>
 
-                        <span className="font-bold text-white">
-                          {futbol11}
-                        </span>
+                        <span className="font-bold text-white">{futbol11}</span>
                       </div>
-
                     </div>
                   </div>
                 </div>
 
-                {/* =================================
-                    ÚLTIMAS RESERVAS
-                ================================= */}
-
                 <div className="rounded-3xl border border-slate-800/80 bg-slate-900/70">
-
                   <div className="flex flex-col gap-3 border-b border-slate-800 p-6 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-lg font-bold">
-                        Últimas reservas 📅
-                      </h2>
+                      <h2 className="text-lg font-bold">Últimas reservas 📅</h2>
 
                       <p className="mt-1 text-xs text-slate-500">
                         Las reservas más recientes del sistema.
@@ -1058,9 +856,7 @@ export default function PanelAdmin() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        cambiarSeccion("reservas")
-                      }
+                      onClick={() => cambiarSeccion("reservas")}
                       className="text-sm font-semibold text-green-400 hover:text-green-300"
                     >
                       Ver todas →
@@ -1069,9 +865,7 @@ export default function PanelAdmin() {
 
                   {reservasRecientes.length === 0 ? (
                     <div className="p-10 text-center">
-                      <div className="text-4xl">
-                        📅
-                      </div>
+                      <div className="text-4xl">📅</div>
 
                       <p className="mt-3 font-semibold text-slate-300">
                         No hay reservas todavía
@@ -1084,7 +878,6 @@ export default function PanelAdmin() {
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-187.5 text-left">
-
                         <thead className="border-b border-slate-800">
                           <tr>
                             <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -1110,111 +903,68 @@ export default function PanelAdmin() {
                         </thead>
 
                         <tbody>
-                          {reservasRecientes.map(
-                            (reserva) => (
-                              <tr
-                                key={reserva._id}
-                                className="border-b border-slate-800/70 transition hover:bg-slate-800/30"
-                              >
-                                <td className="px-6 py-4">
-                                  <p className="font-medium text-white">
-                                    {
-                                      reserva.usuario
-                                        .nombre
-                                    }{" "}
-                                    {
-                                      reserva.usuario
-                                        .apellido
-                                    }
-                                  </p>
+                          {reservasRecientes.map((reserva) => (
+                            <tr
+                              key={reserva._id}
+                              className="border-b border-slate-800/70 transition hover:bg-slate-800/30"
+                            >
+                              <td className="px-6 py-4">
+                                <p className="font-medium text-white">
+                                  {reserva.usuario.nombre}{" "}
+                                  {reserva.usuario.apellido}
+                                </p>
 
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    {
-                                      reserva.usuario
-                                        .email
-                                    }
-                                  </p>
-                                </td>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {reserva.usuario.email}
+                                </p>
+                              </td>
 
-                                <td className="px-6 py-4">
-                                  <p className="font-medium text-white">
-                                    {
-                                      reserva.cancha
-                                        .nombre
-                                    }
-                                  </p>
+                              <td className="px-6 py-4">
+                                <p className="font-medium text-white">
+                                  {reserva.cancha.nombre}
+                                </p>
 
-                                  <p className="mt-1 text-xs text-green-400">
-                                    {
-                                      reserva.cancha
-                                        .tipo
-                                    }
-                                  </p>
-                                </td>
+                                <p className="mt-1 text-xs text-green-400">
+                                  {reserva.cancha.tipo}
+                                </p>
+                              </td>
 
-                                <td className="px-6 py-4 text-sm text-slate-300">
-                                  {formatearFecha(
-                                    reserva.fecha
-                                  )}
-                                </td>
+                              <td className="px-6 py-4 text-sm text-slate-300">
+                                {formatearFecha(reserva.fecha)}
+                              </td>
 
-                                <td className="px-6 py-4">
-                                  <span className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white">
-                                    {
-                                      reserva.horaInicio
-                                    }{" "}
-                                    -{" "}
-                                    {reserva.horaFin}
-                                  </span>
-                                </td>
+                              <td className="px-6 py-4">
+                                <span className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white">
+                                  {reserva.horaInicio} - {reserva.horaFin}
+                                </span>
+                              </td>
 
-                                <td className="px-6 py-4">
-                                  <span
-                                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${obtenerClaseEstado(
-                                      reserva.estado
-                                    )}`}
-                                  >
-                                    {reserva.estado ===
-                                    "confirmada"
-                                      ? "Confirmada"
-                                      : reserva.estado ===
-                                        "cancelada"
+                              <td className="px-6 py-4">
+                                <span
+                                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${obtenerClaseEstado(
+                                    reserva.estado,
+                                  )}`}
+                                >
+                                  {reserva.estado === "confirmada"
+                                    ? "Confirmada"
+                                    : reserva.estado === "cancelada"
                                       ? "Cancelada"
                                       : "Pendiente"}
-                                  </span>
-                                </td>
-                              </tr>
-                            )
-                          )}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
-
                       </table>
                     </div>
                   )}
                 </div>
-
               </div>
             )}
 
-            {/* =================================
-                USUARIOS
-            ================================= */}
+            {seccionActiva === "usuarios" && <AdminUsuarios />}
 
-            {seccionActiva === "usuarios" && (
-              <AdminUsuarios />
-            )}
-
-            {/* =================================
-                CANCHAS
-            ================================= */}
-
-            {seccionActiva === "canchas" && (
-              <AdminCanchas />
-            )}
-
-            {/* =================================
-                CATEGORÍAS
-            ================================= */}
+            {seccionActiva === "canchas" && <AdminCanchas />}
 
             {seccionActiva === "categorias" && (
               <CategoriaProvider>
@@ -1222,38 +972,19 @@ export default function PanelAdmin() {
               </CategoriaProvider>
             )}
 
-            {/* =================================
-                PRODUCTOS
-            ================================= */}
+            {seccionActiva === "productos" && <AdminProductos />}
 
-            {seccionActiva === "productos" && (
-              <AdminProductos />
-            )}
-
-            {/* =================================
-                RESERVAS
-            ================================= */}
-
-            {seccionActiva === "reservas" && (
-              <AdminReservas />
-            )}
-
-            {/* =================================
-                CONFIGURACIÓN
-            ================================= */}
+            {seccionActiva === "reservas" && <AdminReservas />}
 
             {seccionActiva === "configuracion" && (
               <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8">
-                <h1 className="text-2xl font-bold">
-                  Configuración ⚙️
-                </h1>
+                <h1 className="text-2xl font-bold">Configuración ⚙️</h1>
 
                 <p className="mt-2 text-slate-400">
                   La sección de configuración estará disponible próximamente.
                 </p>
               </div>
             )}
-
           </div>
         </main>
       </div>

@@ -5,7 +5,10 @@ import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 
 import Swal from "sweetalert2";
-
+import { PaginadorBackend } from "../../Paginador";
+import { usePaginacionBackend } from "../../../context/PaginacionContext";
+import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { useTabla } from "../../../context/TablaContext";
 interface Usuario {
   _id: string;
   nombre: string;
@@ -37,26 +40,22 @@ const swalTema = Swal.mixin({
     cancelButton: "rounded-lg",
   },
 });
-
+const COLUMNAS_USUARIOS: Columna[] = [
+  { id: "nombre", titulo: "Nombre" },
+  { id: "email", titulo: "Email" },
+  { id: "rol", titulo: "Rol" },
+  { id: "estado", titulo: "Estado" },
+  { id: "verificacion", titulo: "Verificación" },
+  { id: "acciones", titulo: "Acciones" },
+];
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [paginaActual, setPaginaActual] = useState(1);
+  const { setTablaCargando } = useTabla();
+
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
 
-  // ==========================================
-  // PAGINACIÓN
-  // ==========================================
-
-  const usuariosPorPagina = 5;
-
-  const totalPaginas = Math.ceil(usuarios.length / usuariosPorPagina);
-
-  const indiceInicio = (paginaActual - 1) * usuariosPorPagina;
-
-  const indiceFin = indiceInicio + usuariosPorPagina;
-
-  const usuariosPagina = usuarios.slice(indiceInicio, indiceFin);
+  const usuariosPorPagina = 6;
+  const { paginaActual, setCantidadPaginas } = usePaginacionBackend("usuarios");
 
   const {
     register,
@@ -72,17 +71,16 @@ export default function AdminUsuarios() {
   const apellidoActual = watch("apellido", "");
   const emailActual = watch("email", "");
 
-  // ==========================================
-  // OBTENER USUARIOS
-  // ==========================================
-
   const cargarUsuarios = async () => {
     try {
-      setCargando(true);
+      setTablaCargando(true);
 
-      const respuesta = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario`, {
-        credentials: "include",
-      });
+      const respuesta = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario?pagina=${paginaActual}&limite=${usuariosPorPagina}`,
+        {
+          credentials: "include",
+        },
+      );
 
       const resultado = await respuesta.json();
 
@@ -92,10 +90,11 @@ export default function AdminUsuarios() {
         );
       }
 
-      setUsuarios(resultado);
-
-      // Volver a la primera página al cargar nuevamente
-      setPaginaActual(1);
+      setUsuarios(resultado.usuarios || []);
+      setCantidadPaginas(
+        resultado.totalPaginas ||
+          Math.ceil((resultado.cantidadUsuarios || 0) / usuariosPorPagina),
+      );
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
 
@@ -107,17 +106,13 @@ export default function AdminUsuarios() {
         iconColor: "#ef4444",
       });
     } finally {
-      setCargando(false);
+      setTablaCargando(false);
     }
   };
 
   useEffect(() => {
     cargarUsuarios();
-  }, []);
-
-  // ==========================================
-  // ABRIR MODAL EDITAR
-  // ==========================================
+  }, [paginaActual]);
 
   const abrirEditar = (usuario: Usuario) => {
     setUsuarioEditando(usuario);
@@ -131,18 +126,10 @@ export default function AdminUsuarios() {
     });
   };
 
-  // ==========================================
-  // CERRAR MODAL
-  // ==========================================
-
   const cerrarModal = () => {
     setUsuarioEditando(null);
     reset();
   };
-
-  // ==========================================
-  // GUARDAR CAMBIOS
-  // ==========================================
 
   const guardarCambios: SubmitHandler<FormularioUsuario> = async (datos) => {
     if (!usuarioEditando) return;
@@ -196,10 +183,6 @@ export default function AdminUsuarios() {
       });
     }
   };
-
-  // ==========================================
-  // CAMBIAR ROL
-  // ==========================================
 
   const cambiarRol = async (
     usuario: Usuario,
@@ -268,10 +251,6 @@ export default function AdminUsuarios() {
     }
   };
 
-  // ==========================================
-  // CAMBIAR ESTADO
-  // ==========================================
-
   const cambiarEstado = async (usuario: Usuario, nuevoEstado: boolean) => {
     if (usuario.activo === nuevoEstado) return;
 
@@ -338,10 +317,6 @@ export default function AdminUsuarios() {
     }
   };
 
-  // ==========================================
-  // ELIMINAR USUARIO
-  // ==========================================
-
   const eliminarUsuario = async (usuario: Usuario) => {
     const confirmacion = await swalTema.fire({
       icon: "warning",
@@ -372,22 +347,6 @@ export default function AdminUsuarios() {
         throw new Error(resultado.mensaje || "No se pudo eliminar el usuario");
       }
 
-      setUsuarios((usuariosActuales) => {
-        const usuariosActualizados = usuariosActuales.filter(
-          (u) => u._id !== usuario._id,
-        );
-
-        const nuevasPaginas = Math.ceil(
-          usuariosActualizados.length / usuariosPorPagina,
-        );
-
-        setPaginaActual((pagina) =>
-          Math.min(pagina, Math.max(nuevasPaginas, 1)),
-        );
-
-        return usuariosActualizados;
-      });
-
       await swalTema.fire({
         icon: "success",
         title: "Usuario eliminado",
@@ -395,6 +354,8 @@ export default function AdminUsuarios() {
         confirmButtonText: "Continuar",
         iconColor: "#22c55e",
       });
+
+      await cargarUsuarios();
     } catch (error) {
       console.error("Error al eliminar usuario:", error);
 
@@ -408,10 +369,6 @@ export default function AdminUsuarios() {
     }
   };
 
-  // ==========================================
-  // ESTILOS
-  // ==========================================
-
   const inputBase =
     "w-full rounded-lg border bg-[#111c36] px-4 py-3 text-white outline-none transition placeholder:text-slate-500";
 
@@ -419,24 +376,8 @@ export default function AdminUsuarios() {
 
   const inputError = `${inputBase} border-red-500 focus:border-red-500`;
 
-  // ==========================================
-  // CARGANDO
-  // ==========================================
-
-  if (cargando) {
-    return (
-      <div className="flex min-h-100 items-center justify-center">
-        <p className="text-slate-400">Cargando usuarios...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full">
-      {/* ========================================
-          ENCABEZADO
-      ======================================== */}
-
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Gestión de usuarios</h1>
 
@@ -445,178 +386,92 @@ export default function AdminUsuarios() {
         </p>
       </div>
 
-      {/* ========================================
-          TABLA / GRID
-      ======================================== */}
-
       <div className="overflow-x-auto rounded-xl border border-slate-700 bg-[#0b132b]">
-        <table className="w-full min-w-225 text-left">
-          <thead className="border-b border-slate-700 bg-[#111c36]">
-            <tr>
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Nombre
-              </th>
+        <TablaGenerica
+          columnas={COLUMNAS_USUARIOS}
+          datos={usuarios}
+          renderFila={(usuario) => (
+            <tr
+              key={usuario._id}
+              className="border-b border-slate-800 transition hover:bg-[#111c36]"
+            >
+              <td className="px-5 py-4 text-white">
+                <div>
+                  <p className="font-medium">
+                    {usuario.nombre} {usuario.apellido}
+                  </p>
+                </div>
+              </td>
 
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Email
-              </th>
+              <td className="px-5 py-4 text-slate-400">{usuario.email}</td>
 
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Rol
-              </th>
+              <td className="px-5 py-4">
+                <select
+                  value={usuario.rol}
+                  onChange={(e) =>
+                    cambiarRol(usuario, e.target.value as "usuario" | "admin")
+                  }
+                  className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                >
+                  <option value="usuario">Usuario</option>
 
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Estado
-              </th>
+                  <option value="admin">Admin</option>
+                </select>
+              </td>
 
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Verificación
-              </th>
+              <td className="px-5 py-4">
+                <select
+                  value={usuario.activo ? "activo" : "inactivo"}
+                  onChange={(e) =>
+                    cambiarEstado(usuario, e.target.value === "activo")
+                  }
+                  className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                >
+                  <option value="activo">Activo</option>
 
-              <th className="px-5 py-4 text-sm font-semibold text-slate-300">
-                Acciones
-              </th>
+                  <option value="inactivo">Inactivo</option>
+                </select>
+              </td>
+
+              <td className="px-5 py-4">
+                {usuario.emailVerificado ? (
+                  <span className="text-sm font-medium text-green-500">
+                    Verificado
+                  </span>
+                ) : (
+                  <span className="text-sm font-medium text-red-500">
+                    No verificado
+                  </span>
+                )}
+              </td>
+
+              <td className="px-5 py-4">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => abrirEditar(usuario)}
+                    className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-600"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => eliminarUsuario(usuario)}
+                    className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </td>
             </tr>
-          </thead>
-
-          <tbody>
-            {usuariosPagina.map((usuario) => (
-              <tr
-                key={usuario._id}
-                className="border-b border-slate-800 transition hover:bg-[#111c36]"
-              >
-                <td className="px-5 py-4 text-white">
-                  <div>
-                    <p className="font-medium">
-                      {usuario.nombre} {usuario.apellido}
-                    </p>
-                  </div>
-                </td>
-
-                <td className="px-5 py-4 text-slate-400">{usuario.email}</td>
-
-                {/* ROL */}
-
-                <td className="px-5 py-4">
-                  <select
-                    value={usuario.rol}
-                    onChange={(e) =>
-                      cambiarRol(usuario, e.target.value as "usuario" | "admin")
-                    }
-                    className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
-                  >
-                    <option value="usuario">Usuario</option>
-
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-
-                {/* ESTADO */}
-
-                <td className="px-5 py-4">
-                  <select
-                    value={usuario.activo ? "activo" : "inactivo"}
-                    onChange={(e) =>
-                      cambiarEstado(usuario, e.target.value === "activo")
-                    }
-                    className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
-                  >
-                    <option value="activo">Activo</option>
-
-                    <option value="inactivo">Inactivo</option>
-                  </select>
-                </td>
-
-                {/* VERIFICACIÓN */}
-
-                <td className="px-5 py-4">
-                  {usuario.emailVerificado ? (
-                    <span className="text-sm font-medium text-green-500">
-                      Verificado
-                    </span>
-                  ) : (
-                    <span className="text-sm font-medium text-red-500">
-                      No verificado
-                    </span>
-                  )}
-                </td>
-
-                {/* ACCIONES */}
-
-                <td className="px-5 py-4">
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => abrirEditar(usuario)}
-                      className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-600"
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => eliminarUsuario(usuario)}
-                      className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          )}
+        />
       </div>
 
-      {/* ========================================
-          PAGINACIÓN
-      ======================================== */}
-
-      {totalPaginas > 1 && (
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-700 bg-[#0b132b] px-5 py-4">
-          <p className="text-sm text-slate-400">
-            Mostrando{" "}
-            <span className="font-medium text-white">{indiceInicio + 1}</span> -{" "}
-            <span className="font-medium text-white">
-              {Math.min(indiceFin, usuarios.length)}
-            </span>{" "}
-            de <span className="font-medium text-white">{usuarios.length}</span>{" "}
-            usuarios
-          </p>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                setPaginaActual((pagina) => Math.max(pagina - 1, 1))
-              }
-              disabled={paginaActual === 1}
-              className="rounded-lg border border-slate-700 bg-[#111c36] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1a2948] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Anterior
-            </button>
-
-            <span className="rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white">
-              {paginaActual} / {totalPaginas}
-            </span>
-
-            <button
-              type="button"
-              onClick={() =>
-                setPaginaActual((pagina) => Math.min(pagina + 1, totalPaginas))
-              }
-              disabled={paginaActual === totalPaginas}
-              className="rounded-lg border border-slate-700 bg-[#111c36] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1a2948] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================
-          MODAL EDITAR USUARIO
-      ======================================== */}
+      <div className="border-t border-slate-700 p-4">
+        <PaginadorBackend seccion="usuarios" />
+      </div>
 
       {usuarioEditando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
@@ -642,8 +497,6 @@ export default function AdminUsuarios() {
                 ×
               </button>
             </div>
-
-            {/* FORMULARIO */}
 
             <form onSubmit={handleSubmit(guardarCambios)} className="space-y-5">
               {/* NOMBRE */}
@@ -685,8 +538,6 @@ export default function AdminUsuarios() {
                 )}
               </div>
 
-              {/* APELLIDO */}
-
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-medium text-white">
@@ -724,8 +575,6 @@ export default function AdminUsuarios() {
                   </p>
                 )}
               </div>
-
-              {/* EMAIL */}
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
@@ -765,8 +614,6 @@ export default function AdminUsuarios() {
                 )}
               </div>
 
-              {/* ROL */}
-
               <div>
                 <label className="mb-2 block text-sm font-medium text-white">
                   Rol
@@ -778,8 +625,6 @@ export default function AdminUsuarios() {
                   <option value="admin">Administrador</option>
                 </select>
               </div>
-
-              {/* ESTADO */}
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-white">
@@ -797,8 +642,6 @@ export default function AdminUsuarios() {
                   <option value="false">Inactivo</option>
                 </select>
               </div>
-
-              {/* BOTONES */}
 
               <div className="flex justify-end gap-3 border-t border-slate-700 pt-5">
                 <button

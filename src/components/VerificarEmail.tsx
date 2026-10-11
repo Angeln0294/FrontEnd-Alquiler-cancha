@@ -47,7 +47,7 @@ export default function VerificarEmail() {
             email,
             codigo,
           }),
-        }
+        },
       );
 
       const resultado = await respuesta.json();
@@ -83,7 +83,7 @@ export default function VerificarEmail() {
       setReenviando(true);
 
       const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/reenviar-codigo`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/reenviar-codigo`,
         {
           method: "POST",
           headers: {
@@ -92,7 +92,7 @@ export default function VerificarEmail() {
           body: JSON.stringify({
             email,
           }),
-        }
+        },
       );
 
       const resultado = await respuesta.json();
@@ -162,24 +162,18 @@ export default function VerificarEmail() {
             inputMode="numeric"
             maxLength={6}
             value={codigo}
-            onChange={(e) =>
-              setCodigo(e.target.value.replace(/\D/g, ""))
-            }
+            onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
             placeholder="123456"
             className="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-center text-2xl tracking-[0.5em]"
           />
         </div>
 
         {error && (
-          <p className="text-red-400 text-sm text-center mb-4">
-            {error}
-          </p>
+          <p className="text-red-400 text-sm text-center mb-4">{error}</p>
         )}
 
         {mensaje && (
-          <p className="text-green-400 text-sm text-center mb-4">
-            {mensaje}
-          </p>
+          <p className="text-green-400 text-sm text-center mb-4">{mensaje}</p>
         )}
 
         <button
@@ -205,8 +199,8 @@ export default function VerificarEmail() {
             {reenviando
               ? "Enviando..."
               : segundosRestantes > 0
-              ? `Reenviar código (${segundosRestantes}s)`
-              : "Reenviar código"}
+                ? `Reenviar código (${segundosRestantes}s)`
+                : "Reenviar código"}
           </button>
         </div>
       </div>

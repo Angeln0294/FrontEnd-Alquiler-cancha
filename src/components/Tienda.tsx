@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { usePaginacionBackend } from "../context/PaginacionContext";
 import { PaginadorBackend } from "../components/Paginador";
 import { useNavigate } from "react-router-dom";
+import { ProductoCard } from "../components/ProductoCard";
 import Swal from "sweetalert2";
 
 export default function Tienda() {
@@ -142,85 +143,52 @@ export default function Tienda() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {productosFiltrados.map((producto) => (
-                <div
-                  key={producto._id}
-                  className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl hover:border-green-500/40 transition"
-                >
-                  <div className="h-56 bg-slate-950">
-                    <img
-                      src={producto.imagen}
-                      alt={producto.nombreProducto}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+           
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  {productosFiltrados.map((producto) => (
+    <ProductoCard
+      key={producto._id}
+      producto={producto}
+      onAgregarAlCarrito={async (productoSeleccionado) => {
+        if (!usuario) {
+          await Swal.fire({
+            icon: "warning",
+            title: "Iniciá sesión",
+            text: "Debés iniciar sesión para agregar productos al carrito.",
+            confirmButtonText: "Iniciar sesión",
+            background: "#1e293b",
+            color: "#f8fafc",
+            confirmButtonColor: "#22c55e",
+          });
 
-                  <div className="p-5">
-                    <p className="text-xs text-purple-400 font-semibold mb-2">
-                      {producto.categoria?.nombreCategoria}
-                    </p>
+          navigate("/login");
+          return;
+        }
 
-                    <h2 className="text-lg font-bold text-slate-100">
-                      {producto.nombreProducto}
-                    </h2>
+        await agregarAlCarrito(productoSeleccionado._id);
 
-                    <p className="text-sm text-slate-500 mt-2 line-clamp-2">
-                      {producto.descripcion}
-                    </p>
+        const resultado = await Swal.fire({
+          icon: "success",
+          title: "¡Producto agregado!",
+          text: `${productoSeleccionado.nombreProducto} fue agregado al carrito.`,
+          background: "#1e293b",
+          color: "#ffffff",
+          showCancelButton: true,
+          confirmButtonText: "🛒 Ver carrito",
+          cancelButtonText: "Seguir comprando",
+          confirmButtonColor: "#00d26a",
+          cancelButtonColor: "#00d26a",
+          reverseButtons: true,
+        });
 
-                    <div className="flex items-center justify-between gap-3 mt-5">
-                      <span className="text-xl font-black text-green-400">
-                        ${producto.precio}
-                      </span>
+        if (resultado.isConfirmed) {
+          navigate("/carrito");
+        }
+      }}
+    />
+  ))}
+</div>
 
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (!usuario) {
-                            await Swal.fire({
-                              icon: "warning",
-                              title: "Iniciá sesión",
-                              text: "Debés iniciar sesión para agregar productos al carrito.",
-                              confirmButtonText: "Iniciar sesión",
-                              background: "#1e293b",
-                              color: "#f8fafc",
-                              confirmButtonColor: "#22c55e",
-                            });
-
-                            navigate("/login");
-                            return;
-                          }
-
-                          await agregarAlCarrito(producto._id);
-
-                          Swal.fire({
-                            icon: "success",
-                            title: "¡Producto agregado!",
-                            text: `${producto.nombreProducto} fue agregado al carrito.`,
-                            background: "#1e293b",
-                            color: "#ffffff",
-                            showCancelButton: true,
-                            confirmButtonText: "🛒 Ver carrito",
-                            cancelButtonText: "Seguir comprando",
-                            confirmButtonColor: "#00d26a",
-                            cancelButtonColor: "#00d26a",
-                            reverseButtons: true,
-                          }).then((resultado) => {
-                            if (resultado.isConfirmed) {
-                              navigate("/carrito");
-                            }
-                          });
-                        }}
-                        className="px-4 py-2.5 rounded-xl bg-green-500 text-slate-950 font-bold text-sm hover:bg-green-400 transition"
-                      >
-                        Agregar 🛒
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
 
             <div className="border-t border-slate-800 mt-8 pt-4">
               <PaginadorBackend seccion="productos" />

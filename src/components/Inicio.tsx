@@ -99,7 +99,7 @@ export default function Inicio() {
   
   useEffect(() => {
   cargarProductos(1, "", limiteProductos);
-}, [cargarProductos, limiteProductos]);
+}, []);
 
   return (
     <div className="w-full bg-[#0b132b] text-white min-h-screen pb-16">

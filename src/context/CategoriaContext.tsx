@@ -81,10 +81,10 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       setTablaCargando(false);
     }
   };
-  const obtenerTodasLasCategorias = useCallback(async () => {
+ const obtenerTodasLasCategorias = useCallback(async () => {
     try {
       const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias?limit=1000`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/categorias/todas`,
       );
 
       if (!respuesta.ok) {

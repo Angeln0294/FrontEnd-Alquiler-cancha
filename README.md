@@ -1,109 +1,181 @@
 # ⚽ Canchas Ya - FrontEnd 🚀
 
-¡Bienvenido al repositorio del FrontEnd de **Canchas Ya**! Una plataforma web moderna, intuitiva y optimizada diseñada pura y exclusivamente para digitalizar el deporte amateur en Tucumán. Este sistema permite a los complejos deportivos automatizar la gestión de sus turnos y a los usuarios asegurar su hora de juego al instante.
+¡Bienvenido al repositorio del frontend de **Canchas Ya**!
 
-Este desarrollo está construido bajo una arquitectura modular de componentes y aplicando **TypeScript estricto** para garantizar un código robusto, escalable y libre de errores en producción.
+Canchas Ya es una plataforma web diseñada para facilitar la reserva de canchas deportivas y contribuir a la digitalización del deporte amateur en Tucumán. El sistema permite a los usuarios consultar canchas disponibles y gestionar sus reservas, mientras que los complejos deportivos cuentan con herramientas para administrar sus servicios y turnos.
 
----
-
-## 🎨 Características Clave Implementadas
-
-*   **Reserva de Turnos Interactiva:** Mockup dinámico basado en una grilla asimétrica adaptativa de dos columnas para la selección de horarios en tiempo real.
-*   **Promociones Inteligentes Automatizadas:** El sistema calcula y aplica de forma reactiva un **20% de descuento** (Promo Nocturna de lunes a jueves después de las 22:00hs) según el horario cliqueado por el usuario.
-*   **Navegación Fluida e Interconectada:** Reseteo automático de la posición de la pantalla mediante un componente de control del ciclo de vida del enrutamiento.
-*   **Formularios con Validación Avanzada:** Pantallas de Login y Registro fuertemente tipadas con validación nativa de campos (*onTouched*) y soporte para accesos OAuth.
-*   **Estética Premium en Modo Oscuro:** Interfaz optimizada con una paleta corporativa oscura utilizando iconos vectoriales originales (SVG) y adaptabilidad simétrica en imágenes de perfil (`object-cover`).
+El proyecto está desarrollado mediante una arquitectura modular basada en componentes reutilizables y utiliza TypeScript para mejorar la seguridad de tipos, facilitar el mantenimiento del código y favorecer su escalabilidad.
 
 ---
 
-## 🛠️ Stack Tecnológico & Librerías Utilizadas
+## 🎨 Características principales
 
-El proyecto utiliza las herramientas más modernas y ágivas del ecosistema web actual:
-
-*   **React 19:** Biblioteca principal para la construcción de interfaces de usuario basadas en componentes declarativos y reutilizables.
-*   **Vite:** Servidor de desarrollo de última generación y empaquetador ultra rápido para agilizar el flujo de trabajo local.
-*   **TypeScript (Strict Mode):** Tipado estricto habilitado con la directiva `verbatimModuleSyntax` para forzar importaciones explícitas y prevenir errores de lógica en el tipado.
-*   **Tailwind CSS:** Framework de diseño utilitario para la maquetación responsiva, estilización del modo oscuro y animaciones fluidas sin escribir CSS plano.
-*   **React Router Dom v6:** Motor de enrutamiento centralizado para el manejo de rutas protegidas, redirecciones mediante `useNavigate` y lectura de query params en URL.
-*   **React Hook Form:** Gestión eficiente del estado de los formularios, minimizando las re-renderizaciones y optimizando el rendimiento de las validaciones de datos.
-*   **SweetAlert2:** Librería de alertas y ventanas emergentes estilizadas en sintonía con el diseño oscuro para mejorar la experiencia de usuario (UX).
+- **Reserva de turnos interactiva:** interfaz de selección de horarios mediante una grilla adaptable que facilita la consulta y elección de turnos.
+- **Promociones automatizadas:** cálculo de un 20 % de descuento correspondiente a la promoción nocturna, aplicable de lunes a jueves después de las 22:00 h, según las condiciones establecidas.
+- **Navegación entre páginas:** gestión de rutas y redirecciones, incluyendo el restablecimiento de la posición de desplazamiento al navegar.
+- **Formularios de autenticación:** pantallas de inicio de sesión y registro con validación de campos y funcionalidades de autenticación.
+- **Diseño adaptable:** interfaz en modo oscuro, uso de recursos gráficos SVG y estilos responsivos para diferentes tamaños de pantalla.
+- **Gestión administrativa:** funcionalidades destinadas a la administración de canchas, categorías, productos, reservas y usuarios.
 
 ---
 
-## 📂 Estructura del Proyecto (Módulos Principales)
+## 🛠️ Stack tecnológico y librerías utilizadas
 
+El frontend de Canchas Ya utiliza las siguientes tecnologías y herramientas:
 
+- **React 19:** biblioteca para construir interfaces de usuario mediante componentes reutilizables.
+- **Vite:** herramienta de desarrollo y compilación que permite ejecutar el proyecto localmente y generar los archivos optimizados para producción.
+- **TypeScript:** lenguaje que incorpora tipado estático a JavaScript y facilita la detección de errores de tipos durante el desarrollo.
+- **Tailwind CSS:** framework de clases utilitarias utilizado para implementar estilos, diseños responsivos y la interfaz visual.
+- **React Router DOM v7:** biblioteca de enrutamiento para gestionar la navegación entre páginas, las redirecciones y los parámetros de las URL.
+- **React Hook Form:** biblioteca para gestionar formularios, sus estados y validaciones.
+- **SweetAlert2:** biblioteca utilizada para mostrar alertas, mensajes y ventanas de confirmación.
+
+---
+
+## 📂 Estructura del proyecto
+
+La aplicación está organizada en módulos para facilitar el desarrollo y mantenimiento de sus funcionalidades.
 
 ```text
-frontend-alquiler-canchas/
+FrontEnd-Alquiler-cancha/
 ├── public/
 │   ├── _redirects
 │   ├── favicon2.svg
 │   └── icons.svg
 ├── src/
-│   ├── assets/                 # Imágenes y recursos estáticos
-│   │   └── Nosotros/           # Fotos de los integrantes
-│   ├── components/             # Componentes reutilizables y vistas
-│   │   ├── NuestrasCanchas/    # Listado y tarjetas de canchas
-│   │   └── panelAdmin/         # Panel de administración
+│   ├── assets/                  # Imágenes y recursos estáticos
+│   │   └── Nosotros/
+│   ├── components/              # Componentes y funcionalidades
+│   │   ├── NuestrasCanchas/
+│   │   └── panelAdmin/
 │   │       ├── canchas/
 │   │       ├── categorias/
 │   │       ├── productos/
 │   │       ├── reservas/
 │   │       └── usuarios/
-│   ├── context/                # Contextos globales y gestión de estado
-│   ├── pages/                  # Páginas principales de la aplicación
-│   ├── App.tsx                 # Configuración de rutas
-│   ├── main.tsx                # Punto de entrada de React
-│   └── index.css               # Estilos globales
-├── .env                        # Variables de entorno locales (no publicar)
-├── .gitignore                  # Archivos excluidos de Git
-├── eslint.config.js            # Configuración de ESLint
-├── index.html                  # Documento HTML principal
-├── package.json                # Dependencias y scripts
-├── pnpm-lock.yaml              # Versiones bloqueadas de dependencias
-├── pnpm-workspace.yaml         # Configuración del workspace
-├── tsconfig.json               # Configuración de TypeScript
-├── tsconfig.app.json           # Configuración TypeScript de la aplicación
-├── tsconfig.node.json          # Configuración TypeScript para Node.js
-└── vite.config.ts              # Configuración de Vite
+│   ├── context/                 # Contextos globales
+│   ├── pages/                   # Páginas de la aplicación
+│   ├── App.tsx                  # Configuración de rutas
+│   ├── main.tsx                 # Punto de entrada de React
+│   └── index.css                # Estilos globales
+├── .env.example                 # Plantilla de variables de entorno
+├── .env                         # Configuración local (ignorada por Git)
+├── .gitignore                   # Archivos excluidos de Git
+├── eslint.config.js             # Configuración de ESLint
+├── index.html                   # Documento HTML principal
+├── package.json                 # Dependencias y scripts
+├── pnpm-lock.yaml               # Versiones bloqueadas de dependencias
+├── pnpm-workspace.yaml          # Configuración del workspace
+├── tsconfig.json                # Configuración general de TypeScript
+├── tsconfig.app.json            # Configuración TypeScript de la aplicación
+├── tsconfig.node.json           # Configuración TypeScript para Node.js
+└── vite.config.ts               # Configuración de Vite
 ```
 
 ### Organización de carpetas
 
-- **`assets/`**: imágenes y recursos estáticos del proyecto.
-- **`components/`**: componentes de interfaz, formularios, carrito, tienda, reservas y administración.
-- **`context/`**: gestión del estado global mediante React Context.
-- **`pages/`**: páginas de contacto, perfil, presentación del equipo y resultados de pago.
-- **`public/`**: archivos públicos y configuración de redirecciones para el despliegue.
-
+- **`assets/`:** almacena imágenes y recursos estáticos utilizados en la interfaz.
+- **`components/`:** contiene componentes de interfaz y funcionalidades relacionadas con formularios, carrito, reservas, canchas y administración.
+- **`context/`:** gestiona estados compartidos entre diferentes componentes mediante React Context.
+- **`pages/`:** reúne las páginas principales de la aplicación, como contacto, perfil y resultados de pago.
+- **`public/`:** contiene archivos públicos y recursos de configuración para el despliegue.
 
 ---
 
-## 🚀 Instalación y Desarrollo Local
+## 🚀 Instalación y desarrollo local
 
-Para levantar el entorno de desarrollo en tu computadora, ejecutá la siguiente secuencia ordenada de comandos en tu terminal:
+### Requisitos previos
 
-1.  **Clonar el repositorio:**
-    ```bash
-    git clone https://github.com
-    cd FrontEnd-alquiler-cancha
-    ```
+Para ejecutar el frontend de Canchas Ya es necesario contar con:
 
-2.  **Instalar las dependencias oficiales:**
-    ```bash
-    pnpm install
-    ```
+- Node.js compatible con la versión de Vite instalada.
+- pnpm como gestor de paquetes.
+- Acceso al backend de Canchas Ya, ya sea local o publicado.
 
-3.  **Iniciar el servidor de desarrollo local de Vite:**
-    ```bash
-    pnpm run dev
-    ```
-    *Abrí tu navegador en [http://localhost:5173](http://localhost:5173) para ver la aplicación corriendo en vivo.*
+### 1. Clonar el repositorio
 
+```bash
+git clone https://github.com/Angeln0294/FrontEnd-Alquiler-cancha.git
+cd FrontEnd-Alquiler-cancha
+```
 
-## 👥 Equipo de Desarrollo Frontend
+### 2. Instalar las dependencias
 
-*   Ángel Nader, Abel Almaraz, Fatima Alfaro
+```bash
+pnpm install
+```
 
+### 3. Configurar las variables de entorno
 
+El proyecto utiliza variables de entorno para establecer la comunicación entre el frontend y el backend.
+
+Crear una copia del archivo `.env.example` y renombrarla como `.env`.
+
+En PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Para trabajar con el backend local, configurar la siguiente variable dentro del archivo `.env`:
+
+```env
+VITE_BACKEND_URL=http://localhost:3003
+```
+
+Si se desea utilizar el backend publicado, reemplazar el valor por la dirección HTTPS correspondiente.
+
+El archivo `.env` está excluido del control de versiones mediante `.gitignore` y no debe subirse al repositorio.
+
+### 4. Ejecutar el servidor de desarrollo
+
+```bash
+pnpm run dev
+```
+
+Abrir en el navegador la dirección indicada por Vite, normalmente:
+
+http://localhost:5173
+
+---
+
+## 🌐 Configuración y compilación de producción
+
+Para el entorno de producción, el frontend debe utilizar la dirección HTTPS pública del backend, en lugar de una dirección local.
+
+La variable de entorno correspondiente es:
+
+```env
+VITE_BACKEND_URL=https://backend-alquiler-canchas.onrender.com
+```
+
+En la plataforma de alojamiento del frontend, configurar `VITE_BACKEND_URL` como variable de entorno disponible durante la compilación.
+
+### Generar la compilación de producción
+
+Ejecutar el siguiente comando:
+
+```bash
+pnpm build
+```
+
+Este comando realiza la comprobación de TypeScript y genera los archivos de producción en el directorio `dist/`.
+
+Para visualizar localmente la compilación generada, ejecutar:
+
+```bash
+pnpm preview
+```
+
+**Importante:** Vite incorpora las variables con prefijo `VITE_` durante la compilación. Si se modifica `VITE_BACKEND_URL` en la plataforma de alojamiento, es necesario volver a compilar y desplegar el frontend para aplicar el cambio.
+
+Las variables con prefijo `VITE_` son accesibles desde el código del navegador, por lo que no deben utilizarse para almacenar contraseñas, claves privadas ni otros datos sensibles.
+
+---
+
+## 👥 Equipo de desarrollo frontend
+
+- Angel Nader
+- Abel Almaraz
+- Fatima Alfaro

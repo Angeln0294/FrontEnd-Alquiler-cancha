@@ -25,7 +25,7 @@ El frontend de Canchas Ya utiliza las siguientes tecnologías y herramientas:
 
 - **React 19:** biblioteca para construir interfaces de usuario mediante componentes reutilizables.
 - **Vite:** herramienta de desarrollo y compilación que permite ejecutar el proyecto localmente y generar los archivos optimizados para producción.
-- **TypeScript:** lenguaje que incorpora tipado estático a JavaScript y facilita la detección de errores de tipos durante el desarrollo.
+- **TypeScript (Strict Mode):** lenguaje con tipado estático y modo estricto habilitado mediante `strict: true` en `tsconfig.app.json`, que permite detectar posibles errores de tipos durante el desarrollo y mejorar la mantenibilidad del código.
 - **Tailwind CSS:** framework de clases utilitarias utilizado para implementar estilos, diseños responsivos y la interfaz visual.
 - **React Router DOM v7:** biblioteca de enrutamiento para gestionar la navegación entre páginas, las redirecciones y los parámetros de las URL.
 - **React Hook Form:** biblioteca para gestionar formularios, sus estados y validaciones.

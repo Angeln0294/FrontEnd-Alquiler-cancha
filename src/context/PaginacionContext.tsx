@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 
 type SeccionPaginada =
   | "canchas"
@@ -35,12 +35,26 @@ export const PaginacionBackendProvider: React.FC<{
     categorias: { paginaActual: 1, cantidadPaginas: 1 },
   });
 
-  const setCantidadPaginas = (seccion: SeccionPaginada, total: number) => {
-    setPaginaciones((prev) => ({
-      ...prev,
-      [seccion]: { ...prev[seccion], cantidadPaginas: total || 1 },
-    }));
-  };
+  const setCantidadPaginas = useCallback(
+    (seccion: SeccionPaginada, total: number) => {
+      setPaginaciones((prev) => {
+        const nuevaCantidad = total || 1;
+
+        if (prev[seccion].cantidadPaginas === nuevaCantidad) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          [seccion]: {
+            ...prev[seccion],
+            cantidadPaginas: nuevaCantidad,
+          },
+        };
+      });
+    },
+    [],
+  );
 
   const cambiarPagina = (seccion: SeccionPaginada, nuevaPagina: number) => {
     setPaginaciones((prev) => {

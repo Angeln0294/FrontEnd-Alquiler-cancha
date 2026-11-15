@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { apiFetch } from "../../services/api";
 import { PaginadorBackend } from "../Paginador";
 import { usePaginacionBackend } from "../../context/PaginacionContext";
 import { CanchaCard } from "./CanchasCard";
@@ -21,8 +22,6 @@ export default function NuestrasCanchas() {
   const navigate = useNavigate();
   const { usuario } = useAuth();
 
-  const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/canchas`;
-
   const [canchas, setCanchas] = useState<CanchaDetalle[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -31,26 +30,19 @@ export default function NuestrasCanchas() {
   const { paginaActual, setCantidadPaginas } = usePaginacionBackend("canchas");
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const cargarCanchas = async () => {
       try {
         setCargando(true);
 
-        const respuesta = await fetch(
-          `${API_URL}?pagina=${paginaActual}&limite=${canchasPorPagina}`,
-          {
-            credentials: "include",
-          },
-        );
-
-        const resultado = await respuesta.json();
-
-        if (!respuesta.ok) {
-          throw new Error(
-            resultado.mensaje ||
-              resultado.message ||
-              "No se pudieron cargar las canchas",
-          );
-        }
+        const resultado = await apiFetch<{
+          canchas: CanchaDetalle[];
+          totalPaginas?: number;
+          cantidadCanchas?: number;
+        }>(`/api/canchas?pagina=${paginaActual}&limite=${canchasPorPagina}`, {
+          signal: controller.signal,
+        });
 
         setCanchas(resultado.canchas || []);
 
@@ -59,6 +51,7 @@ export default function NuestrasCanchas() {
             Math.ceil((resultado.cantidadCanchas || 0) / canchasPorPagina),
         );
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error("Error al cargar las canchas:", error);
 
         await Swal.fire({
@@ -71,7 +64,9 @@ export default function NuestrasCanchas() {
           confirmButtonColor: "#22c55e",
         });
       } finally {
-        setCargando(false);
+        if (!controller.signal.aborted) {
+          setCargando(false);
+        }
       }
     };
 
@@ -85,7 +80,11 @@ export default function NuestrasCanchas() {
         decodeURIComponent(canchaParam),
       );
     }
-  }, [paginaActual, searchParams]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [paginaActual, searchParams, setCantidadPaginas]);
 
   if (cargando) {
     return (

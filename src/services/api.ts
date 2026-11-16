@@ -24,29 +24,47 @@ export async function apiFetch<T>(
   }
 
   const response = await fetch(
-    `${API_BASE_URL.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`,
-    {
-      ...options,
-      credentials: options.credentials ?? "include",
+  `${API_BASE_URL.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`,
+  {
+    ...options,
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...options.headers,
     },
-  );
+    credentials: options.credentials ?? "include",
+  },
+);
 
   if (!response.ok) {
     let mensaje = `Error HTTP ${response.status}`;
 
     try {
       const resultado = await response.json();
-      mensaje = resultado.mensaje || resultado.message || mensaje;
+     const erroresValidacion = Array.isArray(resultado.errors)
+  ? resultado.errors
+      .map((error: { msg?: string }) => error.msg)
+      .filter(Boolean)
+      .join("\n")
+  : "";
+
+mensaje =
+  resultado.mensaje ||
+  resultado.message ||
+  resultado.error ||
+  erroresValidacion ||
+  mensaje;
     } catch {
-      // Se mantiene el mensaje HTTP si no hay un JSON válido.
+      
     }
 
     throw new ApiError(response.status, mensaje);
   }
 
-  if (response.status === 204) {
-    return undefined as T;
-  }
+  const texto = await response.text();
 
-  return (await response.json()) as T;
+if (!texto) {
+  return undefined as T;
+}
+
+return JSON.parse(texto) as T;
 }

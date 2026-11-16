@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import Swal from "sweetalert2";
+import { apiFetch } from "../services/api";
 
 export interface ItemCarrito {
   producto: {
@@ -47,18 +48,9 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
     try {
       setCargando(true);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
-        {
-          credentials: "include",
-        },
-      );
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudo obtener el carrito");
-      }
-
-      const datos = await respuesta.json();
+      const datos = await apiFetch<Carrito>("/api/carrito", {
+        method: "GET",
+      });
 
       setCarrito(datos);
     } catch (error) {
@@ -70,28 +62,16 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const agregarAlCarrito = async (productoId: string, cantidad = 1) => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            producto: productoId,
-            cantidad,
-          }),
+      const datos = await apiFetch<{ carrito: Carrito }>("/api/carrito", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
-
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          datos?.mensaje || "No se pudo agregar el producto al carrito",
-        );
-      }
+        body: JSON.stringify({
+          producto: productoId,
+          cantidad,
+        }),
+      });
 
       setCarrito(datos.carrito);
     } catch (error) {
@@ -110,20 +90,12 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const restarCantidad = async (productoId: string) => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/carrito/restar/${productoId}`,
+      const datos = await apiFetch<{ carrito: Carrito }>(
+        `/api/carrito/restar/${productoId}`,
         {
           method: "PATCH",
-          credentials: "include",
         },
       );
-
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(datos?.mensaje || "No se pudo actualizar la cantidad");
-      }
-
       setCarrito(datos.carrito);
     } catch (error) {
       console.error("Error al restar cantidad:", error);
@@ -141,26 +113,16 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const sumarCantidad = async (productoId: string) => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            producto: productoId,
-            cantidad: 1,
-          }),
+      const datos = await apiFetch<{ carrito: Carrito }>("/api/carrito", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
-
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(datos?.mensaje || "No se pudo aumentar la cantidad");
-      }
+        body: JSON.stringify({
+          producto: productoId,
+          cantidad: 1,
+        }),
+      });
 
       setCarrito(datos.carrito);
     } catch (error) {
@@ -179,19 +141,9 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const eliminarProducto = async (productoId: string) => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/carrito/producto/${productoId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(datos?.mensaje || "No se pudo eliminar el producto");
-      }
+      await apiFetch<void>(`/api/carrito/producto/${productoId}`, {
+        method: "DELETE",
+      });
 
       await obtenerCarrito();
     } catch (error) {
@@ -210,20 +162,9 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const vaciarCarrito = async () => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/carrito`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(datos?.mensaje || "No se pudo vaciar el carrito");
-      }
-
+      await apiFetch<void>("/api/carrito", {
+        method: "DELETE",
+      });
       setCarrito((actual) =>
         actual
           ? {
@@ -247,19 +188,12 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const pagarCarrito = async () => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia`,
+      const datos = await apiFetch<{ init_point: string }>(
+        "/api/pago/crear-preferencia",
         {
           method: "POST",
-          credentials: "include",
         },
       );
-
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(datos?.mensaje || "No se pudo iniciar el pago");
-      }
 
       window.location.href = datos.init_point;
     } catch (error) {

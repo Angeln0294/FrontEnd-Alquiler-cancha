@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../services/api";
 
 export default function MiPerfil() {
   const { usuario, cargarUsuario } = useAuth();
@@ -12,44 +13,28 @@ export default function MiPerfil() {
   const [email, setEmail] = useState(usuario?.email || "");
   const [guardando, setGuardando] = useState(false);
 
+  const navigate = useNavigate();
+
   if (!usuario) {
     return null;
   }
-  const navigate = useNavigate();
   const guardarCambios = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setGuardando(true);
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuario._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            nombre,
-            apellido,
-            email,
-          }),
+      await apiFetch<void>(`/api/usuario/${usuario._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        await Swal.fire({
-          icon: "error",
-          title: "No se pudo actualizar",
-          text:
-            resultado.mensaje || "Ocurrió un error al actualizar el perfil.",
-        });
-
-        return;
-      }
+        body: JSON.stringify({
+          nombre,
+          apellido,
+          email,
+        }),
+      });
 
       const emailCambio = email.toLowerCase().trim() !== usuario.email;
 
@@ -85,8 +70,11 @@ export default function MiPerfil() {
 
       await Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "No se pudo conectar con el servidor.",
+        title: "No se pudo actualizar el perfil",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error al actualizar el perfil.",
       });
     } finally {
       setGuardando(false);
@@ -124,7 +112,12 @@ export default function MiPerfil() {
 
                   <button
                     type="button"
-                    onClick={() => setEditando(true)}
+                    onClick={() => {
+                      setNombre(usuario.nombre);
+                      setApellido(usuario.apellido);
+                      setEmail(usuario.email);
+                      setEditando(true);
+                    }}
                     className="bg-green-500 hover:bg-green-400 text-black font-semibold px-4 py-2 rounded-lg transition"
                   >
                     ✏️ Editar perfil

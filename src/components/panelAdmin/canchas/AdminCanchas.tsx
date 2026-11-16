@@ -5,6 +5,7 @@ import { CanchaCard } from "./CanchasCardAdmin";
 import CanchasContext from "../../../context/CanchasContext";
 import { PaginadorBackend } from "../../Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
+import { apiFetch } from "../../../services/api";
 
 interface Cancha {
   _id: string;
@@ -24,8 +25,6 @@ interface FormularioCancha {
   tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
   disponible: boolean;
 }
-
-const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/canchas`;
 
 export default function AdminCanchas() {
   const [canchas, setCanchas] = useState<Cancha[]>([]);
@@ -56,22 +55,19 @@ export default function AdminCanchas() {
     },
   });
 
-  const cargarCanchas = async () => {
+  const cargarCanchas = async (signal?: AbortSignal) => {
+    if (signal?.aborted) return;
     try {
       setCargando(true);
 
-      const respuesta = await fetch(
-        `${API_URL}?pagina=${paginaActual}&limite=${limiteCanchas}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudieron obtener las canchas");
-      }
-
-      const resultado = await respuesta.json();
+      const resultado = await apiFetch<{
+        canchas: Cancha[];
+        cantidadCanchas: number;
+        totalPaginas?: number;
+      }>(`/api/canchas?pagina=${paginaActual}&limite=${limiteCanchas}`, {
+        method: "GET",
+        signal,
+      });
 
       setCanchas(resultado.canchas || []);
       setCantidadCanchas(resultado.cantidadCanchas || 0);
@@ -81,6 +77,7 @@ export default function AdminCanchas() {
         Math.ceil((resultado.cantidadCanchas || 0) / limiteCanchas);
       setCantidadPaginas(paginasTotales);
     } catch (error) {
+      if (signal?.aborted) return;
       console.error("Error al cargar canchas:", error);
 
       Swal.fire({
@@ -92,12 +89,20 @@ export default function AdminCanchas() {
         confirmButtonColor: "#22c55e",
       });
     } finally {
-      setCargando(false);
+      if (!signal?.aborted) {
+        setCargando(false);
+      }
     }
   };
 
   useEffect(() => {
-    cargarCanchas();
+    const controller = new AbortController();
+
+    cargarCanchas(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [paginaActual]);
 
   const abrirFormularioNueva = () => {
@@ -141,7 +146,6 @@ export default function AdminCanchas() {
     try {
       setGuardando(true);
 
-      const url = editando ? `${API_URL}/${editando._id}` : API_URL;
       const formData = new FormData();
 
       formData.append("nombre", datos.nombre);
@@ -154,21 +158,13 @@ export default function AdminCanchas() {
         formData.append("imagen", datos.imagen[0]);
       }
 
-      const respuesta = await fetch(url, {
-        method: editando ? "PUT" : "POST",
-        credentials: "include",
-        body: formData,
-      });
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.message ||
-            resultado.mensaje ||
-            "No se pudo guardar la cancha",
-        );
-      }
+      await apiFetch(
+        editando ? `/api/canchas/${editando._id}` : "/api/canchas",
+        {
+          method: editando ? "PUT" : "POST",
+          body: formData,
+        },
+      );
 
       await Swal.fire({
         icon: "success",
@@ -221,20 +217,9 @@ export default function AdminCanchas() {
     }
 
     try {
-      const respuesta = await fetch(`${API_URL}/${cancha._id}`, {
+      await apiFetch(`/api/canchas/${cancha._id}`, {
         method: "DELETE",
-        credentials: "include",
       });
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.message ||
-            resultado.mensaje ||
-            "No se pudo eliminar la cancha",
-        );
-      }
 
       await Swal.fire({
         icon: "success",

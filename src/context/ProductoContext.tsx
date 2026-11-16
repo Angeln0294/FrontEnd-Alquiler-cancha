@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import Swal from "sweetalert2";
+import { apiFetch } from "../services/api";
 import { useTabla } from "../context/TablaContext";
 import { usePaginacionBackend } from "../context/PaginacionContext";
 
@@ -73,22 +74,19 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     try {
       setTablaCargando(true);
       const numeroPagina = pagina || 1;
-      let url =
-        `${import.meta.env.VITE_BACKEND_URL}/api/producto` +
-        `?pagina=${numeroPagina}` +
-        `&limite=${limite}`;
+      let endpoint = `/api/producto?pagina=${numeroPagina}&limite=${limite}`;
 
       if (termino.trim() !== "") {
-        url += `&termino=${encodeURIComponent(termino)}`;
+        endpoint += `&termino=${encodeURIComponent(termino)}`;
       }
 
-      const respuesta = await fetch(url);
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudieron obtener los productos");
-      }
-
-      const datos = await respuesta.json();
+      const datos = await apiFetch<{
+        productos: Producto[];
+        cantidadProductos: number;
+        totalPaginas?: number;
+      }>(endpoint, {
+        method: "GET",
+      });
 
       setProductos(datos.productos || []);
       setCantidadProductos(datos.cantidadProductos || 0);
@@ -108,15 +106,15 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
 
   const cargarCategorias = async () => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias`,
-      );
-      if (!respuesta.ok)
-        throw new Error("No se pudieron obtener las categorías");
-
-      const datos = await respuesta.json();
-
-      setCategorias(datos.categorias || datos);
+      const datos = await apiFetch<
+        | {
+            categorias: Categoria[];
+          }
+        | Categoria[]
+      >("/api/categorias", {
+        method: "GET",
+      });
+      setCategorias(Array.isArray(datos) ? datos : datos.categorias || []);
     } catch (error) {
       console.error("Error al cargar categorías:", error);
       setCategorias([]);
@@ -156,46 +154,22 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
         formulario.append("imagen", datosProducto.imagen);
       }
 
-      let respuesta;
+      
 
       // EDITAR
       if (productoSeleccionado) {
-        respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/producto/${productoSeleccionado._id}`,
+        await apiFetch<void>(
+          `/api/producto/${productoSeleccionado._id}`,
           {
             method: "PUT",
             body: formulario,
-            credentials: "include",
           },
         );
       } else {
-        respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/producto`,
-          {
-            method: "POST",
-            body: formulario,
-            credentials: "include",
-          },
-        );
-      }
-
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => null);
-        console.log("STATUS:", respuesta.status);
-        console.log("ERROR DEL BACKEND:", error);
-
-        let mensaje = `Error ${respuesta.status}`;
-
-        if (Array.isArray(error)) {
-          mensaje = error
-            .map((item) => item.msg)
-            .filter(Boolean)
-            .join("\n");
-        } else {
-          mensaje = error?.message || error?.mensaje || error?.error || mensaje;
-        }
-
-        throw new Error(mensaje);
+        await apiFetch<void>("/api/producto", {
+          method: "POST",
+          body: formulario,
+        });
       }
 
       await cargarProductos();
@@ -221,17 +195,9 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     if (!resultado.isConfirmed) return;
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/producto/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudo eliminar el producto");
-      }
+      await apiFetch<void>(`/api/producto/${id}`, {
+        method: "DELETE",
+      });
 
       await cargarProductos();
     } catch (error) {

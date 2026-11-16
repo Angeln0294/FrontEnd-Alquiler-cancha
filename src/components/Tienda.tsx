@@ -23,6 +23,8 @@ export default function Tienda() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
 
   useEffect(() => {
+    if (paginaActual === 1) return;
+
     cargarProductos(paginaActual, busqueda, limiteProductos);
   }, [paginaActual]);
 
@@ -143,52 +145,50 @@ export default function Tienda() {
           </div>
         ) : (
           <>
-           
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-  {productosFiltrados.map((producto) => (
-    <ProductoCard
-      key={producto._id}
-      producto={producto}
-      onAgregarAlCarrito={async (productoSeleccionado) => {
-        if (!usuario) {
-          await Swal.fire({
-            icon: "warning",
-            title: "Iniciá sesión",
-            text: "Debés iniciar sesión para agregar productos al carrito.",
-            confirmButtonText: "Iniciar sesión",
-            background: "#1e293b",
-            color: "#f8fafc",
-            confirmButtonColor: "#22c55e",
-          });
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {productosFiltrados.map((producto) => (
+                <ProductoCard
+                  key={producto._id}
+                  producto={producto}
+                  onAgregarAlCarrito={async (productoSeleccionado) => {
+                    if (!usuario) {
+                      await Swal.fire({
+                        icon: "warning",
+                        title: "Iniciá sesión",
+                        text: "Debés iniciar sesión para agregar productos al carrito.",
+                        confirmButtonText: "Iniciar sesión",
+                        background: "#1e293b",
+                        color: "#f8fafc",
+                        confirmButtonColor: "#22c55e",
+                      });
 
-          navigate("/login");
-          return;
-        }
+                      navigate("/login");
+                      return;
+                    }
 
-        await agregarAlCarrito(productoSeleccionado._id);
+                    await agregarAlCarrito(productoSeleccionado._id);
 
-        const resultado = await Swal.fire({
-          icon: "success",
-          title: "¡Producto agregado!",
-          text: `${productoSeleccionado.nombreProducto} fue agregado al carrito.`,
-          background: "#1e293b",
-          color: "#ffffff",
-          showCancelButton: true,
-          confirmButtonText: "🛒 Ver carrito",
-          cancelButtonText: "Seguir comprando",
-          confirmButtonColor: "#00d26a",
-          cancelButtonColor: "#00d26a",
-          reverseButtons: true,
-        });
+                    const resultado = await Swal.fire({
+                      icon: "success",
+                      title: "¡Producto agregado!",
+                      text: `${productoSeleccionado.nombreProducto} fue agregado al carrito.`,
+                      background: "#1e293b",
+                      color: "#ffffff",
+                      showCancelButton: true,
+                      confirmButtonText: "🛒 Ver carrito",
+                      cancelButtonText: "Seguir comprando",
+                      confirmButtonColor: "#00d26a",
+                      cancelButtonColor: "#00d26a",
+                      reverseButtons: true,
+                    });
 
-        if (resultado.isConfirmed) {
-          navigate("/carrito");
-        }
-      }}
-    />
-  ))}
-</div>
-
+                    if (resultado.isConfirmed) {
+                      navigate("/carrito");
+                    }
+                  }}
+                />
+              ))}
+            </div>
 
             <div className="border-t border-slate-800 mt-8 pt-4">
               <PaginadorBackend seccion="productos" />

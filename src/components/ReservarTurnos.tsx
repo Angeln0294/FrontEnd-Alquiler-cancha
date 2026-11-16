@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Swal from "sweetalert2";
+import { apiFetch } from "../services/api";
 
 interface HorarioTurno {
   horaInicio: string;
@@ -82,6 +83,7 @@ export default function ReservasPage() {
   };
 
   const [reservando, setReservando] = useState(false);
+  const reservaEnProceso = useRef(false);
 
   const [turnos, setTurnos] = useState<HorarioTurno[]>([]);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState<string | null>(
@@ -114,6 +116,7 @@ export default function ReservasPage() {
   }, [usuario, cargandoUsuario, navigate]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const cargarDisponibilidad = async () => {
       if (!canchaId) {
         console.error("No se recibió el ID de la cancha");
@@ -124,31 +127,31 @@ export default function ReservasPage() {
         setCargandoTurnos(true);
         setTurnoSeleccionado(null);
 
-        const respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
-          {
-            credentials: "include",
-          },
+        const resultado = await apiFetch<{ turnos: HorarioTurno[] }>(
+          `/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
+          { method: "GET", signal: controller.signal },
         );
-
-        const resultado = await respuesta.json();
-
-        if (!respuesta.ok) {
-          throw new Error(
-            resultado.mensaje || "No se pudo obtener la disponibilidad",
-          );
-        }
 
         setTurnos(resultado.turnos || []);
       } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
         console.error("Error al obtener disponibilidad:", error);
         setTurnos([]);
       } finally {
-        setCargandoTurnos(false);
+        if (!controller.signal.aborted) {
+          setCargandoTurnos(false);
+        }
       }
     };
 
     cargarDisponibilidad();
+
+    return () => {
+      controller.abort();
+    };
   }, [canchaId, fechaSeleccionada]);
 
   const precioNumero = Number(precioCanchaUrl);
@@ -168,21 +171,20 @@ export default function ReservasPage() {
     setTurnoSeleccionado(horaInicio);
   };
   const handleConfirmarReserva = async () => {
-    if (!canchaId || !turnoSeleccionado) {
+    if (reservaEnProceso.current || !canchaId || !turnoSeleccionado) {
       return;
     }
+
+    reservaEnProceso.current = true;
+    let reservaCreada = false;
 
     try {
       setReservando(true);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/reservas`,
+      const resultado = await apiFetch<{ reserva: { _id: string } }>(
+        "/api/reservas",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
           body: JSON.stringify({
             cancha: canchaId,
             fecha: fechaSeleccionada,
@@ -191,39 +193,21 @@ export default function ReservasPage() {
         },
       );
 
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo realizar la reserva");
-      }
-
       const reservaId = resultado.reserva?._id;
 
       if (!reservaId) {
         throw new Error("La reserva fue creada, pero no se recibió su ID");
       }
-
-      const respuestaPago = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia-reserva`,
+      reservaCreada = true;
+      const resultadoPago = await apiFetch<{ init_point: string }>(
+        "/api/pago/crear-preferencia-reserva",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
           body: JSON.stringify({
             reservaId,
           }),
         },
       );
-
-      const resultadoPago = await respuestaPago.json();
-
-      if (!respuestaPago.ok) {
-        throw new Error(
-          resultadoPago.mensaje || "No se pudo crear la preferencia de pago",
-        );
-      }
 
       const confirmacion = await Swal.fire({
         icon: "success",
@@ -245,26 +229,23 @@ export default function ReservasPage() {
 
       setTurnoSeleccionado(null);
 
-      const disponibilidad = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
-        {
-          credentials: "include",
-        },
+      const datosDisponibilidad = await apiFetch<{ turnos: HorarioTurno[] }>(
+        `/api/reservas/disponibilidad/${canchaId}/${fechaSeleccionada}`,
+        { method: "GET" },
       );
 
-      const datosDisponibilidad = await disponibilidad.json();
-
-      if (disponibilidad.ok) {
-        setTurnos(datosDisponibilidad.turnos || []);
-      }
+      setTurnos(datosDisponibilidad.turnos || []);
     } catch (error) {
       console.error("Error al confirmar reserva:", error);
 
       Swal.fire({
         icon: "error",
-        title: "No se pudo completar la reserva",
-        text:
-          error instanceof Error
+        title: reservaCreada
+          ? "La reserva fue creada"
+          : "No se pudo completar la reserva",
+        text: reservaCreada
+          ? "Tu reserva se creó correctamente, pero hubo un problema al generar el pago. Revisá Mis Reservas antes de intentar reservar nuevamente."
+          : error instanceof Error
             ? error.message
             : "Ocurrió un error al realizar la reserva.",
         confirmButtonText: "Aceptar",
@@ -273,6 +254,7 @@ export default function ReservasPage() {
         color: "#f8fafc",
       });
     } finally {
+      reservaEnProceso.current = false;
       setReservando(false);
     }
   };
@@ -423,8 +405,20 @@ export default function ReservasPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {turnos.map((turno) => {
                     const seleccionado = turno.horaInicio === turnoSeleccionado;
+                    const ahora = new Date();
 
-                    if (!turno.disponible) {
+                    const fechaActual = [
+                      ahora.getFullYear(),
+                      String(ahora.getMonth() + 1).padStart(2, "0"),
+                      String(ahora.getDate()).padStart(2, "0"),
+                    ].join("-");
+
+                    const horarioPasado =
+                      fechaSeleccionada === fechaActual &&
+                      new Date(`${fechaSeleccionada}T${turno.horaInicio}`) <=
+                        ahora;
+
+                    if (!turno.disponible || horarioPasado) {
                       return (
                         <div
                           key={turno.horaInicio}
@@ -528,7 +522,7 @@ export default function ReservasPage() {
               <button
                 type="button"
                 onClick={handleConfirmarReserva}
-                disabled={!turnoSeleccionado || reservando}
+                disabled={!turnoSeleccionado || reservando || cargandoTurnos}
                 className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300 cursor-pointer ${
                   turnoSeleccionado
                     ? "bg-[#22c55e] text-[#0b132b] hover:bg-[#22c55e]/90 shadow-md shadow-green-500/10"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { apiFetch, ApiError } from "../services/api";
 
 interface ItemCompra {
   producto: string;
@@ -33,36 +34,33 @@ export default function MisCompras() {
 
   const cantidadPaginas = Math.ceil(compras.length / comprasPorPagina);
 
-  const cargarCompras = async () => {
+  const cargarCompras = async (signal?: AbortSignal) => {
     try {
       setCargando(true);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/pago/mis-compras`,
+      const resultado = await apiFetch<{ ordenes: Orden[] }>(
+        "/api/pago/mis-compras",
         {
-          credentials: "include",
+          method: "GET",
+          signal,
         },
       );
 
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudieron obtener tus compras",
-        );
-      }
-
       setCompras(resultado.ordenes || []);
     } catch (error) {
+      if (signal?.aborted) {
+        return;
+      }
+
       console.error("Error al obtener compras:", error);
 
       Swal.fire({
         icon: "error",
         title: "No se pudieron cargar las compras",
         text:
-          error instanceof Error
+          error instanceof ApiError
             ? error.message
-            : "Ocurrió un error al obtener tus compras.",
+            : "No se pudo conectar con el servidor.",
         confirmButtonText: "Aceptar",
         confirmButtonColor: "#22c55e",
         background: "#1e293b",
@@ -74,7 +72,13 @@ export default function MisCompras() {
   };
 
   useEffect(() => {
-    cargarCompras();
+    const controller = new AbortController();
+
+    cargarCompras(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const formatearFecha = (fecha: string) => {

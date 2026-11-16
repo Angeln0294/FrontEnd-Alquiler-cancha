@@ -126,13 +126,7 @@ export default function NuestrasCanchas() {
                 }
 
                 navigate(
-                  `/reservar-turnos?canchaId=${encodeURIComponent(
-                    cancha._id,
-                  )}&cancha=${encodeURIComponent(
-                    cancha.nombre,
-                  )}&precio=${encodeURIComponent(
-                    cancha.precio,
-                  )}&imagen=${encodeURIComponent(cancha.imagen)}`,
+                  `/reservar-turnos?canchaId=${encodeURIComponent(cancha._id)}`,
                 );
               }}
             />

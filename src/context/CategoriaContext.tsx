@@ -80,13 +80,14 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       setTablaCargando(false);
     }
   };
-  const obtenerTodasLasCategorias = useCallback(async () => {
+ const obtenerTodasLasCategorias = useCallback(async () => {
     try {
-      const datos = await apiFetch<{
+            const datos = await apiFetch<{
         categorias: Categoria[];
-      }>("/api/categorias?limit=100", {
+      }>("/api/categorias/todas", {
         method: "GET",
       });
+      
       setCategorias(datos.categorias || []);
     } catch (error) {
       console.error("Error al cargar todas las categorías:", error);

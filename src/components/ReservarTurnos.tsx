@@ -10,19 +10,27 @@ interface HorarioTurno {
   disponible: boolean;
 }
 
+interface CanchaDetalle {
+  _id: string;
+  nombre: string;
+  precio: number;
+  imagen: string;
+  tipo?: string;
+}
+
 export default function ReservasPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { usuario, cargando: cargandoUsuario } = useAuth();
 
   const canchaId = searchParams.get("canchaId");
-  const nombreCanchaUrl = searchParams.get("cancha") || "Cancha 5 - Fútbol 7";
-  const precioCanchaUrl = searchParams.get("precio") || "12000";
-  const imagenCanchaUrl = searchParams.get("imagen") || "";
+
+  // Estados para almacenar los datos reales obtenidos del backend
+  const [cancha, setCancha] = useState<CanchaDetalle | null>(null);
+  const [cargandoCancha, setCargandoCancha] = useState(true);
 
   const [fechaSeleccionada, setFechaSeleccionada] = useState(() => {
     const hoy = new Date();
-
     return [
       hoy.getFullYear(),
       String(hoy.getMonth() + 1).padStart(2, "0"),
@@ -31,12 +39,10 @@ export default function ReservasPage() {
   });
 
   const fechaCalendario = new Date(`${fechaSeleccionada}T00:00:00`);
-
   const calendarDay = fechaCalendario.getDate();
   const calendarMonth = fechaCalendario.getMonth();
   const calendarYear = fechaCalendario.getFullYear();
   const primerDiaDelMes = new Date(calendarYear, calendarMonth, 1).getDay();
-
   const diasDelMes = new Date(calendarYear, calendarMonth + 1, 0).getDate();
 
   const nombreMes = fechaCalendario.toLocaleDateString("es-AR", {
@@ -44,57 +50,47 @@ export default function ReservasPage() {
   });
 
   const hoy = new Date();
-
   hoy.setHours(0, 0, 0, 0);
 
   const fechaHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   const mesActual = new Date(fechaHoy.getFullYear(), fechaHoy.getMonth(), 1);
-
   const mesMostrado = new Date(calendarYear, calendarMonth, 1);
 
   const puedeRetroceder = mesMostrado > mesActual;
+
   const cambiarMes = (direccion: number) => {
     const nuevaFecha = new Date(calendarYear, calendarMonth + direccion, 1);
-
     const fechaFormateada = [
       nuevaFecha.getFullYear(),
       String(nuevaFecha.getMonth() + 1).padStart(2, "0"),
       "01",
     ].join("-");
-
     setFechaSeleccionada(fechaFormateada);
   };
+
   const seleccionarDia = (dia: number) => {
     const nuevaFecha = new Date(calendarYear, calendarMonth, dia);
-
     nuevaFecha.setHours(0, 0, 0, 0);
 
-    if (nuevaFecha < fechaHoy) {
-      return;
-    }
+    if (nuevaFecha < fechaHoy) return;
 
     const fechaFormateada = [
       nuevaFecha.getFullYear(),
       String(nuevaFecha.getMonth() + 1).padStart(2, "0"),
       String(nuevaFecha.getDate()).padStart(2, "0"),
     ].join("-");
-
     setFechaSeleccionada(fechaFormateada);
   };
 
   const [reservando, setReservando] = useState(false);
   const reservaEnProceso = useRef(false);
-
   const [turnos, setTurnos] = useState<HorarioTurno[]>([]);
-  const [turnoSeleccionado, setTurnoSeleccionado] = useState<string | null>(
-    null,
-  );
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState<string | null>(null);
   const [cargandoTurnos, setCargandoTurnos] = useState(false);
 
+  // Validar sesión de usuario
   useEffect(() => {
-    if (cargandoUsuario) {
-      return;
-    }
+    if (cargandoUsuario) return;
 
     if (!usuario) {
       Swal.fire({
@@ -110,18 +106,48 @@ export default function ReservasPage() {
           navigate("/login");
         }
       });
-
       return;
     }
   }, [usuario, cargandoUsuario, navigate]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const cargarDisponibilidad = async () => {
+    const cargarDetallesCancha = async () => {
       if (!canchaId) {
-        console.error("No se recibió el ID de la cancha");
+        setCargandoCancha(false);
         return;
       }
+
+      try {
+        setCargandoCancha(true);
+        const resultado = await apiFetch<CanchaDetalle>(
+          `/api/canchas/${canchaId}`,
+          { method: "GET" },
+        );
+
+        setCancha(resultado);
+      } catch (error) {
+        console.error("Error al cargar la cancha:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo cargar la información de la cancha.",
+          background: "#1e293b",
+          color: "#f8fafc",
+          confirmButtonColor: "#22c55e",
+        });
+      } finally {
+        setCargandoCancha(false);
+      }
+    };
+
+    cargarDetallesCancha();
+  }, [canchaId]);
+
+  
+  useEffect(() => {
+    const controller = new AbortController();
+    const cargarDisponibilidad = async () => {
+      if (!canchaId) return;
 
       try {
         setCargandoTurnos(true);
@@ -154,22 +180,18 @@ export default function ReservasPage() {
     };
   }, [canchaId, fechaSeleccionada]);
 
-  const precioNumero = Number(precioCanchaUrl);
-
-  const esHorarioPromo =
-    turnoSeleccionado === "22:00" || turnoSeleccionado === "23:00";
-
-  const precioFinalNumero = esHorarioPromo ? precioNumero * 0.8 : precioNumero;
-
+  
+  const precioBase = cancha?.precio || 0;
+  const esHorarioPromo = turnoSeleccionado === "22:00" || turnoSeleccionado === "23:00";
+  const precioFinalNumero = esHorarioPromo ? precioBase * 0.8 : precioBase;
   const precioFinalFormateado = `$${precioFinalNumero.toLocaleString("es-AR")}`;
 
-  const turnoActual = turnos.find(
-    (turno) => turno.horaInicio === turnoSeleccionado,
-  );
+  const turnoActual = turnos.find((turno) => turno.horaInicio === turnoSeleccionado);
 
   const handleSeleccionarTurno = (horaInicio: string) => {
     setTurnoSeleccionado(horaInicio);
   };
+
   const handleConfirmarReserva = async () => {
     if (reservaEnProceso.current || !canchaId || !turnoSeleccionado) {
       return;
@@ -194,7 +216,6 @@ export default function ReservasPage() {
       );
 
       const reservaId = resultado.reserva?._id;
-
       if (!reservaId) {
         throw new Error("La reserva fue creada, pero no se recibió su ID");
       }
@@ -237,7 +258,6 @@ export default function ReservasPage() {
       setTurnos(datosDisponibilidad.turnos || []);
     } catch (error) {
       console.error("Error al confirmar reserva:", error);
-
       Swal.fire({
         icon: "error",
         title: reservaCreada
@@ -258,6 +278,15 @@ export default function ReservasPage() {
       setReservando(false);
     }
   };
+
+  if (cargandoCancha) {
+    return (
+      <div className="min-h-screen bg-[#0b132b] text-slate-100 flex items-center justify-center">
+        <p className="text-slate-400 text-sm">Cargando detalles de la cancha...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans animate-fadeIn">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -277,10 +306,10 @@ export default function ReservasPage() {
           <div className="lg:col-span-5 space-y-6">
             <div className="bg-[#1e293b] rounded-2xl overflow-hidden border border-slate-800 shadow-xl">
               <div className="w-full h-56 bg-slate-900 overflow-hidden">
-                {imagenCanchaUrl ? (
+                {cancha?.imagen ? (
                   <img
-                    src={imagenCanchaUrl}
-                    alt={`Imagen de ${nombreCanchaUrl}`}
+                    src={cancha.imagen}
+                    alt={`Imagen de ${cancha.nombre}`}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -294,16 +323,16 @@ export default function ReservasPage() {
 
               <div className="p-5 space-y-2">
                 <h4 className="text-lg font-bold text-white">
-                  {nombreCanchaUrl}
+                  {cancha?.nombre || "Cancha"}
                 </h4>
 
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Estás visualizando la disponibilidad para {nombreCanchaUrl}.
-                  Seleccioná el día y el horario que quieras reservar.
+                  Estás visualizando la disponibilidad oficial. Seleccioná el día y el horario que quieras reservar.
                 </p>
               </div>
             </div>
 
+            {/* Calendario */}
             <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-xl">
               <div className="flex justify-between items-center mb-4">
                 <button
@@ -326,7 +355,7 @@ export default function ReservasPage() {
                 <button
                   type="button"
                   onClick={() => cambiarMes(1)}
-                  className="text-slate-400 hover:text-white transition-colors font-bold"
+                  className="text-slate-400 hover:text-white transition-colors font-bold cursor-pointer"
                 >
                   &gt;
                 </button>
@@ -350,11 +379,9 @@ export default function ReservasPage() {
                 {Array.from({ length: diasDelMes }, (_, i) => i + 1).map(
                   (dia) => {
                     const fechaDia = new Date(calendarYear, calendarMonth, dia);
-
                     fechaDia.setHours(0, 0, 0, 0);
 
                     const esPasado = fechaDia < fechaHoy;
-
                     const isSelected =
                       dia === calendarDay &&
                       calendarMonth === fechaCalendario.getMonth() &&
@@ -370,8 +397,8 @@ export default function ReservasPage() {
                           isSelected
                             ? "bg-[#22c55e] text-[#0b132b] font-black shadow-md shadow-green-500/20"
                             : esPasado
-                              ? "text-slate-700 cursor-not-allowed"
-                              : "text-slate-300 hover:bg-[#0b132b] border border-transparent hover:border-slate-800 cursor-pointer"
+                            ? "text-slate-700 cursor-not-allowed"
+                            : "text-slate-300 hover:bg-[#0b132b] border border-transparent hover:border-slate-800 cursor-pointer"
                         }`}
                       >
                         {dia}
@@ -383,6 +410,7 @@ export default function ReservasPage() {
             </div>
           </div>
 
+          {/* Horarios y Resumen */}
           <div className="lg:col-span-7 bg-[#1e293b] p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-between space-y-6 h-full">
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
@@ -398,7 +426,7 @@ export default function ReservasPage() {
               ) : turnos.length === 0 ? (
                 <div className="text-center py-10">
                   <p className="text-slate-400 text-sm">
-                    No se pudo obtener la disponibilidad.
+                    No hay turnos disponibles para esta fecha.
                   </p>
                 </div>
               ) : (
@@ -427,7 +455,6 @@ export default function ReservasPage() {
                           <span className="text-xs font-medium">
                             {turno.horaInicio} - {turno.horaFin}
                           </span>
-
                           <span className="text-[9px] uppercase tracking-wider text-red-500/50 font-black mt-0.5">
                             Ocupado
                           </span>
@@ -440,15 +467,12 @@ export default function ReservasPage() {
                         <button
                           key={turno.horaInicio}
                           type="button"
-                          onClick={() =>
-                            handleSeleccionarTurno(turno.horaInicio)
-                          }
+                          onClick={() => handleSeleccionarTurno(turno.horaInicio)}
                           className="bg-[#22c55e] text-[#0b132b] font-black rounded-xl p-3 text-center flex items-center justify-center gap-2 shadow-lg shadow-green-500/10 h-14 w-full cursor-pointer border border-[#22c55e]"
                         >
                           <span className="text-xs tracking-wide">
                             {turno.horaInicio} - {turno.horaFin}
                           </span>
-
                           <span className="text-xs">✓</span>
                         </button>
                       );
@@ -477,17 +501,13 @@ export default function ReservasPage() {
               <div className="space-y-3 text-xs text-slate-400">
                 <div className="flex justify-between items-center">
                   <span>Fecha:</span>
-
                   <span className="text-slate-200 font-bold">
-                    {calendarDay} de{" "}
-                    {nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} de{" "}
-                    {calendarYear}
+                    {calendarDay} de {nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} de {calendarYear}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <span>Hora:</span>
-
                   <span className="text-slate-200 font-bold">
                     {turnoActual
                       ? `${turnoActual.horaInicio} - ${turnoActual.horaFin}`
@@ -497,9 +517,8 @@ export default function ReservasPage() {
 
                 <div className="flex justify-between items-center">
                   <span>Cancha:</span>
-
                   <span className="text-slate-200 font-bold">
-                    {nombreCanchaUrl}
+                    {cancha?.nombre || "Cargando..."}
                   </span>
                 </div>
 
@@ -512,7 +531,6 @@ export default function ReservasPage() {
 
                 <div className="flex justify-between items-center text-sm pt-3 border-t border-slate-800/80">
                   <span className="text-slate-300 font-black">Total:</span>
-
                   <span className="text-green-400 font-black text-lg">
                     {precioFinalFormateado}
                   </span>
@@ -525,7 +543,7 @@ export default function ReservasPage() {
                 disabled={!turnoSeleccionado || reservando || cargandoTurnos}
                 className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300 cursor-pointer ${
                   turnoSeleccionado
-                    ? "bg-[#22c55e] text-[#0b132b] hover:bg-[#22c55e]/90 shadow-md shadow-green-500/10"
+                    ? "bg-[#22c55e] text-[#0b132b] hover:bg-[#22c55e]/90 shadow-md shadow-green-500/10 cursor-pointer"
                     : "bg-slate-700 text-slate-500 cursor-not-allowed"
                 }`}
               >

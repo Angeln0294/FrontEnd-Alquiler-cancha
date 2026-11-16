@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useRef, useState } from "react";
+import { apiFetch } from "../services/api";
 import AdminUsuarios from "./panelAdmin/usuarios/AdminUsuarios";
 import AdminCanchas from "./panelAdmin/canchas/AdminCanchas";
 import AdminReservas from "./panelAdmin/reservas/AdminReservas";
@@ -68,6 +68,7 @@ interface DatosDashboard {
 
 export default function PanelAdmin() {
   const { cerrarSesion } = useAuth();
+  const controllerRef = useRef<AbortController | null>(null);
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [seccionActiva, setSeccionActiva] = useState<Seccion>("dashboard");
@@ -82,55 +83,47 @@ export default function PanelAdmin() {
   const [errorDashboard, setErrorDashboard] = useState(false);
 
   const cargarDatosDashboard = async () => {
+    controllerRef.current?.abort();
+
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const signal = controller.signal;
     try {
       setCargandoDashboard(true);
       setErrorDashboard(false);
 
-      const [respuestaUsuarios, respuestaCanchas, respuestaReservas] =
+      const [resultadoUsuarios, resultadoCanchas, resultadoReservas] =
         await Promise.all([
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario`, {
-            credentials: "include",
-          }),
-
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, {
-            credentials: "include",
-          }),
-
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
-            credentials: "include",
-          }),
+          apiFetch<Usuario[]>("/api/usuario", { signal }),
+          apiFetch<{ canchas: Cancha[] }>("/api/canchas", { signal }),
+          apiFetch<{ reservas: Reserva[] }>("/api/reservas", { signal }),
         ]);
 
-      if (
-        !respuestaUsuarios.ok ||
-        !respuestaCanchas.ok ||
-        !respuestaReservas.ok
-      ) {
-        throw new Error("No se pudieron obtener los datos del dashboard");
-      }
-
-      const resultadoUsuarios = await respuestaUsuarios.json();
-      const resultadoCanchas = await respuestaCanchas.json();
-      const resultadoReservas = await respuestaReservas.json();
+      if (signal?.aborted) return;
 
       setDatos({
         usuarios: Array.isArray(resultadoUsuarios) ? resultadoUsuarios : [],
-
         canchas: resultadoCanchas.canchas || [],
-
         reservas: resultadoReservas.reservas || [],
       });
     } catch (error) {
-      console.error("Error al cargar datos del dashboard:", error);
+      if (signal?.aborted) return;
 
+      console.error("Error al cargar datos del dashboard:", error);
       setErrorDashboard(true);
     } finally {
-      setCargandoDashboard(false);
+      if (!signal?.aborted) {
+        setCargandoDashboard(false);
+      }
     }
   };
 
   useEffect(() => {
     cargarDatosDashboard();
+
+    return () => {
+      controllerRef.current?.abort();
+    };
   }, []);
 
   const totalUsuarios = datos.usuarios.length;
@@ -415,7 +408,7 @@ export default function PanelAdmin() {
 
             <button
               type="button"
-              onClick={cargarDatosDashboard}
+              onClick={() => cargarDatosDashboard()}
               className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-300 transition hover:border-green-500/30 hover:text-green-400"
             >
               🔄 Actualizar
@@ -448,7 +441,7 @@ export default function PanelAdmin() {
 
                     <button
                       type="button"
-                      onClick={cargarDatosDashboard}
+                      onClick={() => cargarDatosDashboard()}
                       className="mt-3 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400"
                     >
                       Reintentar

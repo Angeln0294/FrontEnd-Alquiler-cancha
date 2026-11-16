@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { apiFetch, ApiError } from "../services/api";
 
 interface FormValores {
   nombre: string;
@@ -27,8 +28,8 @@ export default function Registro() {
 
   const alEnviar: SubmitHandler<FormValores> = async (datos) => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/registro`,
+      const resultado = await apiFetch<{ mensaje?: string }>(
+        "/api/usuario/registro",
         {
           method: "POST",
           headers: {
@@ -42,23 +43,6 @@ export default function Registro() {
           }),
         },
       );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        await Swal.fire({
-          icon: "error",
-          title: "No se pudo registrar",
-          text: resultado.mensaje || "Error al registrar usuario.",
-          confirmButtonText: "Entendido",
-          background: "#0b132b",
-          color: "#ffffff",
-          confirmButtonColor: "#22c55e",
-          iconColor: "#ef4444",
-        });
-
-        return;
-      }
 
       console.log("Usuario registrado:", resultado);
 
@@ -79,12 +63,16 @@ export default function Registro() {
         },
       });
     } catch (error) {
-      console.error("Error al conectar con el servidor:", error);
+      console.error("Error al registrar usuario:", error);
+
+      const esErrorHTTP = error instanceof ApiError;
 
       await Swal.fire({
         icon: "error",
-        title: "Error de conexión",
-        text: "No se pudo conectar con el servidor.",
+        title: esErrorHTTP ? "No se pudo registrar" : "Error de conexión",
+        text: esErrorHTTP
+          ? error.message
+          : "No se pudo conectar con el servidor.",
         confirmButtonText: "Entendido",
         background: "#0b132b",
         color: "#ffffff",

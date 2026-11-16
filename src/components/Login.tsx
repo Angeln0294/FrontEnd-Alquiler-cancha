@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { apiFetch, ApiError } from "../services/api";
 import type { SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -23,37 +24,19 @@ export default function Login() {
 
   const alEnviar: SubmitHandler<LoginValores> = async (datos) => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/login`,
+      const resultado = await apiFetch<{ mensaje?: string }>(
+        "/api/usuario/login",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include",
           body: JSON.stringify({
             email: datos.email,
             password: datos.contrasenia,
           }),
         },
       );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        await Swal.fire({
-          icon: "error",
-          title: "No se pudo iniciar sesión",
-          text: resultado.mensaje || "Verificá tu email y contraseña.",
-          confirmButtonText: "Entendido",
-          background: "#0b132b",
-          color: "#ffffff",
-          confirmButtonColor: "#22c55e",
-          iconColor: "#ef4444",
-        });
-
-        return;
-      }
 
       console.log("Inicio de sesión exitoso:", resultado);
 
@@ -73,10 +56,14 @@ export default function Login() {
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
 
+      const esErrorHTTP = error instanceof ApiError;
+
       await Swal.fire({
         icon: "error",
-        title: "Error de conexión",
-        text: "No se pudo conectar con el servidor.",
+        title: esErrorHTTP ? "No se pudo iniciar sesión" : "Error de conexión",
+        text: esErrorHTTP
+          ? error.message
+          : "No se pudo conectar con el servidor.",
         confirmButtonText: "Entendido",
         background: "#0b132b",
         color: "#ffffff",
@@ -85,6 +72,7 @@ export default function Login() {
       });
     }
   };
+
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#0b132b] flex items-center justify-center p-6 text-white">
       <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-md">

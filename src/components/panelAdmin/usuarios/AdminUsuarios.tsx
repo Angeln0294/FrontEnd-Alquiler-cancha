@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-
 import { useForm } from "react-hook-form";
-
 import type { SubmitHandler } from "react-hook-form";
-
 import Swal from "sweetalert2";
+import { apiFetch } from "../../../services/api";
 import { PaginadorBackend } from "../../Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
 import { TablaGenerica, type Columna } from "../../TablaGenerica";
 import { useTabla } from "../../../context/TablaContext";
+
 interface Usuario {
   _id: string;
   nombre: string;
@@ -71,24 +70,19 @@ export default function AdminUsuarios() {
   const apellidoActual = watch("apellido", "");
   const emailActual = watch("email", "");
 
-  const cargarUsuarios = async () => {
+  const cargarUsuarios = async (signal?: AbortSignal) => {
+    if (signal?.aborted) return;
     try {
       setTablaCargando(true);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario?pagina=${paginaActual}&limite=${usuariosPorPagina}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudieron obtener los usuarios",
-        );
-      }
+      const resultado = await apiFetch<{
+        usuarios: Usuario[];
+        totalPaginas?: number;
+        cantidadUsuarios?: number;
+      }>(`/api/usuario?pagina=${paginaActual}&limite=${usuariosPorPagina}`, {
+        method: "GET",
+        signal,
+      });
 
       setUsuarios(resultado.usuarios || []);
       setCantidadPaginas(
@@ -96,6 +90,7 @@ export default function AdminUsuarios() {
           Math.ceil((resultado.cantidadUsuarios || 0) / usuariosPorPagina),
       );
     } catch (error) {
+      if (signal?.aborted) return;
       console.error("Error al cargar usuarios:", error);
 
       await swalTema.fire({
@@ -106,12 +101,20 @@ export default function AdminUsuarios() {
         iconColor: "#ef4444",
       });
     } finally {
-      setTablaCargando(false);
+      if (!signal?.aborted) {
+        setTablaCargando(false);
+      }
     }
   };
 
   useEffect(() => {
-    cargarUsuarios();
+    const controller = new AbortController();
+
+    cargarUsuarios(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [paginaActual]);
 
   const abrirEditar = (usuario: Usuario) => {
@@ -135,31 +138,16 @@ export default function AdminUsuarios() {
     if (!usuarioEditando) return;
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuarioEditando._id}`,
+      const resultado = await apiFetch<{ mensaje?: string }>(
+        `/api/usuario/${usuarioEditando._id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include",
           body: JSON.stringify(datos),
         },
       );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        await swalTema.fire({
-          icon: "error",
-          title: "No se pudieron guardar los cambios",
-          text: resultado.mensaje || "Ocurrió un error.",
-          confirmButtonText: "Entendido",
-          iconColor: "#ef4444",
-        });
-
-        return;
-      }
 
       await swalTema.fire({
         icon: "success",
@@ -176,8 +164,11 @@ export default function AdminUsuarios() {
 
       await swalTema.fire({
         icon: "error",
-        title: "Error de conexión",
-        text: "No se pudo conectar con el servidor.",
+        title: "No se pudieron guardar los cambios",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo actualizar el usuario.",
         confirmButtonText: "Entendido",
         iconColor: "#ef4444",
       });
@@ -205,25 +196,15 @@ export default function AdminUsuarios() {
     }
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuario._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            rol: nuevoRol,
-          }),
+      await apiFetch<{ mensaje?: string }>(`/api/usuario/${usuario._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo cambiar el rol");
-      }
+        body: JSON.stringify({
+          rol: nuevoRol,
+        }),
+      });
 
       setUsuarios((usuariosActuales) =>
         usuariosActuales.map((u) =>
@@ -271,25 +252,15 @@ export default function AdminUsuarios() {
     }
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuario._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            activo: nuevoEstado,
-          }),
+      await apiFetch<{ mensaje?: string }>(`/api/usuario/${usuario._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo cambiar el estado");
-      }
+        body: JSON.stringify({
+          activo: nuevoEstado,
+        }),
+      });
 
       setUsuarios((usuariosActuales) =>
         usuariosActuales.map((u) =>
@@ -333,19 +304,9 @@ export default function AdminUsuarios() {
     }
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/${usuario._id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo eliminar el usuario");
-      }
+      await apiFetch<{ mensaje?: string }>(`/api/usuario/${usuario._id}`, {
+        method: "DELETE",
+      });
 
       await swalTema.fire({
         icon: "success",

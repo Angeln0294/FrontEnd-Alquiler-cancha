@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { apiFetch, ApiError } from "../services/api";
 
 interface Usuario {
   _id: string;
@@ -35,25 +36,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const cargarUsuario = async (): Promise<Usuario | null> => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/me`,
+      const resultado = await apiFetch<{ usuario: Usuario }>(
+        "/api/usuario/me",
         {
-          credentials: "include",
+          method: "GET",
         },
       );
-
-      if (!respuesta.ok) {
-        setUsuario(null);
-        return null;
-      }
-
-      const resultado = await respuesta.json();
 
       setUsuario(resultado.usuario);
 
       return resultado.usuario;
     } catch (error) {
-      console.error("Error al obtener usuario:", error);
+      if (!(error instanceof ApiError && error.status === 401)) {
+        console.error("Error al obtener usuario:", error);
+      }
+
       setUsuario(null);
       return null;
     } finally {
@@ -62,9 +59,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
   const cerrarSesion = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/logout`, {
+      await apiFetch<void>("/api/usuario/logout", {
         method: "POST",
-        credentials: "include",
       });
 
       setUsuario(null);

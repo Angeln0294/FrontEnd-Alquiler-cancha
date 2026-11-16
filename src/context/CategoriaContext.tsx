@@ -9,6 +9,7 @@ import { useTabla } from "../context/TablaContext";
 import { usePaginacionBackend } from "../context/PaginacionContext";
 
 import Swal from "sweetalert2";
+import { apiFetch } from "../services/api";
 
 export interface Categoria {
   _id: string;
@@ -51,17 +52,15 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
       const numeroPagina = pagina || 1;
 
-      const url =
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias` +
-        `?page=${numeroPagina}&limit=${limiteCategorias}`;
-
-      const respuesta = await fetch(url);
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudieron obtener las categorías");
-      }
-
-      const datos = await respuesta.json();
+      const datos = await apiFetch<{
+        categorias: Categoria[];
+        paginacion?: {
+          totalItems?: number;
+          totalPages?: number;
+        };
+      }>(`/api/categorias?page=${numeroPagina}&limit=${limiteCategorias}`, {
+        method: "GET",
+      });
 
       setCategorias(datos.categorias || []);
 
@@ -83,16 +82,12 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   };
  const obtenerTodasLasCategorias = useCallback(async () => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias/todas`,
-      );
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudieron obtener todas las categorías");
-      }
-
-      const datos = await respuesta.json();
-
+            const datos = await apiFetch<{
+        categorias: Categoria[];
+      }>("/api/categorias/todas", {
+        method: "GET",
+      });
+      
       setCategorias(datos.categorias || []);
     } catch (error) {
       console.error("Error al cargar todas las categorías:", error);
@@ -122,43 +117,23 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   const guardarCategoria = async (nombreCategoria: string) => {
     try {
       setGuardando(true);
-      let respuesta;
 
       if (categoriaSeleccionada) {
-        respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/categorias/${categoriaSeleccionada._id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ nombreCategoria }),
+        await apiFetch<void>(`/api/categorias/${categoriaSeleccionada._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({ nombreCategoria }),
+        });
       } else {
-        respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/categorias`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ nombreCategoria }),
+        await apiFetch<void>("/api/categorias", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
-      }
-
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => null);
-        console.log("ERROR DEL BACKEND:", error);
-        throw new Error(
-          error?.message ||
-            error?.mensaje ||
-            error?.errors?.[0]?.msg ||
-            "No se pudo guardar la categoría",
-        );
+          body: JSON.stringify({ nombreCategoria }),
+        });
       }
 
       await obtenerCategorias();
@@ -200,22 +175,9 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     if (!confirmar.isConfirmed) return;
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => null);
-        throw new Error(
-          error?.message ||
-            error?.mensaje ||
-            "No se pudo eliminar la categoría",
-        );
-      }
+      await apiFetch<void>(`/api/categorias/${id}`, {
+        method: "DELETE",
+      });
 
       await obtenerCategorias();
     } catch (error) {

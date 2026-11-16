@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { apiFetch } from "../services/api";
 
 interface Usuario {
   _id: string;
@@ -39,28 +40,24 @@ export default function MisReservas() {
 
   const cantidadPaginas = Math.ceil(cantidadReservas / reservasPorPagina);
 
-  const cargarReservas = async () => {
+  const cargarReservas = async (signal: AbortSignal) => {
     try {
       setCargando(true);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/reservas?pagina=${paginaActual}&limite=${reservasPorPagina}`,
-        {
-          credentials: "include",
-        },
-      );
+      const resultado = await apiFetch<{
+        reservas: Reserva[];
+        cantidadReservas: number;
+      }>(`/api/reservas?pagina=${paginaActual}&limite=${reservasPorPagina}`, {
+        signal,
+      });
 
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudieron obtener las reservas",
-        );
-      }
+      if (signal.aborted) return;
 
       setReservas(resultado.reservas || []);
       setCantidadReservas(resultado.cantidadReservas || 0);
     } catch (error) {
+      if (signal.aborted) return;
+
       console.error("Error al obtener reservas:", error);
 
       Swal.fire({
@@ -76,12 +73,20 @@ export default function MisReservas() {
         color: "#f8fafc",
       });
     } finally {
-      setCargando(false);
+      if (!signal.aborted) {
+        setCargando(false);
+      }
     }
   };
 
   useEffect(() => {
-    cargarReservas();
+    const controller = new AbortController();
+
+    cargarReservas(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [paginaActual]);
 
   const formatearFecha = (fecha: string) => {
@@ -126,19 +131,9 @@ export default function MisReservas() {
     try {
       setProcesando(reserva._id);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/reservas/${reserva._id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo cancelar la reserva");
-      }
+      await apiFetch(`/api/reservas/${reserva._id}`, {
+        method: "DELETE",
+      });
 
       setReservas((reservasActuales) =>
         reservasActuales.map((reservaActual) =>
@@ -184,27 +179,17 @@ export default function MisReservas() {
     try {
       setProcesando(reserva._id);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/pago/crear-preferencia-reserva`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            reservaId: reserva._id,
-          }),
+      const resultado = await apiFetch<{
+        init_point: string;
+      }>("/api/pago/crear-preferencia-reserva", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudo crear la preferencia de pago",
-        );
-      }
+        body: JSON.stringify({
+          reservaId: reserva._id,
+        }),
+      });
 
       if (!resultado.init_point) {
         throw new Error("Mercado Pago no devolvió el enlace de pago.");

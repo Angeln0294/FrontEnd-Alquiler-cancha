@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { apiFetch, ApiError } from "../services/api";
 
 interface EstadoLocation {
   email?: string;
+}
+
+interface RespuestaApi {
+  mensaje?: string;
 }
 
 export default function VerificarEmail() {
@@ -18,8 +23,49 @@ export default function VerificarEmail() {
   const [cargando, setCargando] = useState(false);
   const [reenviando, setReenviando] = useState(false);
   const [segundosRestantes, setSegundosRestantes] = useState(0);
+  const [verificado, setVerificado] = useState(false);
+
+  const temporizadorRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const navegacionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const solicitudActivaRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (temporizadorRef.current !== null) {
+        clearInterval(temporizadorRef.current);
+      }
+
+      if (navegacionRef.current !== null) {
+        clearTimeout(navegacionRef.current);
+      }
+    };
+  }, []);
+
+  const iniciarTemporizador = (segundos: number) => {
+    if (temporizadorRef.current !== null) {
+      clearInterval(temporizadorRef.current);
+    }
+
+    setSegundosRestantes(segundos);
+
+    temporizadorRef.current = setInterval(() => {
+      setSegundosRestantes((actual) => {
+        if (actual <= 1) {
+          if (temporizadorRef.current !== null) {
+            clearInterval(temporizadorRef.current);
+            temporizadorRef.current = null;
+          }
+          return 0;
+        }
+
+        return actual - 1;
+      });
+    }, 1000);
+  };
 
   const verificarCodigo = async () => {
+    if (solicitudActivaRef.current || verificado) return;
+
     setMensaje("");
     setError("");
 
@@ -33,44 +79,50 @@ export default function VerificarEmail() {
       return;
     }
 
-    try {
-      setCargando(true);
+    solicitudActivaRef.current = true;
+    setCargando(true);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/verificar-email`,
+    try {
+      const resultado = await apiFetch<RespuestaApi>(
+        "/api/usuario/verificar-email",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            email,
-            codigo,
-          }),
+          body: JSON.stringify({ email, codigo }),
         },
       );
 
-      const resultado = await respuesta.json();
+      setMensaje(resultado.mensaje || "Email verificado correctamente.");
+      setVerificado(true);
 
-      if (!respuesta.ok) {
-        setError(resultado.mensaje || "Código incorrecto.");
-        return;
-      }
-
-      setMensaje(resultado.mensaje);
-
-      setTimeout(() => {
+      navegacionRef.current = setTimeout(() => {
         navigate("/login");
       }, 1500);
     } catch (error) {
       console.error("Error al verificar email:", error);
-      setError("No se pudo conectar con el servidor.");
+
+      if (error instanceof ApiError) {
+        setError(error.message || "No se pudo verificar el código.");
+      } else {
+        setError("No se pudo conectar con el servidor.");
+      }
     } finally {
+      solicitudActivaRef.current = false;
       setCargando(false);
     }
   };
 
   const reenviarCodigo = async () => {
+    if (
+      solicitudActivaRef.current ||
+      segundosRestantes > 0 ||
+      verificado
+    ) {
+      return;
+    }
+
     setMensaje("");
     setError("");
 
@@ -79,62 +131,43 @@ export default function VerificarEmail() {
       return;
     }
 
-    try {
-      setReenviando(true);
+    solicitudActivaRef.current = true;
+    setReenviando(true);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/reenviar-codigo`,
+    try {
+      const resultado = await apiFetch<RespuestaApi>(
+        "/api/usuario/reenviar-codigo",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            email,
-          }),
+          body: JSON.stringify({ email }),
         },
       );
 
-      const resultado = await respuesta.json();
+      setMensaje(resultado.mensaje || "Se envió un nuevo código.");
+      iniciarTemporizador(60);
+    } catch (error) {
+      console.error("Error al reenviar código:", error);
 
-      if (!respuesta.ok) {
-        setError(resultado.mensaje || "No se pudo reenviar el código.");
+      if (error instanceof ApiError) {
+        setError(error.message || "No se pudo reenviar el código.");
 
-        if (respuesta.status === 429) {
-          const coincidencia = resultado.mensaje.match(/\d+/);
+        if (error.status === 429) {
+          const coincidencia = error.message.match(/\d+/);
 
           if (coincidencia) {
             iniciarTemporizador(Number(coincidencia[0]));
           }
         }
-
-        return;
+      } else {
+        setError("No se pudo conectar con el servidor.");
       }
-
-      setMensaje(resultado.mensaje);
-
-      iniciarTemporizador(60);
-    } catch (error) {
-      console.error("Error al reenviar código:", error);
-      setError("No se pudo conectar con el servidor.");
     } finally {
+      solicitudActivaRef.current = false;
       setReenviando(false);
     }
-  };
-
-  const iniciarTemporizador = (segundos: number) => {
-    setSegundosRestantes(segundos);
-
-    const intervalo = setInterval(() => {
-      setSegundosRestantes((actual) => {
-        if (actual <= 1) {
-          clearInterval(intervalo);
-          return 0;
-        }
-
-        return actual - 1;
-      });
-    }, 1000);
   };
 
   return (
@@ -162,27 +195,38 @@ export default function VerificarEmail() {
             inputMode="numeric"
             maxLength={6}
             value={codigo}
-            onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
+            onChange={(e) =>
+              setCodigo(e.target.value.replace(/\D/g, ""))
+            }
+            disabled={cargando || reenviando || verificado}
             placeholder="123456"
             className="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-center text-2xl tracking-[0.5em]"
           />
         </div>
 
         {error && (
-          <p className="text-red-400 text-sm text-center mb-4">{error}</p>
+          <p className="text-red-400 text-sm text-center mb-4">
+            {error}
+          </p>
         )}
 
         {mensaje && (
-          <p className="text-green-400 text-sm text-center mb-4">{mensaje}</p>
+          <p className="text-green-400 text-sm text-center mb-4">
+            {mensaje}
+          </p>
         )}
 
         <button
           type="button"
           onClick={verificarCodigo}
-          disabled={cargando}
+          disabled={cargando || reenviando || verificado}
           className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 text-slate-950 font-bold p-3 rounded-lg transition"
         >
-          {cargando ? "Verificando..." : "Verificar Email"}
+          {cargando
+            ? "Verificando..."
+            : verificado
+              ? "Email verificado"
+              : "Verificar Email"}
         </button>
 
         <div className="mt-5 text-center">
@@ -193,7 +237,12 @@ export default function VerificarEmail() {
           <button
             type="button"
             onClick={reenviarCodigo}
-            disabled={reenviando || segundosRestantes > 0}
+            disabled={
+              reenviando ||
+              cargando ||
+              segundosRestantes > 0 ||
+              verificado
+            }
             className="text-green-400 hover:text-green-300 disabled:text-slate-600 disabled:cursor-not-allowed text-sm font-semibold"
           >
             {reenviando

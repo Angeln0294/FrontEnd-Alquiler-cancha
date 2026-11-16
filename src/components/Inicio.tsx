@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useProductos } from "../context/ProductoContext";
@@ -28,7 +29,7 @@ interface Cancha {
 export default function Inicio() {
   const navigate = useNavigate();
   const { usuario } = useAuth();
-  const { productos ,cargarProductos, limiteProductos } = useProductos();
+  const { productos, cargarProductos, limiteProductos } = useProductos();
   const { agregarAlCarrito } = useCarrito();
   // 🔘 Estado para controlar el carrusel de anuncios publicitarios
   const [currentSlide, setCurrentSlide] = useState<number>(0);
@@ -67,39 +68,40 @@ export default function Inicio() {
   }, [anuncios.length]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const cargarCanchas = async () => {
       try {
         setCargandoCanchas(true);
 
-        const respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/canchas`,
-          {
-            credentials: "include",
-          },
+        const resultado = await apiFetch<{ canchas: Cancha[] }>(
+          "/api/canchas",
+          { signal: controller.signal },
         );
 
-        const resultado = await respuesta.json();
-
-        if (!respuesta.ok) {
-          throw new Error(
-            resultado.message || "No se pudieron cargar las canchas",
-          );
-        }
+        if (controller.signal.aborted) return;
 
         setCanchas(resultado.canchas || []);
       } catch (error) {
+        if (controller.signal.aborted) return;
+
         console.error("Error al cargar las canchas:", error);
       } finally {
-        setCargandoCanchas(false);
+        if (!controller.signal.aborted) {
+          setCargandoCanchas(false);
+        }
       }
     };
 
     cargarCanchas();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
-  
+
   useEffect(() => {
-  cargarProductos(1, "", limiteProductos);
-}, []);
+    cargarProductos(1, "", limiteProductos);
+  }, []);
 
   return (
     <div className="w-full bg-[#0b132b] text-white min-h-screen pb-16">
@@ -149,63 +151,60 @@ export default function Inicio() {
           </p>
         </div>
 
-        
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {cargandoCanchas ? (
-    <div className="col-span-full text-center py-10">
-      <p className="text-gray-400 text-lg">
-        Cargando canchas...
-      </p>
-    </div>
-  ) : canchas.filter((cancha) => cancha.disponible).length === 0 ? (
-    <div className="col-span-full text-center py-10">
-      <p className="text-gray-400 text-lg">
-        No hay canchas disponibles en este momento.
-      </p>
-    </div>
-  ) : (
-    canchas
-      .filter((cancha) => cancha.disponible)
-      .slice(0, 3)
-      .map((cancha) => (
-        <CanchaCard
-          key={cancha._id}
-          cancha={cancha}
-          onReservar={(canchaSeleccionada) => {
-            if (!usuario) {
-              Swal.fire({
-                icon: "warning",
-                title: "Iniciá sesión",
-                text: "Debés iniciar sesión para poder reservar una cancha.",
-                confirmButtonText: "Iniciar sesión",
-                background: "#1e293b",
-                color: "#f8fafc",
-                confirmButtonColor: "#22c55e",
-              }).then((resultado) => {
-                if (resultado.isConfirmed) {
-                  navigate("/login");
-                }
-              });
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cargandoCanchas ? (
+            <div className="col-span-full text-center py-10">
+              <p className="text-gray-400 text-lg">Cargando canchas...</p>
+            </div>
+          ) : canchas.filter((cancha) => cancha.disponible).length === 0 ? (
+            <div className="col-span-full text-center py-10">
+              <p className="text-gray-400 text-lg">
+                No hay canchas disponibles en este momento.
+              </p>
+            </div>
+          ) : (
+            canchas
+              .filter((cancha) => cancha.disponible)
+              .slice(0, 3)
+              .map((cancha) => (
+                <CanchaCard
+                  key={cancha._id}
+                  cancha={cancha}
+                  onReservar={(canchaSeleccionada) => {
+                    if (!usuario) {
+                      Swal.fire({
+                        icon: "warning",
+                        title: "Iniciá sesión",
+                        text: "Debés iniciar sesión para poder reservar una cancha.",
+                        confirmButtonText: "Iniciar sesión",
+                        background: "#1e293b",
+                        color: "#f8fafc",
+                        confirmButtonColor: "#22c55e",
+                      }).then((resultado) => {
+                        if (resultado.isConfirmed) {
+                          navigate("/login");
+                        }
+                      });
 
-              return;
-            }
+                      return;
+                    }
 
-            navigate(
-              `/reservar-turnos?canchaId=${encodeURIComponent(
-                canchaSeleccionada._id
-              )}&cancha=${encodeURIComponent(
-                canchaSeleccionada.nombre
-              )}&precio=${encodeURIComponent(
-                canchaSeleccionada.precio
-              )}&imagen=${encodeURIComponent(
-                canchaSeleccionada.imagen
-              )}`
-            );
-          }}
-        />
-      ))
-  )}
-</div>
+                    navigate(
+                      `/reservar-turnos?canchaId=${encodeURIComponent(
+                        canchaSeleccionada._id,
+                      )}&cancha=${encodeURIComponent(
+                        canchaSeleccionada.nombre,
+                      )}&precio=${encodeURIComponent(
+                        canchaSeleccionada.precio,
+                      )}&imagen=${encodeURIComponent(
+                        canchaSeleccionada.imagen,
+                      )}`,
+                    );
+                  }}
+                />
+              ))
+          )}
+        </div>
 
         <div className="flex justify-end mt-8">
           <button
@@ -229,54 +228,53 @@ export default function Inicio() {
           </p>
         </div>
 
-        
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-  {productos.slice(0, 3).map((producto) => (
-    <ProductoCard
-      key={producto._id}
-      producto={producto}
-      onAgregarAlCarrito={async (productoSeleccionado) => {
-        if (!usuario) {
-          const resultado = await Swal.fire({
-            icon: "warning",
-            title: "Iniciá sesión",
-            text: "Debés iniciar sesión para poder agregar productos al carrito.",
-            confirmButtonText: "Iniciar sesión",
-            background: "#1e293b",
-            color: "#f8fafc",
-            confirmButtonColor: "#22c55e",
-          });
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {productos.slice(0, 3).map((producto) => (
+            <ProductoCard
+              key={producto._id}
+              producto={producto}
+              onAgregarAlCarrito={async (productoSeleccionado) => {
+                if (!usuario) {
+                  const resultado = await Swal.fire({
+                    icon: "warning",
+                    title: "Iniciá sesión",
+                    text: "Debés iniciar sesión para poder agregar productos al carrito.",
+                    confirmButtonText: "Iniciar sesión",
+                    background: "#1e293b",
+                    color: "#f8fafc",
+                    confirmButtonColor: "#22c55e",
+                  });
 
-          if (resultado.isConfirmed) {
-            navigate("/login");
-          }
+                  if (resultado.isConfirmed) {
+                    navigate("/login");
+                  }
 
-          return;
-        }
+                  return;
+                }
 
-        await agregarAlCarrito(productoSeleccionado._id);
+                await agregarAlCarrito(productoSeleccionado._id);
 
-        const resultado = await Swal.fire({
-          icon: "success",
-          title: "¡Producto agregado!",
-          text: `${productoSeleccionado.nombreProducto} fue agregado al carrito.`,
-          background: "#1e293b",
-          color: "#ffffff",
-          showCancelButton: true,
-          confirmButtonText: "🛒 Ver carrito",
-          cancelButtonText: "Seguir comprando",
-          confirmButtonColor: "#00d26a",
-          cancelButtonColor: "#00d26a",
-          reverseButtons: true,
-        });
+                const resultado = await Swal.fire({
+                  icon: "success",
+                  title: "¡Producto agregado!",
+                  text: `${productoSeleccionado.nombreProducto} fue agregado al carrito.`,
+                  background: "#1e293b",
+                  color: "#ffffff",
+                  showCancelButton: true,
+                  confirmButtonText: "🛒 Ver carrito",
+                  cancelButtonText: "Seguir comprando",
+                  confirmButtonColor: "#00d26a",
+                  cancelButtonColor: "#00d26a",
+                  reverseButtons: true,
+                });
 
-        if (resultado.isConfirmed) {
-          navigate("/carrito");
-        }
-      }}
-    />
-  ))}
-</div>
+                if (resultado.isConfirmed) {
+                  navigate("/carrito");
+                }
+              }}
+            />
+          ))}
+        </div>
 
         <div className="flex justify-end mt-8">
           <button

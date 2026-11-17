@@ -104,22 +104,19 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const cargarCategorias = async () => {
-    try {
-      const datos = await apiFetch<
-        | {
-            categorias: Categoria[];
-          }
-        | Categoria[]
-      >("/api/categorias", {
-        method: "GET",
-      });
-      setCategorias(Array.isArray(datos) ? datos : datos.categorias || []);
-    } catch (error) {
-      console.error("Error al cargar categorías:", error);
-      setCategorias([]);
-    }
-  };
+const cargarCategorias = async () => {
+  try {
+    const datos = await apiFetch<{ categorias: Categoria[] }>(
+      "/api/categorias/todas",
+      { method: "GET" }
+    );
+
+    setCategorias(datos.categorias || []);
+  } catch (error) {
+    console.error("Error al cargar categorías:", error);
+    setCategorias([]);
+  }
+};
 
   useEffect(() => {
     cargarCategorias();

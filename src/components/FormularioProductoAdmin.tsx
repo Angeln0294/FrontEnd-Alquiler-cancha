@@ -15,7 +15,7 @@ interface FormularioProducto {
 export default function FormularioProductoAdmin() {
   const { productoSeleccionado, guardando, cerrarModal, guardarProducto } =
     useProductos();
-  const { categorias, obtenerTodasLasCategorias } = useCategorias();
+  const { todasLasCategorias, obtenerTodasLasCategorias } = useCategorias();
 
   const [imagen, setImagen] = useState<File | null>(null);
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
@@ -279,7 +279,7 @@ export default function FormularioProductoAdmin() {
               >
                 <option value="">Seleccionar categoría</option>
 
-                {categorias?.map((categoria) => (
+                {todasLasCategorias?.map((categoria) => (
                   <option key={categoria._id} value={categoria._id}>
                     {categoria.nombreCategoria}
                   </option>

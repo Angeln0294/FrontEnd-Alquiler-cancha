@@ -17,6 +17,7 @@ export interface Categoria {
 }
 
 interface CategoriaContextType {
+  todasLasCategorias: Categoria[];
   categorias: Categoria[];
   categoriaSeleccionada: Categoria | null;
   modalAbierto: boolean;
@@ -35,6 +36,7 @@ const CategoriaContext = createContext<CategoriaContextType | undefined>(
 );
 export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [todasLasCategorias, setTodasLasCategorias] = useState<Categoria[]>([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] =
     useState<Categoria | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -81,19 +83,18 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     }
   };
  const obtenerTodasLasCategorias = useCallback(async () => {
-    try {
-            const datos = await apiFetch<{
-        categorias: Categoria[];
-      }>("/api/categorias/todas", {
-        method: "GET",
-      });
-      
-      setCategorias(datos.categorias || []);
-    } catch (error) {
-      console.error("Error al cargar todas las categorías:", error);
-      setCategorias([]);
-    }
-  }, []);
+  try {
+    const datos = await apiFetch<{ categorias: Categoria[] }>(
+      "/api/categorias/todas",
+      { method: "GET" }
+    );
+
+    setTodasLasCategorias(datos.categorias || []);
+  } catch (error) {
+    console.error("Error al cargar todas las categorías:", error);
+    setTodasLasCategorias([]);
+  }
+}, []);
 
   useEffect(() => {
     obtenerCategorias(1);
@@ -137,6 +138,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       }
 
       await obtenerCategorias();
+      await obtenerTodasLasCategorias();
       cerrarModal();
     } catch (error) {
       console.error("Error al guardar categoría:", error);
@@ -180,6 +182,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       });
 
       await obtenerCategorias();
+      await obtenerTodasLasCategorias();
     } catch (error) {
       console.error("Error al eliminar categoría:", error);
       await Swal.fire({
@@ -201,6 +204,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     <CategoriaContext.Provider
       value={{
         categorias,
+        todasLasCategorias,
         categoriaSeleccionada,
         modalAbierto,
         guardando,

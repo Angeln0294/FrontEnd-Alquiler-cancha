@@ -159,11 +159,11 @@ export default function FormularioProductoAdmin() {
 
       Swal.fire({
         icon: "error",
-        title: "Producto duplicado",
+        title: "No se pudo guardar el producto",
         text:
           error instanceof Error
             ? error.message
-            : "No se pudo guardar el producto.",
+            : "Ocurrió un error inesperado. Intente nuevamente.",
         background: "#0b0f19",
         color: "#f8fafc",
         confirmButtonColor: "#22c55e",

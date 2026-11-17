@@ -27,10 +27,12 @@ export async function apiFetch<T>(
   `${API_BASE_URL.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`,
   {
     ...options,
-    headers: {
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...options.headers,
-    },
+   headers: {
+  ...(options.body && !(options.body instanceof FormData)
+    ? { "Content-Type": "application/json" }
+    : {}),
+  ...options.headers,
+},
     credentials: options.credentials ?? "include",
   },
 );

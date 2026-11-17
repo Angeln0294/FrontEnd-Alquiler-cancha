@@ -19,7 +19,8 @@ export const PaginadorBackend: React.FC<PaginadorBackendProps> = ({
         type="button"
         disabled={paginaActual === 1}
         onClick={() => cambiarPagina(paginaActual - 1)}
-        className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+        aria-label="Página anterior"
+        className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         &lt;
       </button>
@@ -30,7 +31,9 @@ export const PaginadorBackend: React.FC<PaginadorBackendProps> = ({
             key={pagina}
             type="button"
             onClick={() => cambiarPagina(pagina)}
-            className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-semibold transition ${
+            aria-label={`Ir a la página ${pagina}`}
+            aria-current={paginaActual === pagina ? "page" : undefined}
+            className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
               paginaActual === pagina
                 ? "bg-green-500 border-green-500 text-slate-950"
                 : "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800"
@@ -45,7 +48,8 @@ export const PaginadorBackend: React.FC<PaginadorBackendProps> = ({
         type="button"
         disabled={paginaActual === cantidadPaginas}
         onClick={() => cambiarPagina(paginaActual + 1)}
-        className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+        aria-label="Página siguiente"
+        className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         &gt;
       </button>

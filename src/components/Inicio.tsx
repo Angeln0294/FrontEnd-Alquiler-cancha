@@ -61,13 +61,6 @@ export default function Inicio() {
   ];
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % anuncios.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [anuncios.length]);
-
-  useEffect(() => {
     const controller = new AbortController();
     const cargarCanchas = async () => {
       try {
@@ -128,12 +121,16 @@ export default function Inicio() {
           </div>
 
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-            {anuncios.map((_, idx) => (
+            {anuncios.map((anuncio, idx) => (
               <button
-                key={idx}
+                key={anuncio.id}
                 type="button"
                 onClick={() => setCurrentSlide(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-colors ${currentSlide === idx ? "bg-green-400" : "bg-gray-500/50"}`}
+                aria-label={`Mostrar anuncio: ${anuncio.titulo}`}
+                aria-current={currentSlide === idx ? "true" : undefined}
+                className={`w-2.5 h-2.5 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white ${
+                  currentSlide === idx ? "bg-green-400" : "bg-gray-500/50"
+                }`}
               />
             ))}
           </div>
@@ -210,7 +207,7 @@ export default function Inicio() {
           <button
             type="button"
             onClick={() => navigate("/nuestras-canchas")}
-            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer"
+            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             aria-label="Ir a nuestras canchas"
           >
             Ver más &gt;
@@ -280,7 +277,7 @@ export default function Inicio() {
           <button
             type="button"
             onClick={() => navigate("/tienda")}
-            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer"
+            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             aria-label="Ir a la tienda"
           >
             Ver más &gt;

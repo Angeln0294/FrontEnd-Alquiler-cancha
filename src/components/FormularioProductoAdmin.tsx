@@ -15,7 +15,7 @@ interface FormularioProducto {
 export default function FormularioProductoAdmin() {
   const { productoSeleccionado, guardando, cerrarModal, guardarProducto } =
     useProductos();
-  const { categorias, obtenerTodasLasCategorias } = useCategorias();
+  const { todasLasCategorias, obtenerTodasLasCategorias } = useCategorias();
 
   const [imagen, setImagen] = useState<File | null>(null);
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
@@ -159,11 +159,11 @@ export default function FormularioProductoAdmin() {
 
       Swal.fire({
         icon: "error",
-        title: "Producto duplicado",
+        title: "No se pudo guardar el producto",
         text:
           error instanceof Error
             ? error.message
-            : "No se pudo guardar el producto.",
+            : "Ocurrió un error inesperado. Intente nuevamente.",
         background: "#0b0f19",
         color: "#f8fafc",
         confirmButtonColor: "#22c55e",
@@ -279,7 +279,7 @@ export default function FormularioProductoAdmin() {
               >
                 <option value="">Seleccionar categoría</option>
 
-                {categorias?.map((categoria) => (
+                {todasLasCategorias?.map((categoria) => (
                   <option key={categoria._id} value={categoria._id}>
                     {categoria.nombreCategoria}
                   </option>

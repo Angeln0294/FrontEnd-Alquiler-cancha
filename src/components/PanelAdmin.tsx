@@ -318,7 +318,11 @@ export default function PanelAdmin() {
             bg-[#0b0f19]
             transition-transform duration-300
             lg:translate-x-0
-            ${menuAbierto ? "translate-x-0" : "-translate-x-full"}
+            ${
+              menuAbierto
+                ? "translate-x-0 visible"
+                : "-translate-x-full invisible lg:visible"
+            }
           `}
         >
           <div className="flex h-20 items-center border-b border-slate-800 px-6">
@@ -331,7 +335,10 @@ export default function PanelAdmin() {
             </div>
           </div>
 
-          <nav className="p-4">
+          <nav
+            aria-label="Navegación del panel de administración"
+            className="p-4"
+          >
             <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
               Administración
             </p>
@@ -342,11 +349,13 @@ export default function PanelAdmin() {
                   key={item.id}
                   type="button"
                   onClick={() => cambiarSeccion(item.id)}
+                  aria-pressed={seccionActiva === item.id}
                   className={`
                     flex w-full items-center gap-3
                     rounded-xl px-4 py-3
                     text-sm font-medium
                     transition
+                    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white
                     ${
                       seccionActiva === item.id
                         ? "bg-green-500/10 text-green-400 border border-green-500/20"
@@ -354,7 +363,9 @@ export default function PanelAdmin() {
                     }
                   `}
                 >
-                  <span className="text-lg">{item.icono}</span>
+                  <span aria-hidden="true" className="text-lg">
+                    {item.icono}
+                  </span>
 
                   {item.nombre}
                 </button>
@@ -366,9 +377,9 @@ export default function PanelAdmin() {
             <button
               type="button"
               onClick={cerrarSesion}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-400"
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              <span>🚪</span>
+              <span aria-hidden="true">🚪</span>
               Cerrar sesión
             </button>
           </div>
@@ -389,7 +400,13 @@ export default function PanelAdmin() {
               <button
                 type="button"
                 onClick={() => setMenuAbierto(!menuAbierto)}
-                className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-lg lg:hidden"
+                aria-label={
+                  menuAbierto
+                    ? "Cerrar menú de administración"
+                    : "Abrir menú de administración"
+                }
+                aria-expanded={menuAbierto}
+                className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-lg lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 ☰
               </button>
@@ -409,7 +426,8 @@ export default function PanelAdmin() {
             <button
               type="button"
               onClick={() => cargarDatosDashboard()}
-              className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-300 transition hover:border-green-500/30 hover:text-green-400"
+              aria-label="Actualizar datos del panel de administración"
+              className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-300 transition hover:border-green-500/30 hover:text-green-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               🔄 Actualizar
             </button>
@@ -441,8 +459,9 @@ export default function PanelAdmin() {
 
                     <button
                       type="button"
+                      aria-label="Reintentar la carga de datos del panel"
                       onClick={() => cargarDatosDashboard()}
-                      className="mt-3 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400"
+                      className="mt-3 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                     >
                       Reintentar
                     </button>
@@ -690,7 +709,8 @@ export default function PanelAdmin() {
                       <button
                         type="button"
                         onClick={() => cambiarSeccion("usuarios")}
-                        className="text-xs font-semibold text-green-400 hover:text-green-300"
+                        aria-label="Ir a la administración de usuarios"
+                        className="text-xs font-semibold text-green-400 hover:text-green-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       >
                         Ver usuarios →
                       </button>
@@ -784,8 +804,9 @@ export default function PanelAdmin() {
 
                       <button
                         type="button"
+                        aria-label="Ir a la administración de canchas"
                         onClick={() => cambiarSeccion("canchas")}
-                        className="text-xs font-semibold text-green-400 hover:text-green-300"
+                        className="text-xs font-semibold text-green-400 hover:text-green-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       >
                         Ver canchas →
                       </button>
@@ -849,8 +870,9 @@ export default function PanelAdmin() {
 
                     <button
                       type="button"
+                      aria-label="Ver todas las reservas"
                       onClick={() => cambiarSeccion("reservas")}
-                      className="text-sm font-semibold text-green-400 hover:text-green-300"
+                      className="text-sm font-semibold text-green-400 hover:text-green-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                     >
                       Ver todas →
                     </button>

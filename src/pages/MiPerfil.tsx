@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
-import { apiFetch } from "../services/api";
+import { actualizarUsuarioService } from "../services/usuarios.service";
 
 export default function MiPerfil() {
   const { usuario, cargarUsuario } = useAuth();
@@ -24,17 +24,11 @@ export default function MiPerfil() {
     setGuardando(true);
 
     try {
-      await apiFetch<void>(`/api/usuario/${usuario._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre,
-          apellido,
-          email,
-        }),
-      });
+      await actualizarUsuarioService(usuario._id, {
+  nombre,
+  apellido,
+  email,
+});
 
       const emailCambio = email.toLowerCase().trim() !== usuario.email;
 

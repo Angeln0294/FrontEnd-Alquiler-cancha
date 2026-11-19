@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { apiFetch, ApiError } from "../services/api";
+import { ApiError } from "../services/api";
+import {
+  verificarEmailService,
+  reenviarCodigoService,
+} from "../services/auth.service";
 
 interface EstadoLocation {
   email?: string;
-}
-
-interface RespuestaApi {
-  mensaje?: string;
 }
 
 export default function VerificarEmail() {
@@ -85,15 +85,7 @@ export default function VerificarEmail() {
     setCargando(true);
 
     try {
-      const resultado = await apiFetch<RespuestaApi>(
-        "/api/usuario/verificar-email",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, codigo }),
-        },
-      );
-
+      const resultado = await verificarEmailService({ email, codigo });
       setMensaje(resultado.mensaje || "Email verificado correctamente.");
       setVerificado(true);
 
@@ -130,14 +122,7 @@ export default function VerificarEmail() {
     setReenviando(true);
 
     try {
-      const resultado = await apiFetch<RespuestaApi>(
-        "/api/usuario/reenviar-codigo",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        },
-      );
+      const resultado = await reenviarCodigoService(email);
 
       setMensaje(resultado.mensaje || "Se envió un nuevo código.");
       iniciarTemporizador(60);
@@ -167,7 +152,10 @@ export default function VerificarEmail() {
           Verificar Email
         </h1>
 
-        <p id="instrucciones-codigo" className="text-slate-400 text-center text-sm mb-6">
+        <p
+          id="instrucciones-codigo"
+          className="text-slate-400 text-center text-sm mb-6"
+        >
           Enviamos un código de 6 dígitos a:
         </p>
 
@@ -175,9 +163,18 @@ export default function VerificarEmail() {
           {email || "Email no disponible"}
         </p>
 
-        <form onSubmit={(e) => { e.preventDefault(); void verificarCodigo(); }} noValidate>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void verificarCodigo();
+          }}
+          noValidate
+        >
           <div className="mb-4">
-            <label htmlFor="codigo-verificacion" className="block text-sm font-medium mb-2 text-slate-300">
+            <label
+              htmlFor="codigo-verificacion"
+              className="block text-sm font-medium mb-2 text-slate-300"
+            >
               Código de verificación
             </label>
 
@@ -194,20 +191,31 @@ export default function VerificarEmail() {
               disabled={cargando || reenviando || verificado}
               aria-required="true"
               aria-invalid={!!error}
-              aria-describedby={error ? "instrucciones-codigo error-verificacion" : "instrucciones-codigo"}
+              aria-describedby={
+                error
+                  ? "instrucciones-codigo error-verificacion"
+                  : "instrucciones-codigo"
+              }
               placeholder="123456"
               className="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-center text-2xl tracking-[0.5em]"
             />
           </div>
 
           {error && (
-            <p id="error-verificacion" role="alert" className="text-red-400 text-sm text-center mb-4">
+            <p
+              id="error-verificacion"
+              role="alert"
+              className="text-red-400 text-sm text-center mb-4"
+            >
               {error}
             </p>
           )}
 
           {mensaje && (
-            <p role="status" className="text-green-400 text-sm text-center mb-4">
+            <p
+              role="status"
+              className="text-green-400 text-sm text-center mb-4"
+            >
               {mensaje}
             </p>
           )}
@@ -217,23 +225,39 @@ export default function VerificarEmail() {
             disabled={cargando || reenviando || verificado}
             className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 text-slate-950 font-bold p-3 rounded-lg transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400"
           >
-            {cargando ? "Verificando..." : verificado ? "Email verificado" : "Verificar Email"}
+            {cargando
+              ? "Verificando..."
+              : verificado
+                ? "Email verificado"
+                : "Verificar Email"}
           </button>
         </form>
 
         <div className="mt-5 text-center">
-          <p className="text-slate-500 text-sm mb-2">¿No recibiste el código?</p>
+          <p className="text-slate-500 text-sm mb-2">
+            ¿No recibiste el código?
+          </p>
 
           <button
             type="button"
             onClick={reenviarCodigo}
-            disabled={reenviando || cargando || segundosRestantes > 0 || verificado}
+            disabled={
+              reenviando || cargando || segundosRestantes > 0 || verificado
+            }
             className="text-green-400 hover:text-green-300 disabled:text-slate-600 disabled:cursor-not-allowed text-sm font-semibold rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-green-400"
           >
-            {reenviando ? "Enviando..." : segundosRestantes > 0 ? `Reenviar código (${segundosRestantes}s)` : "Reenviar código"}
+            {reenviando
+              ? "Enviando..."
+              : segundosRestantes > 0
+                ? `Reenviar código (${segundosRestantes}s)`
+                : "Reenviar código"}
           </button>
           <p className="sr-only" aria-live="polite" aria-atomic="true">
-            {segundosRestantes === 0 ? "Podés solicitar un nuevo código." : segundosRestantes % 15 === 0 ? `Podrás reenviar el código en ${segundosRestantes} segundos.` : ""}
+            {segundosRestantes === 0
+              ? "Podés solicitar un nuevo código."
+              : segundosRestantes % 15 === 0
+                ? `Podrás reenviar el código en ${segundosRestantes} segundos.`
+                : ""}
           </p>
         </div>
       </div>

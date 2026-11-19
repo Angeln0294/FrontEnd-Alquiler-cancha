@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
-import { apiFetch, ApiError } from "../services/api";
+import { ApiError } from "../services/api";
+import { iniciarSesionService } from "../services/auth.service";
 import type { SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -23,56 +24,46 @@ export default function Login() {
   });
 
   const alEnviar: SubmitHandler<LoginValores> = async (datos) => {
-    try {
-      const resultado = await apiFetch<{ mensaje?: string }>(
-        "/api/usuario/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: datos.email,
-            password: datos.contrasenia,
-          }),
-        },
-      );
+  try {
+    const resultado = await iniciarSesionService({
+      email: datos.email,
+      password: datos.contrasenia,
+    });
 
-      console.log("Inicio de sesión exitoso:", resultado);
+    console.log("Inicio de sesión exitoso:", resultado);
 
-      await Swal.fire({
-        icon: "success",
-        title: "¡Bienvenido!",
-        text: resultado.mensaje || "Sesión iniciada correctamente.",
-        confirmButtonText: "Continuar",
-        background: "#0b132b",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        iconColor: "#22c55e",
-      });
+    await Swal.fire({
+      icon: "success",
+      title: "¡Bienvenido!",
+      text: resultado.mensaje || "Sesión iniciada correctamente.",
+      confirmButtonText: "Continuar",
+      background: "#0b132b",
+      color: "#ffffff",
+      confirmButtonColor: "#22c55e",
+      iconColor: "#22c55e",
+    });
 
-      await cargarUsuario();
-      navigate("/");
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
+    await cargarUsuario();
+    navigate("/");
+  } catch (error) {
+    console.error("Error al iniciar sesión:", error);
 
-      const esErrorHTTP = error instanceof ApiError;
+    const esErrorHTTP = error instanceof ApiError;
 
-      await Swal.fire({
-        icon: "error",
-        title: esErrorHTTP ? "No se pudo iniciar sesión" : "Error de conexión",
-        text: esErrorHTTP
-          ? error.message
-          : "No se pudo conectar con el servidor.",
-        confirmButtonText: "Entendido",
-        background: "#0b132b",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        iconColor: "#ef4444",
-      });
-    }
-  };
-
+    await Swal.fire({
+      icon: "error",
+      title: esErrorHTTP ? "No se pudo iniciar sesión" : "Error de conexión",
+      text: esErrorHTTP
+        ? error.message
+        : "No se pudo conectar con el servidor.",
+      confirmButtonText: "Entendido",
+      background: "#0b132b",
+      color: "#ffffff",
+      confirmButtonColor: "#22c55e",
+      iconColor: "#ef4444",
+    });
+  }
+};
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#0b132b] flex items-center justify-center p-6 text-white">
       <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-md">

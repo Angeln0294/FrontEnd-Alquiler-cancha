@@ -2,7 +2,8 @@ import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { apiFetch, ApiError } from "../services/api";
+import { ApiError } from "../services/api";
+import { registrarUsuarioService } from "../services/auth.service";
 
 interface FormValores {
   nombre: string;
@@ -27,60 +28,51 @@ export default function Registro() {
   const contraseniaValue = watch("contrasenia");
 
   const alEnviar: SubmitHandler<FormValores> = async (datos) => {
-    try {
-      const resultado = await apiFetch<{ mensaje?: string }>(
-        "/api/usuario/registro",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nombre: datos.nombre,
-            apellido: datos.apellido,
-            email: datos.email,
-            password: datos.contrasenia,
-          }),
-        },
-      );
+  try {
+    const resultado = await registrarUsuarioService({
+      nombre: datos.nombre,
+      apellido: datos.apellido,
+      email: datos.email,
+      password: datos.contrasenia,
+    });
 
-      console.log("Usuario registrado:", resultado);
+    console.log("Usuario registrado:", resultado);
 
-      await Swal.fire({
-        icon: "success",
-        title: "¡Registro exitoso!",
-        text: resultado.mensaje || "Revisá tu email para verificar tu cuenta.",
-        confirmButtonText: "Continuar",
-        background: "#0b132b",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        iconColor: "#22c55e",
-      });
+    await Swal.fire({
+      icon: "success",
+      title: "¡Registro exitoso!",
+      text: resultado.mensaje || "Revisá tu email para verificar tu cuenta.",
+      confirmButtonText: "Continuar",
+      background: "#0b132b",
+      color: "#ffffff",
+      confirmButtonColor: "#22c55e",
+      iconColor: "#22c55e",
+    });
 
-      navigate("/verificar-email", {
-        state: {
-          email: datos.email,
-        },
-      });
-    } catch (error) {
-      console.error("Error al registrar usuario:", error);
+    navigate("/verificar-email", {
+      state: {
+        email: datos.email,
+      },
+    });
+  } catch (error) {
+    console.error("Error al registrar usuario:", error);
 
-      const esErrorHTTP = error instanceof ApiError;
+    const esErrorHTTP = error instanceof ApiError;
 
-      await Swal.fire({
-        icon: "error",
-        title: esErrorHTTP ? "No se pudo registrar" : "Error de conexión",
-        text: esErrorHTTP
-          ? error.message
-          : "No se pudo conectar con el servidor.",
-        confirmButtonText: "Entendido",
-        background: "#0b132b",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        iconColor: "#ef4444",
-      });
-    }
-  };
+    await Swal.fire({
+      icon: "error",
+      title: esErrorHTTP ? "No se pudo registrar" : "Error de conexión",
+      text: esErrorHTTP
+        ? error.message
+        : "No se pudo conectar con el servidor.",
+      confirmButtonText: "Entendido",
+      background: "#0b132b",
+      color: "#ffffff",
+      confirmButtonColor: "#22c55e",
+      iconColor: "#ef4444",
+    });
+  }
+};
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-white">
       <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-md">

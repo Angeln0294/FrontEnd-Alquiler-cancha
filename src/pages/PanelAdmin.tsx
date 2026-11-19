@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../services/api";
-import AdminUsuarios from "./panelAdmin/usuarios/AdminUsuarios";
-import AdminCanchas from "./panelAdmin/canchas/AdminCanchas";
-import AdminReservas from "./panelAdmin/reservas/AdminReservas";
-import AdminCategorias from "./panelAdmin/categorias/AdminCategorias";
-import AdminProductos from "./panelAdmin/productos/AdminProductos";
+import AdminUsuarios from "../components/panelAdmin/usuarios/AdminUsuarios";
+import AdminCanchas from "../components/panelAdmin/canchas/AdminCanchas";
+import AdminReservas from "../components/panelAdmin/reservas/AdminReservas";
+import AdminCategorias from "../components/panelAdmin/categorias/AdminCategorias";
+import AdminProductos from "../components/panelAdmin/productos/AdminProductos";
 
 import { CategoriaProvider } from "../context/CategoriaContext";
 import { useAuth } from "../context/AuthContext";

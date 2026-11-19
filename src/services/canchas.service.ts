@@ -76,3 +76,12 @@ export const eliminarCanchaService = (id: string) => {
     method: "DELETE",
   });
 };
+export const obtenerCanchaPorIdService = (
+  id: string,
+  signal?: AbortSignal,
+) => {
+  return apiFetch<CanchaDTO>(`/api/canchas/${id}`, {
+    method: "GET",
+    signal,
+  });
+};

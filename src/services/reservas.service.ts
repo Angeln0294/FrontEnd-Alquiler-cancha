@@ -38,6 +38,29 @@ export interface RespuestaPreferenciaPago {
   init_point: string;
 }
 
+export interface HorarioTurnoDTO {
+  horaInicio: string;
+  horaFin: string;
+  disponible: boolean;
+}
+
+export interface RespuestaDisponibilidadDTO {
+  turnos: HorarioTurnoDTO[];
+}
+
+export interface CrearReservaPayload {
+  cancha: string;
+  fecha: string;
+  horaInicio: string;
+}
+
+export interface RespuestaCrearReserva {
+  reserva: {
+    _id: string;
+  };
+  mensaje?: string;
+}
+
 const jsonHeaders = {
   "Content-Type": "application/json",
 };
@@ -96,4 +119,26 @@ export const crearPreferenciaPagoReservaService = (reservaId: string) => {
       body: JSON.stringify({ reservaId }),
     },
   );
+};
+
+export const obtenerDisponibilidadReservaService = (
+  canchaId: string,
+  fecha: string,
+  signal?: AbortSignal,
+) => {
+  return apiFetch<RespuestaDisponibilidadDTO>(
+    `/api/reservas/disponibilidad/${canchaId}/${fecha}`,
+    {
+      method: "GET",
+      signal,
+    },
+  );
+};
+
+export const crearReservaService = (payload: CrearReservaPayload) => {
+  return apiFetch<RespuestaCrearReserva>("/api/reservas", {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  });
 };

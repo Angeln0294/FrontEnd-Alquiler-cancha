@@ -108,7 +108,7 @@ export default function Registro() {
                 errors.nombre ? "registro-nombre-error" : undefined
               }
               type="text"
-              placeholder="Juan Pérez"
+              placeholder="Juan"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.nombre ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
               {...register("nombre", {
                 required: "El nombre es obligatorio.",

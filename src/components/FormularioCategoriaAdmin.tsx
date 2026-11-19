@@ -19,6 +19,7 @@ export default function FormularioCategoriaAdmin() {
     handleSubmit,
     reset,
     setFocus,
+    setValue,
     formState: { errors },
   } = useForm<FormularioCategoria>({
     mode: "onSubmit",
@@ -35,6 +36,10 @@ export default function FormularioCategoriaAdmin() {
     if (categoriaSeleccionada) {
       reset({
         nombreCategoria: categoriaSeleccionada.nombreCategoria,
+      });
+    }else {
+      reset({
+        nombreCategoria: "",
       });
     }
   }, [categoriaSeleccionada, reset]);
@@ -101,9 +106,20 @@ export default function FormularioCategoriaAdmin() {
   }, [setFocus]);
 
   const manejarSubmit = async (datos: FormularioCategoria) => {
-    console.log("DATOS DEL FORMULARIO:", datos);
     await guardarCategoria(datos.nombreCategoria.trim());
   };
+
+  const nombreCategoriaField = register("nombreCategoria", {
+    required: "El nombre de la categoría es obligatorio",
+    minLength: {
+      value: 5,
+      message: "El nombre debe tener al menos 5 caracteres",
+    },
+    maxLength: {
+      value: 100,
+      message: "El nombre no puede superar los 100 caracteres",
+    },
+  });
 
   return (
     <div
@@ -178,6 +194,16 @@ export default function FormularioCategoriaAdmin() {
                   message: "El nombre no puede superar los 100 caracteres",
                 },
               })}
+              {...nombreCategoriaField}
+              onChange={(e) => {
+                const nuevoNombre = e.target.value;
+
+                setValue("nombreCategoria", nuevoNombre, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                  shouldValidate: true,
+                });
+              }}
               className={`w-full bg-slate-800 border text-white rounded-xl px-4 py-3 outline-none transition ${
                 errors.nombreCategoria
                   ? "border-rose-500 focus:border-rose-500"

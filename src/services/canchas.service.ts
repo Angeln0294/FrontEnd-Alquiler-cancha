@@ -85,3 +85,20 @@ export const obtenerCanchaPorIdService = (
     signal,
   });
 };
+export const obtenerCanchasService = (
+  pagina?: number,
+  limite?: number,
+  signal?: AbortSignal,
+) => {
+  const params = new URLSearchParams();
+  if (pagina !== undefined) params.set("pagina", String(pagina));
+  if (limite !== undefined) params.set("limite", String(limite));
+
+  const queryString = params.toString();
+  const endpoint = queryString ? `/api/canchas?${queryString}` : "/api/canchas";
+
+  return apiFetch<RespuestaCanchasPaginadas>(endpoint, {
+    method: "GET",
+    signal,
+  });
+};

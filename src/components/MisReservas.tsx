@@ -253,7 +253,13 @@ export default function MisReservas() {
       <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans">
         <div className="max-w-7xl mx-auto">
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl p-10 text-center">
-            <p className="text-slate-400 text-sm">Cargando tus reservas...</p>
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-slate-400 text-sm"
+            >
+              Cargando tus reservas...
+            </p>
           </div>
         </div>
       </div>
@@ -278,7 +284,7 @@ export default function MisReservas() {
           <button
             type="button"
             onClick={() => navigate("/canchas")}
-            className="w-fit text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-green-400 transition-colors flex items-center gap-2 cursor-pointer"
+            className="w-fit text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-green-400 transition-colors flex items-center gap-2 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             ← Reservar cancha
           </button>
@@ -286,7 +292,9 @@ export default function MisReservas() {
 
         {reservas.length === 0 ? (
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl p-10 text-center shadow-xl">
-            <div className="text-5xl mb-5">⚽</div>
+            <div aria-hidden="true" className="text-5xl mb-5">
+              ⚽
+            </div>
 
             <h2 className="text-lg font-bold text-white">
               Todavía no tenés reservas
@@ -299,7 +307,7 @@ export default function MisReservas() {
             <button
               type="button"
               onClick={() => navigate("/canchas")}
-              className="bg-[#22c55e] text-[#0b132b] px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#22c55e]/90 transition-all cursor-pointer"
+              className="bg-[#22c55e] text-[#0b132b] px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#22c55e]/90 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             >
               Ver canchas
             </button>
@@ -401,7 +409,12 @@ export default function MisReservas() {
                                 type="button"
                                 disabled={procesando === reserva._id}
                                 onClick={() => pagarReserva(reserva)}
-                                className="bg-green-500 text-slate-950 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+                                aria-label={
+                                  procesando === reserva._id
+                                    ? `Procesando pago de ${reserva.cancha?.nombre || "cancha"}`
+                                    : `Pagar reserva de ${reserva.cancha?.nombre || "cancha"} del ${formatearFecha(reserva.fecha)}`
+                                }
+                                className="bg-green-500 text-slate-950 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                               >
                                 {procesando === reserva._id
                                   ? "Procesando..."
@@ -413,7 +426,12 @@ export default function MisReservas() {
                               type="button"
                               disabled={procesando === reserva._id}
                               onClick={() => cancelarReserva(reserva)}
-                              className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide hover:bg-red-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+                              aria-label={
+                                procesando === reserva._id
+                                  ? `Procesando reserva de ${reserva.cancha?.nombre || "cancha"}`
+                                  : `Cancelar reserva de ${reserva.cancha?.nombre || "cancha"} del ${formatearFecha(reserva.fecha)}`
+                              }
+                              className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide hover:bg-red-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                             >
                               {procesando === reserva._id
                                 ? "Procesando..."
@@ -432,7 +450,8 @@ export default function MisReservas() {
                     type="button"
                     disabled={paginaActual === 1}
                     onClick={() => setPaginaActual((pagina) => pagina - 1)}
-                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition"
+                    aria-label="Ir a la página anterior de reservas"
+                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
                     ← Anterior
                   </button>
@@ -445,7 +464,8 @@ export default function MisReservas() {
                     type="button"
                     disabled={paginaActual === cantidadPaginas}
                     onClick={() => setPaginaActual((pagina) => pagina + 1)}
-                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition"
+                    aria-label="Ir a la página siguiente de reservas"
+                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
                     Siguiente →
                   </button>

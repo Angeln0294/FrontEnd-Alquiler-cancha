@@ -1,4 +1,3 @@
-
 import React from "react";
 
 interface ProductoCardProps {
@@ -15,7 +14,7 @@ interface ProductoCardProps {
   };
 
   onAgregarAlCarrito: (
-    producto: ProductoCardProps["producto"]
+    producto: ProductoCardProps["producto"],
   ) => void | Promise<void>;
 }
 
@@ -62,7 +61,8 @@ export const ProductoCard: React.FC<ProductoCardProps> = ({
         <button
           type="button"
           onClick={() => onAgregarAlCarrito(producto)}
-          className="w-full bg-green-500 hover:bg-green-600 text-[#0b132b] font-black py-2.5 rounded-xl transition-colors text-sm tracking-wide shadow-md shadow-green-500/10 cursor-pointer"
+          aria-label={`Agregar al carrito: ${producto.nombreProducto}`}
+          className="w-full bg-green-500 hover:bg-green-600 text-[#0b132b] font-black py-2.5 rounded-xl transition-colors text-sm tracking-wide shadow-md shadow-green-500/10 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
         >
           AGREGAR 🛒
         </button>

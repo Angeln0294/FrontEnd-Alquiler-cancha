@@ -89,7 +89,9 @@ export default function NuestrasCanchas() {
   if (cargando) {
     return (
       <div className="w-full bg-[#0b132b] text-white min-h-screen flex items-center justify-center">
-        <p className="text-slate-400">Cargando canchas...</p>
+        <p role="status" aria-live="polite" className="text-slate-400">
+          Cargando canchas...
+        </p>
       </div>
     );
   }
@@ -103,6 +105,7 @@ export default function NuestrasCanchas() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {canchas.map((cancha) => (
+            
             <CanchaCard
               key={cancha._id}
               cancha={cancha}

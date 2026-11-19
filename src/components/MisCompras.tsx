@@ -46,6 +46,7 @@ export default function MisCompras() {
         },
       );
 
+      if (signal?.aborted) return;
       setCompras(resultado.ordenes || []);
     } catch (error) {
       if (signal?.aborted) {
@@ -67,7 +68,7 @@ export default function MisCompras() {
         color: "#f8fafc",
       });
     } finally {
-      setCargando(false);
+      if (!signal?.aborted) setCargando(false);
     }
   };
 
@@ -140,7 +141,7 @@ export default function MisCompras() {
       <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans">
         <div className="max-w-7xl mx-auto">
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl p-10 text-center">
-            <p className="text-slate-400 text-sm">Cargando tus compras...</p>
+            <p role="status" aria-live="polite" className="text-slate-400 text-sm">Cargando tus compras...</p>
           </div>
         </div>
       </div>
@@ -166,14 +167,14 @@ export default function MisCompras() {
           <button
             type="button"
             onClick={() => navigate("/tienda")}
-            className="w-fit text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-green-400 transition-colors flex items-center gap-2 cursor-pointer"
+            className="w-fit text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-green-400 transition-colors flex items-center gap-2 cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-green-400"
           >
             ← Ir a la tienda
           </button>
         </div>
 
         {compras.length === 0 ? (
-          <div className="bg-[#1e293b] border border-slate-800 rounded-2xl p-10 text-center shadow-xl">
+          <div role="status" className="bg-[#1e293b] border border-slate-800 rounded-2xl p-10 text-center shadow-xl">
             <div className="text-5xl mb-5">🛍️</div>
 
             <h2 className="text-lg font-bold text-white">
@@ -187,36 +188,37 @@ export default function MisCompras() {
             <button
               type="button"
               onClick={() => navigate("/tienda")}
-              className="bg-[#22c55e] text-[#0b132b] px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#22c55e]/90 transition-all cursor-pointer"
+              className="bg-[#22c55e] text-[#0b132b] px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#22c55e]/90 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-green-400"
             >
               Ver tienda
             </button>
           </div>
         ) : (
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" role="region" aria-label="Historial de compras" tabIndex={0}>
               <table className="w-full min-w-225 text-sm">
+                <caption className="sr-only">Historial de compras: fecha, productos, cantidad, total y estado de cada compra</caption>
                 {/* CABECERA */}
 
                 <thead className="bg-[#16213d] border-b border-slate-700">
                   <tr>
-                    <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
+                    <th scope="col" className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Fecha
                     </th>
 
-                    <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
+                    <th scope="col" className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Productos
                     </th>
 
-                    <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
+                    <th scope="col" className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Cantidad
                     </th>
 
-                    <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
+                    <th scope="col" className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Total
                     </th>
 
-                    <th className="px-5 py-4 text-center text-[10px] uppercase tracking-widest font-black text-slate-500">
+                    <th scope="col" className="px-5 py-4 text-center text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Estado
                     </th>
                   </tr>
@@ -287,12 +289,13 @@ export default function MisCompras() {
               </table>
 
               {cantidadPaginas > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-10 pb-6">
+                <nav aria-label="Paginación de compras" className="flex justify-center items-center gap-2 mt-10 pb-6">
                   <button
                     type="button"
                     disabled={paginaActual === 1}
                     onClick={() => setPaginaActual((pagina) => pagina - 1)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Página anterior de compras"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400"
                   >
                     ‹
                   </button>
@@ -305,7 +308,9 @@ export default function MisCompras() {
                         key={pagina}
                         type="button"
                         onClick={() => setPaginaActual(pagina)}
-                        className={`w-10 h-10 rounded-lg font-semibold transition ${
+                        aria-label={`Ir a la página ${pagina} de compras`}
+                        aria-current={paginaActual === pagina ? "page" : undefined}
+                        className={`w-10 h-10 rounded-lg font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400 ${
                           paginaActual === pagina
                             ? "bg-green-500 text-slate-950"
                             : "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800"
@@ -320,11 +325,12 @@ export default function MisCompras() {
                     type="button"
                     disabled={paginaActual === cantidadPaginas}
                     onClick={() => setPaginaActual((pagina) => pagina + 1)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Página siguiente de compras"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400"
                   >
                     ›
                   </button>
-                </div>
+                </nav>
               )}
             </div>
           </div>

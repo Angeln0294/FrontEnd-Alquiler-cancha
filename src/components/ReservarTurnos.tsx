@@ -85,7 +85,9 @@ export default function ReservasPage() {
   const [reservando, setReservando] = useState(false);
   const reservaEnProceso = useRef(false);
   const [turnos, setTurnos] = useState<HorarioTurno[]>([]);
-  const [turnoSeleccionado, setTurnoSeleccionado] = useState<string | null>(null);
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState<string | null>(
+    null,
+  );
   const [cargandoTurnos, setCargandoTurnos] = useState(false);
 
   // Validar sesión de usuario
@@ -143,7 +145,6 @@ export default function ReservasPage() {
     cargarDetallesCancha();
   }, [canchaId]);
 
-  
   useEffect(() => {
     const controller = new AbortController();
     const cargarDisponibilidad = async () => {
@@ -180,13 +181,15 @@ export default function ReservasPage() {
     };
   }, [canchaId, fechaSeleccionada]);
 
-  
   const precioBase = cancha?.precio || 0;
-  const esHorarioPromo = turnoSeleccionado === "22:00" || turnoSeleccionado === "23:00";
+  const esHorarioPromo =
+    turnoSeleccionado === "22:00" || turnoSeleccionado === "23:00";
   const precioFinalNumero = esHorarioPromo ? precioBase * 0.8 : precioBase;
   const precioFinalFormateado = `$${precioFinalNumero.toLocaleString("es-AR")}`;
 
-  const turnoActual = turnos.find((turno) => turno.horaInicio === turnoSeleccionado);
+  const turnoActual = turnos.find(
+    (turno) => turno.horaInicio === turnoSeleccionado,
+  );
 
   const handleSeleccionarTurno = (horaInicio: string) => {
     setTurnoSeleccionado(horaInicio);
@@ -282,7 +285,9 @@ export default function ReservasPage() {
   if (cargandoCancha) {
     return (
       <div className="min-h-screen bg-[#0b132b] text-slate-100 flex items-center justify-center">
-        <p className="text-slate-400 text-sm">Cargando detalles de la cancha...</p>
+        <p role="status" className="text-slate-400">
+          Cargando detalles de la cancha...
+        </p>
       </div>
     );
   }
@@ -293,7 +298,8 @@ export default function ReservasPage() {
         <button
           type="button"
           onClick={() => navigate("/canchas")}
-          className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-green-400 transition-colors flex items-center gap-2 cursor-pointer mb-2"
+          aria-label="Volver al listado de canchas"
+          className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-green-400 transition-colors flex items-center gap-2 cursor-pointer mb-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
         >
           ← Volver a canchas
         </button>
@@ -327,7 +333,8 @@ export default function ReservasPage() {
                 </h4>
 
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Estás visualizando la disponibilidad oficial. Seleccioná el día y el horario que quieras reservar.
+                  Estás visualizando la disponibilidad oficial. Seleccioná el
+                  día y el horario que quieras reservar.
                 </p>
               </div>
             </div>
@@ -339,7 +346,8 @@ export default function ReservasPage() {
                   type="button"
                   onClick={() => cambiarMes(-1)}
                   disabled={!puedeRetroceder}
-                  className={`font-bold transition-colors ${
+                  aria-label="Ir al mes anterior"
+                  className={`font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white ${
                     puedeRetroceder
                       ? "text-slate-400 hover:text-white cursor-pointer"
                       : "text-slate-700 cursor-not-allowed"
@@ -347,7 +355,6 @@ export default function ReservasPage() {
                 >
                   &lt;
                 </button>
-
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
                   {nombreMes} {calendarYear}
                 </span>
@@ -355,7 +362,8 @@ export default function ReservasPage() {
                 <button
                   type="button"
                   onClick={() => cambiarMes(1)}
-                  className="text-slate-400 hover:text-white transition-colors font-bold cursor-pointer"
+                  aria-label="Ir al mes siguiente"
+                  className="text-slate-400 hover:text-white transition-colors font-bold cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
                 >
                   &gt;
                 </button>
@@ -393,12 +401,21 @@ export default function ReservasPage() {
                         type="button"
                         disabled={esPasado}
                         onClick={() => seleccionarDia(dia)}
-                        className={`py-2 rounded-lg font-bold transition-all ${
+                        aria-label={`Seleccionar ${fechaDia.toLocaleDateString(
+                          "es-AR",
+                          {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          },
+                        )}`}
+                        aria-pressed={isSelected}
+                        className={`py-2 rounded-lg font-bold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
                           isSelected
                             ? "bg-[#22c55e] text-[#0b132b] font-black shadow-md shadow-green-500/20"
                             : esPasado
-                            ? "text-slate-700 cursor-not-allowed"
-                            : "text-slate-300 hover:bg-[#0b132b] border border-transparent hover:border-slate-800 cursor-pointer"
+                              ? "text-slate-700 cursor-not-allowed"
+                              : "text-slate-300 hover:bg-[#0b132b] border border-transparent hover:border-slate-800 cursor-pointer"
                         }`}
                       >
                         {dia}
@@ -418,13 +435,13 @@ export default function ReservasPage() {
               </h4>
 
               {cargandoTurnos ? (
-                <div className="text-center py-10">
+                <div role="status" className="text-center py-10">
                   <p className="text-slate-400 text-sm">
                     Consultando disponibilidad...
                   </p>
                 </div>
               ) : turnos.length === 0 ? (
-                <div className="text-center py-10">
+                <div role="status" className="text-center py-10">
                   <p className="text-slate-400 text-sm">
                     No hay turnos disponibles para esta fecha.
                   </p>
@@ -467,8 +484,12 @@ export default function ReservasPage() {
                         <button
                           key={turno.horaInicio}
                           type="button"
-                          onClick={() => handleSeleccionarTurno(turno.horaInicio)}
-                          className="bg-[#22c55e] text-[#0b132b] font-black rounded-xl p-3 text-center flex items-center justify-center gap-2 shadow-lg shadow-green-500/10 h-14 w-full cursor-pointer border border-[#22c55e]"
+                          onClick={() =>
+                            handleSeleccionarTurno(turno.horaInicio)
+                          }
+                          aria-label={`Horario seleccionado: ${turno.horaInicio} a ${turno.horaFin}`}
+                          aria-pressed={true}
+                          className="bg-[#22c55e] text-[#0b132b] font-black rounded-xl p-3 text-center flex items-center justify-center gap-2 shadow-lg shadow-green-500/10 h-14 w-full cursor-pointer border border-[#22c55e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                         >
                           <span className="text-xs tracking-wide">
                             {turno.horaInicio} - {turno.horaFin}
@@ -483,7 +504,9 @@ export default function ReservasPage() {
                         key={turno.horaInicio}
                         type="button"
                         onClick={() => handleSeleccionarTurno(turno.horaInicio)}
-                        className="bg-[#0b132b] border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl p-3 text-center text-xs font-bold transition-all h-14 hover:bg-[#0b132b]/80 cursor-pointer"
+                        aria-label={`Seleccionar horario de ${turno.horaInicio} a ${turno.horaFin}`}
+                        aria-pressed={false}
+                        className="bg-[#0b132b] border border-slate-800 hover:border-slate-700 text-slate-200 rounded-xl p-3 text-center text-xs font-bold transition-all h-14 hover:bg-[#0b132b]/80 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       >
                         {turno.horaInicio} - {turno.horaFin}
                       </button>
@@ -502,7 +525,9 @@ export default function ReservasPage() {
                 <div className="flex justify-between items-center">
                   <span>Fecha:</span>
                   <span className="text-slate-200 font-bold">
-                    {calendarDay} de {nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} de {calendarYear}
+                    {calendarDay} de{" "}
+                    {nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} de{" "}
+                    {calendarYear}
                   </span>
                 </div>
 
@@ -541,7 +566,12 @@ export default function ReservasPage() {
                 type="button"
                 onClick={handleConfirmarReserva}
                 disabled={!turnoSeleccionado || reservando || cargandoTurnos}
-                className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300 cursor-pointer ${
+                aria-label={
+                  reservando
+                    ? "Procesando reserva"
+                    : "Confirmar reserva de cancha"
+                }
+                className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white ${
                   turnoSeleccionado
                     ? "bg-[#22c55e] text-[#0b132b] hover:bg-[#22c55e]/90 shadow-md shadow-green-500/10 cursor-pointer"
                     : "bg-slate-700 text-slate-500 cursor-not-allowed"

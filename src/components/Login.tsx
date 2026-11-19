@@ -95,10 +95,17 @@ export default function Login() {
           noValidate
         >
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="login-email"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Correo Electrónico
             </label>
             <input
+              id="login-email"
+              autoComplete="email"
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "login-email-error" : undefined}
               type="email"
               placeholder="correo@ejemplo.com"
               disabled={isSubmitting}
@@ -117,7 +124,7 @@ export default function Login() {
               })}
             />
             {errors.email && (
-              <p className="text-red-400 text-xs mt-1">
+              <p id="login-email-error" className="text-red-400 text-xs mt-1">
                 {errors.email.message}
               </p>
             )}
@@ -125,7 +132,10 @@ export default function Login() {
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-slate-300">
+              <label
+                htmlFor="login-contrasenia"
+                className="block text-sm font-medium text-slate-300"
+              >
                 Contraseña
               </label>
               <a
@@ -136,6 +146,12 @@ export default function Login() {
               </a>
             </div>
             <input
+              id="login-contrasenia"
+              autoComplete="current-password"
+              aria-invalid={!!errors.contrasenia}
+              aria-describedby={
+                errors.contrasenia ? "login-contrasenia-error" : undefined
+              }
               type="password"
               placeholder="••••••••"
               disabled={isSubmitting}
@@ -153,7 +169,10 @@ export default function Login() {
               })}
             />
             {errors.contrasenia && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="login-contrasenia-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.contrasenia.message}
               </p>
             )}

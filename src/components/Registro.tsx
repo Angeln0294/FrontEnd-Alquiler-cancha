@@ -94,10 +94,19 @@ export default function Registro() {
           noValidate
         >
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-nombre"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Nombre
             </label>
             <input
+              id="registro-nombre"
+              autoComplete="given-name"
+              aria-invalid={!!errors.nombre}
+              aria-describedby={
+                errors.nombre ? "registro-nombre-error" : undefined
+              }
               type="text"
               placeholder="Juan"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.nombre ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
@@ -110,17 +119,29 @@ export default function Registro() {
               })}
             />
             {errors.nombre && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-nombre-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.nombre.message}
               </p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-apellido"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Apellido
             </label>
 
             <input
+              id="registro-apellido"
+              autoComplete="family-name"
+              aria-invalid={!!errors.apellido}
+              aria-describedby={
+                errors.apellido ? "registro-apellido-error" : undefined
+              }
               type="text"
               placeholder="Pérez"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${
@@ -138,17 +159,29 @@ export default function Registro() {
             />
 
             {errors.apellido && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-apellido-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.apellido.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-email"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Correo Electrónico
             </label>
             <input
+              id="registro-email"
+              autoComplete="email"
+              aria-invalid={!!errors.email}
+              aria-describedby={
+                errors.email ? "registro-email-error" : undefined
+              }
               type="email"
               placeholder="correo@ejemplo.com"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.email ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
@@ -161,17 +194,29 @@ export default function Registro() {
               })}
             />
             {errors.email && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-email-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.email.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-contrasenia"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Contraseña
             </label>
             <input
+              id="registro-contrasenia"
+              autoComplete="new-password"
+              aria-invalid={!!errors.contrasenia}
+              aria-describedby={
+                errors.contrasenia ? "registro-contrasenia-error" : undefined
+              }
               type="password"
               placeholder="••••••••"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.contrasenia ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
@@ -181,17 +226,31 @@ export default function Registro() {
               })}
             />
             {errors.contrasenia && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-contrasenia-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.contrasenia.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-confirmar-contrasenia"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Confirmar Contraseña
             </label>
             <input
+              id="registro-confirmar-contrasenia"
+              autoComplete="new-password"
+              aria-invalid={!!errors.confirmarContrasenia}
+              aria-describedby={
+                errors.confirmarContrasenia
+                  ? "registro-confirmar-contrasenia-error"
+                  : undefined
+              }
               type="password"
               placeholder="••••••••"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.confirmarContrasenia ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
@@ -202,7 +261,10 @@ export default function Registro() {
               })}
             />
             {errors.confirmarContrasenia && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-confirmar-contrasenia-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.confirmarContrasenia.message}
               </p>
             )}

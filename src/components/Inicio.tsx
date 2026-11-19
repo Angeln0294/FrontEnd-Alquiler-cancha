@@ -61,13 +61,6 @@ export default function Inicio() {
   ];
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % anuncios.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [anuncios.length]);
-
-  useEffect(() => {
     const controller = new AbortController();
     const cargarCanchas = async () => {
       try {
@@ -107,9 +100,15 @@ export default function Inicio() {
     <div className="w-full bg-[#0b132b] text-white min-h-screen pb-16">
       <div className="w-full px-6 md:px-12 pt-8 max-w-7xl mx-auto">
         <div
+          role="region"
+          aria-roledescription="carrusel"
+          aria-label="Anuncios y promociones"
           className={`w-full rounded-3xl bg-linear-to-r ${anuncios[currentSlide].colorBg} p-8 md:p-12 relative overflow-hidden shadow-2xl transition-all duration-700 ease-in-out border border-gray-800 flex flex-col md:flex-row justify-between items-center gap-6 min-h-55`}
         >
-          <div className="flex flex-col gap-3 text-center md:text-left max-w-xl">
+          <div
+            id="contenido-anuncio"
+            className="flex flex-col gap-3 text-center md:text-left max-w-xl"
+          >
             <span className="text-xs font-black uppercase tracking-widest text-green-400 bg-black/30 px-3 py-1 rounded-full w-fit mx-auto md:mx-0">
               PROMO EXCLUSIVA
             </span>
@@ -128,12 +127,17 @@ export default function Inicio() {
           </div>
 
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-            {anuncios.map((_, idx) => (
+            {anuncios.map((anuncio, idx) => (
               <button
-                key={idx}
+                key={anuncio.id}
                 type="button"
                 onClick={() => setCurrentSlide(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-colors ${currentSlide === idx ? "bg-green-400" : "bg-gray-500/50"}`}
+                aria-label={`Mostrar anuncio ${idx + 1} de ${anuncios.length}: ${anuncio.titulo}`}
+                aria-controls="contenido-anuncio"
+                aria-pressed={currentSlide === idx}
+                className={`w-2.5 h-2.5 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white ${
+                  currentSlide === idx ? "bg-green-400" : "bg-gray-500/50"
+                }`}
               />
             ))}
           </div>
@@ -151,14 +155,19 @@ export default function Inicio() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          aria-busy={cargandoCanchas}
+        >
           {cargandoCanchas ? (
             <div className="col-span-full text-center py-10">
-              <p className="text-gray-400 text-lg">Cargando canchas...</p>
+              <p role="status" className="text-gray-400 text-lg">
+                Cargando canchas...
+              </p>
             </div>
           ) : canchas.filter((cancha) => cancha.disponible).length === 0 ? (
             <div className="col-span-full text-center py-10">
-              <p className="text-gray-400 text-lg">
+              <p role="status" className="text-gray-400 text-lg">
                 No hay canchas disponibles en este momento.
               </p>
             </div>
@@ -210,7 +219,7 @@ export default function Inicio() {
           <button
             type="button"
             onClick={() => navigate("/nuestras-canchas")}
-            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer"
+            className="text-green-400 hover:text-green-300 text-base font-bold transition-colors cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             aria-label="Ir a nuestras canchas"
           >
             Ver más &gt;
@@ -280,7 +289,7 @@ export default function Inicio() {
           <button
             type="button"
             onClick={() => navigate("/tienda")}
-            className="text-green-400 hover:text-green-300 text-1xl font-bold transition-colors cursor-pointer"
+            className="text-green-400 hover:text-green-300 text-base font-bold transition-colors cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             aria-label="Ir a la tienda"
           >
             Ver más &gt;

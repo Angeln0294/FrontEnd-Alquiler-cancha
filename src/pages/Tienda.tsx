@@ -4,9 +4,9 @@ import { useCategorias } from "../context/CategoriaContext";
 import { useCarrito } from "../context/CarritoContext";
 import { useAuth } from "../context/AuthContext";
 import { usePaginacionBackend } from "../context/PaginacionContext";
-import { PaginadorBackend } from "../components/Paginador";
+import { PaginadorBackend } from "../components/ui/Paginador";
 import { useNavigate } from "react-router-dom";
-import { ProductoCard } from "../components/ProductoCard";
+import { ProductoCard } from "../components/ui/ProductoCard";
 import Swal from "sweetalert2";
 
 export default function Tienda() {

@@ -1,7 +1,7 @@
 import { useCategorias } from "../../../context/CategoriaContext";
-import FormularioCategoriaAdmin from "../../FormularioCategoriaAdmin";
-import { TablaGenerica, type Columna } from "../../TablaGenerica";
-import { PaginadorBackend } from "../../Paginador";
+import FormularioCategoriaAdmin from "./FormularioCategoriaAdmin";
+import { TablaGenerica, type Columna } from "../../ui/TablaGenerica";
+import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
 import { useEffect } from "react";
 

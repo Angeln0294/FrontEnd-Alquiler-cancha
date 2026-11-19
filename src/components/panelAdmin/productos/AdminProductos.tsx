@@ -1,7 +1,7 @@
 import { useProductos } from "../../../context/ProductoContext";
-import FormularioProductoAdmin from "../../FormularioProductoAdmin";
-import { TablaGenerica, type Columna } from "../../TablaGenerica";
-import { PaginadorBackend } from "../../Paginador";
+import FormularioProductoAdmin from "./FormularioProductoAdmin";
+import { TablaGenerica, type Columna } from "../../ui/TablaGenerica";
+import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
 import { useEffect } from "react";
 const COLUMNAS_PRODUCTOS: Columna[] = [

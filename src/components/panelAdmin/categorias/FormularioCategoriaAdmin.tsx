@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useCategorias } from "../context/CategoriaContext";
+import { useCategorias } from "../../../context/CategoriaContext";
 
 interface FormularioCategoria {
   nombreCategoria: string;

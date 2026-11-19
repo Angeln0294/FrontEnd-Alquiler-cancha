@@ -1,8 +1,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { apiFetch } from "../services/api";
 import { useTabla } from "../context/TablaContext";
 import { usePaginacionBackend } from "../context/PaginacionContext";
+import {
+  obtenerProductosService,
+  obtenerTodasCategoriasService,
+  actualizarProductoService,
+  crearProductoService,
+  eliminarProductoService,
+} from "../services/productos.service";
 
 export interface Categoria {
   _id: string;
@@ -74,19 +80,12 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     try {
       setTablaCargando(true);
       const numeroPagina = pagina || 1;
-      let endpoint = `/api/producto?pagina=${numeroPagina}&limite=${limite}`;
 
-      if (termino.trim() !== "") {
-        endpoint += `&termino=${encodeURIComponent(termino)}`;
-      }
-
-      const datos = await apiFetch<{
-        productos: Producto[];
-        cantidadProductos: number;
-        totalPaginas?: number;
-      }>(endpoint, {
-        method: "GET",
-      });
+      const datos = await obtenerProductosService(
+        numeroPagina,
+        limite,
+        termino,
+      );
 
       setProductos(datos.productos || []);
       setCantidadProductos(datos.cantidadProductos || 0);
@@ -104,19 +103,16 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-const cargarCategorias = async () => {
-  try {
-    const datos = await apiFetch<{ categorias: Categoria[] }>(
-      "/api/categorias/todas",
-      { method: "GET" }
-    );
+  const cargarCategorias = async () => {
+    try {
+      const datos = await obtenerTodasCategoriasService();
 
-    setCategorias(datos.categorias || []);
-  } catch (error) {
-    console.error("Error al cargar categorías:", error);
-    setCategorias([]);
-  }
-};
+      setCategorias(datos.categorias || []);
+    } catch (error) {
+      console.error("Error al cargar categorías:", error);
+      setCategorias([]);
+    }
+  };
 
   useEffect(() => {
     cargarCategorias();
@@ -141,32 +137,13 @@ const cargarCategorias = async () => {
     try {
       setGuardando(true);
 
-      const formulario = new FormData();
-      formulario.append("nombreProducto", datosProducto.nombreProducto);
-      formulario.append("precio", String(datosProducto.precio));
-      formulario.append("categoria", datosProducto.categoria);
-      formulario.append("descripcion", datosProducto.descripcion);
-
-      if (datosProducto.imagen) {
-        formulario.append("imagen", datosProducto.imagen);
-      }
-
-      
-
-      // EDITAR
       if (productoSeleccionado) {
-        await apiFetch<void>(
-          `/api/producto/${productoSeleccionado._id}`,
-          {
-            method: "PUT",
-            body: formulario,
-          },
+        await actualizarProductoService(
+          productoSeleccionado._id,
+          datosProducto,
         );
       } else {
-        await apiFetch<void>("/api/producto", {
-          method: "POST",
-          body: formulario,
-        });
+        await crearProductoService(datosProducto);
       }
 
       await cargarProductos();
@@ -192,9 +169,7 @@ const cargarCategorias = async () => {
     if (!resultado.isConfirmed) return;
 
     try {
-      await apiFetch<void>(`/api/producto/${id}`, {
-        method: "DELETE",
-      });
+      await eliminarProductoService(id);
 
       await cargarProductos();
     } catch (error) {

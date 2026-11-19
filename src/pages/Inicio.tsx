@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import { apiFetch } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
 import { useProductos } from "../context/ProductoContext";
 import { useCarrito } from "../context/CarritoContext";
-import { CanchaCard } from "./NuestrasCanchas/CanchasCard";
-import Swal from "sweetalert2";
-import { ProductoCard } from "../components/ProductoCard";
+import { CanchaCard } from "../components/ui/CanchasCard";
+import { ProductoCard } from "../components/ui/ProductoCard";
+import {
+  obtenerCanchasService,
+  type CanchaDTO,
+} from "../services/canchas.service";
 
 interface Anuncio {
   id: number;
@@ -16,24 +19,14 @@ interface Anuncio {
   colorBg: string;
 }
 
-interface Cancha {
-  _id: string;
-  nombre: string;
-  tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
-  precio: number;
-  imagen: string;
-  descripcion: string;
-  disponible: boolean;
-}
-
 export default function Inicio() {
   const navigate = useNavigate();
   const { usuario } = useAuth();
   const { productos, cargarProductos, limiteProductos } = useProductos();
   const { agregarAlCarrito } = useCarrito();
-  // 🔘 Estado para controlar el carrusel de anuncios publicitarios
+
   const [currentSlide, setCurrentSlide] = useState<number>(0);
-  const [canchas, setCanchas] = useState<Cancha[]>([]);
+  const [canchas, setCanchas] = useState<CanchaDTO[]>([]);
   const [cargandoCanchas, setCargandoCanchas] = useState(true);
 
   const anuncios: Anuncio[] = [
@@ -62,13 +55,15 @@ export default function Inicio() {
 
   useEffect(() => {
     const controller = new AbortController();
+
     const cargarCanchas = async () => {
       try {
         setCargandoCanchas(true);
 
-        const resultado = await apiFetch<{ canchas: Cancha[] }>(
-          "/api/canchas",
-          { signal: controller.signal },
+        const resultado = await obtenerCanchasService(
+          undefined,
+          undefined,
+          controller.signal,
         );
 
         if (controller.signal.aborted) return;
@@ -94,7 +89,7 @@ export default function Inicio() {
 
   useEffect(() => {
     cargarProductos(1, "", limiteProductos);
-  }, []);
+  }, [cargarProductos, limiteProductos]);
 
   return (
     <div className="w-full bg-[#0b132b] text-white min-h-screen pb-16">

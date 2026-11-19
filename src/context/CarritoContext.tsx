@@ -1,8 +1,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import Swal from "sweetalert2";
-import { apiFetch } from "../services/api";
-
+import {
+  obtenerCarritoService,
+  agregarItemCarritoService,
+  restarItemCarritoService,
+  eliminarItemCarritoService,
+  vaciarCarritoService,
+} from "../services/carrito.service";
+import { crearPreferenciaCarritoService } from "../services/pagos.service";
 export interface ItemCarrito {
   producto: {
     _id: string;
@@ -48,10 +54,7 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
     try {
       setCargando(true);
 
-      const datos = await apiFetch<Carrito>("/api/carrito", {
-        method: "GET",
-      });
-
+      const datos = await obtenerCarritoService();
       setCarrito(datos);
     } catch (error) {
       console.error("Error al obtener carrito:", error);
@@ -62,17 +65,7 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const agregarAlCarrito = async (productoId: string, cantidad = 1) => {
     try {
-      const datos = await apiFetch<{ carrito: Carrito }>("/api/carrito", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          producto: productoId,
-          cantidad,
-        }),
-      });
-
+      const datos = await agregarItemCarritoService(productoId, cantidad);
       setCarrito(datos.carrito);
     } catch (error) {
       console.error("Error al agregar al carrito:", error);
@@ -90,12 +83,7 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const restarCantidad = async (productoId: string) => {
     try {
-      const datos = await apiFetch<{ carrito: Carrito }>(
-        `/api/carrito/restar/${productoId}`,
-        {
-          method: "PATCH",
-        },
-      );
+      const datos = await restarItemCarritoService(productoId);
       setCarrito(datos.carrito);
     } catch (error) {
       console.error("Error al restar cantidad:", error);
@@ -113,16 +101,7 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const sumarCantidad = async (productoId: string) => {
     try {
-      const datos = await apiFetch<{ carrito: Carrito }>("/api/carrito", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          producto: productoId,
-          cantidad: 1,
-        }),
-      });
+      const datos = await agregarItemCarritoService(productoId, 1);
 
       setCarrito(datos.carrito);
     } catch (error) {
@@ -141,10 +120,7 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const eliminarProducto = async (productoId: string) => {
     try {
-      await apiFetch<void>(`/api/carrito/producto/${productoId}`, {
-        method: "DELETE",
-      });
-
+      await eliminarItemCarritoService(productoId);
       await obtenerCarrito();
     } catch (error) {
       console.error("Error al eliminar producto:", error);
@@ -162,17 +138,8 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const vaciarCarrito = async () => {
     try {
-      await apiFetch<void>("/api/carrito", {
-        method: "DELETE",
-      });
-      setCarrito((actual) =>
-        actual
-          ? {
-              ...actual,
-              items: [],
-            }
-          : null,
-      );
+      await vaciarCarritoService();
+      setCarrito((actual) => (actual ? { ...actual, items: [] } : null));
     } catch (error) {
       console.error("Error al vaciar carrito:", error);
       Swal.fire({
@@ -188,13 +155,7 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const pagarCarrito = async () => {
     try {
-      const datos = await apiFetch<{ init_point: string }>(
-        "/api/pago/crear-preferencia",
-        {
-          method: "POST",
-        },
-      );
-
+      const datos = await crearPreferenciaCarritoService();
       window.location.href = datos.init_point;
     } catch (error) {
       console.error("Error al iniciar el pago:", error);

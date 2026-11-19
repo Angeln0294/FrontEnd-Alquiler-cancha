@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 import Swal from "sweetalert2";
-import { apiFetch } from "../../../services/api";
-import { PaginadorBackend } from "../../Paginador";
+import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
-import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { TablaGenerica, type Columna } from "../../ui/TablaGenerica";
 import { useTabla } from "../../../context/TablaContext";
+import { obtenerUsuariosAdminService, actualizarUsuarioService , eliminarUsuarioService} from "../../../services/usuarios.service";
 
 interface Usuario {
   _id: string;
@@ -78,14 +78,11 @@ export default function AdminUsuarios() {
     try {
       setTablaCargando(true);
 
-      const resultado = await apiFetch<{
-        usuarios: Usuario[];
-        totalPaginas?: number;
-        cantidadUsuarios?: number;
-      }>(`/api/usuario?pagina=${paginaActual}&limite=${usuariosPorPagina}`, {
-        method: "GET",
-        signal,
-      });
+      const resultado = await obtenerUsuariosAdminService(
+  paginaActual,
+  usuariosPorPagina,
+  signal,
+);
 
       setUsuarios(resultado.usuarios || []);
       setCantidadPaginas(
@@ -204,16 +201,7 @@ export default function AdminUsuarios() {
     if (!usuarioEditando) return;
 
     try {
-      const resultado = await apiFetch<{ mensaje?: string }>(
-        `/api/usuario/${usuarioEditando._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(datos),
-        },
-      );
+      const resultado = await actualizarUsuarioService(usuarioEditando._id, datos);
 
       await swalTema.fire({
         icon: "success",
@@ -262,15 +250,7 @@ export default function AdminUsuarios() {
     }
 
     try {
-      await apiFetch<{ mensaje?: string }>(`/api/usuario/${usuario._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          rol: nuevoRol,
-        }),
-      });
+     await actualizarUsuarioService(usuario._id, { rol: nuevoRol });
 
       setUsuarios((usuariosActuales) =>
         usuariosActuales.map((u) =>
@@ -318,16 +298,7 @@ export default function AdminUsuarios() {
     }
 
     try {
-      await apiFetch<{ mensaje?: string }>(`/api/usuario/${usuario._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          activo: nuevoEstado,
-        }),
-      });
-
+      await actualizarUsuarioService(usuario._id, { activo: nuevoEstado });
       setUsuarios((usuariosActuales) =>
         usuariosActuales.map((u) =>
           u._id === usuario._id ? { ...u, activo: nuevoEstado } : u,
@@ -370,9 +341,7 @@ export default function AdminUsuarios() {
     }
 
     try {
-      await apiFetch<{ mensaje?: string }>(`/api/usuario/${usuario._id}`, {
-        method: "DELETE",
-      });
+     await eliminarUsuarioService(usuario._id);
 
       await swalTema.fire({
         icon: "success",

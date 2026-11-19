@@ -1,28 +1,23 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { apiFetch } from "../../services/api";
-import { PaginadorBackend } from "../Paginador";
-import { usePaginacionBackend } from "../../context/PaginacionContext";
-import { CanchaCard } from "./CanchasCard";
 import Swal from "sweetalert2";
+import { useAuth } from "../../context/AuthContext";
+import { usePaginacionBackend } from "../../context/PaginacionContext";
+import { PaginadorBackend } from "./Paginador";
+import { CanchaCard } from "./CanchasCard";
+import {
+  obtenerCanchasService,
+  type CanchaDTO,
+} from "../../services/canchas.service";
 
-export interface CanchaDetalle {
-  _id: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  imagen: string;
-  tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
-  disponible: boolean;
-}
+export type CanchaDetalle = CanchaDTO;
 
 export default function NuestrasCanchas() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { usuario } = useAuth();
 
-  const [canchas, setCanchas] = useState<CanchaDetalle[]>([]);
+  const [canchas, setCanchas] = useState<CanchaDTO[]>([]);
   const [cargando, setCargando] = useState(true);
 
   const canchasPorPagina = 6;
@@ -36,13 +31,13 @@ export default function NuestrasCanchas() {
       try {
         setCargando(true);
 
-        const resultado = await apiFetch<{
-          canchas: CanchaDetalle[];
-          totalPaginas?: number;
-          cantidadCanchas?: number;
-        }>(`/api/canchas?pagina=${paginaActual}&limite=${canchasPorPagina}`, {
-          signal: controller.signal,
-        });
+        const resultado = await obtenerCanchasService(
+          paginaActual,
+          canchasPorPagina,
+          controller.signal,
+        );
+
+        if (controller.signal.aborted) return;
 
         setCanchas(resultado.canchas || []);
 
@@ -105,11 +100,10 @@ export default function NuestrasCanchas() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {canchas.map((cancha) => (
-            
             <CanchaCard
               key={cancha._id}
               cancha={cancha}
-              onReservar={(cancha) => {
+              onReservar={(canchaSeleccionada) => {
                 if (!usuario) {
                   Swal.fire({
                     icon: "warning",
@@ -129,7 +123,7 @@ export default function NuestrasCanchas() {
                 }
 
                 navigate(
-                  `/reservar-turnos?canchaId=${encodeURIComponent(cancha._id)}`,
+                  `/reservar-turnos?canchaId=${encodeURIComponent(canchaSeleccionada._id)}`,
                 );
               }}
             />

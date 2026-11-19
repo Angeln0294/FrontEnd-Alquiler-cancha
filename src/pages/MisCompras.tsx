@@ -1,27 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { apiFetch, ApiError } from "../services/api";
+import { ApiError } from "../services/api";
+import {
+  obtenerMisComprasService,
+  type OrdenCompraDTO,
+} from "../services/pagos.service";
 
-interface ItemCompra {
-  producto: string;
-  nombreProducto: string;
-  precioUnitario: number;
-  cantidad: number;
-}
-
-interface Orden {
-  _id: string;
-  items: ItemCompra[];
-  montoTotal: number;
-  estado: "pendiente" | "aprobada" | "rechazada" | "cancelada";
-  createdAt: string;
-}
 
 export default function MisCompras() {
   const navigate = useNavigate();
 
-  const [compras, setCompras] = useState<Orden[]>([]);
+  const [compras, setCompras] = useState<OrdenCompraDTO[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
   const [paginaActual, setPaginaActual] = useState(1);
 
@@ -34,20 +24,14 @@ export default function MisCompras() {
 
   const cantidadPaginas = Math.ceil(compras.length / comprasPorPagina);
 
-  const cargarCompras = async (signal?: AbortSignal) => {
-    try {
-      setCargando(true);
+ const cargarCompras = async (signal?: AbortSignal) => {
+  try {
+    setCargando(true);
 
-      const resultado = await apiFetch<{ ordenes: Orden[] }>(
-        "/api/pago/mis-compras",
-        {
-          method: "GET",
-          signal,
-        },
-      );
+    const resultado = await obtenerMisComprasService(signal);
 
-      if (signal?.aborted) return;
-      setCompras(resultado.ordenes || []);
+    if (signal?.aborted) return;
+    setCompras(resultado.ordenes || []);
     } catch (error) {
       if (signal?.aborted) {
         return;
@@ -98,7 +82,7 @@ export default function MisCompras() {
     });
   };
 
-  const obtenerClaseEstado = (estado: Orden["estado"]) => {
+  const obtenerClaseEstado = (estado: OrdenCompraDTO["estado"]) => {
     switch (estado) {
       case "aprobada":
         return "bg-green-500/10 text-green-400 border-green-500/20";
@@ -117,7 +101,7 @@ export default function MisCompras() {
     }
   };
 
-  const obtenerTextoEstado = (estado: Orden["estado"]) => {
+  const obtenerTextoEstado = (estado: OrdenCompraDTO["estado"]) => {
     switch (estado) {
       case "aprobada":
         return "Aprobada";

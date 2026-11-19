@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, type FieldErrors } from "react-hook-form";
 import Swal from "sweetalert2";
 import { useProductos } from "../context/ProductoContext";
@@ -19,10 +19,13 @@ export default function FormularioProductoAdmin() {
 
   const [imagen, setImagen] = useState<File | null>(null);
   const [vistaPrevia, setVistaPrevia] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const botonAnteriorRef = useRef<HTMLElement | null>(null);
   const {
     register,
     handleSubmit,
     reset,
+    setFocus,
     setValue,
     setError,
     clearErrors,
@@ -70,6 +73,78 @@ export default function FormularioProductoAdmin() {
       clearErrors();
     }
   }, [productoSeleccionado, reset, clearErrors]);
+
+  useEffect(() => {
+    botonAnteriorRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    const marco = requestAnimationFrame(() => {
+      setFocus("nombreProducto");
+    });
+
+    return () => {
+      cancelAnimationFrame(marco);
+
+      const botonAnterior = botonAnteriorRef.current;
+
+      requestAnimationFrame(() => {
+        if (botonAnterior?.isConnected) {
+          botonAnterior.focus();
+        }
+      });
+    };
+  }, [setFocus]);
+
+  useEffect(() => {
+    const manejarTeclado = (event: KeyboardEvent) => {
+      if (Swal.isVisible()) return;
+      if (event.key === "Escape") {
+        if (!guardando) {
+          event.preventDefault();
+          cerrarModal();
+        }
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const modal = modalRef.current;
+      if (!modal) return;
+
+      const elementos = Array.from(
+        modal.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((elemento) => elemento.getClientRects().length > 0);
+
+      if (elementos.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const primero = elementos[0];
+      const ultimo = elementos[elementos.length - 1];
+
+      if (event.shiftKey && document.activeElement === primero) {
+        event.preventDefault();
+        ultimo.focus();
+      } else if (!event.shiftKey && document.activeElement === ultimo) {
+        event.preventDefault();
+        primero.focus();
+      } else if (!modal.contains(document.activeElement)) {
+        event.preventDefault();
+        primero.focus();
+      }
+    };
+
+    document.addEventListener("keydown", manejarTeclado);
+
+    return () => {
+      document.removeEventListener("keydown", manejarTeclado);
+    };
+  }, [cerrarModal, guardando]);
 
   const manejarImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
     const archivo = e.target.files?.[0];
@@ -173,10 +248,19 @@ export default function FormularioProductoAdmin() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0b0f19] border border-slate-800 rounded-3xl shadow-2xl">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-modal-producto"
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0b0f19] border border-slate-800 rounded-3xl shadow-2xl"
+      >
         <div className="p-6 border-b border-slate-800 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-100">
+            <h2
+              id="titulo-modal-producto"
+              className="text-xl font-bold text-slate-100"
+            >
               {productoSeleccionado ? "Editar producto" : "Nuevo producto"}
             </h2>
 
@@ -187,9 +271,10 @@ export default function FormularioProductoAdmin() {
 
           <button
             type="button"
+            aria-label="Cerrar formulario de producto"
             onClick={cerrarModal}
             disabled={guardando}
-            className="w-9 h-9 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition disabled:opacity-50"
+            className="w-9 h-9 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400"
           >
             ✕
           </button>
@@ -200,11 +285,15 @@ export default function FormularioProductoAdmin() {
           className="p-6 space-y-5"
         >
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label
+              htmlFor="nombreProducto"
+              className="block text-sm font-semibold text-slate-300 mb-2"
+            >
               Nombre del producto
             </label>
 
             <input
+              id="nombreProducto"
               type="text"
               placeholder="Ej: Remera deportiva"
               {...register("nombreProducto", {
@@ -218,6 +307,8 @@ export default function FormularioProductoAdmin() {
                   message: "El nombre no puede superar los 50 caracteres",
                 },
               })}
+              aria-invalid={!!errors.nombreProducto}
+              aria-describedby={errors.nombreProducto ? "error-nombreProducto" : undefined}
               className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition ${
                 errors.nombreProducto
                   ? "border-rose-500 focus:border-rose-500"
@@ -226,7 +317,7 @@ export default function FormularioProductoAdmin() {
             />
 
             {errors.nombreProducto && (
-              <p className="text-rose-400 text-xs mt-1.5">
+              <p id="error-nombreProducto" role="alert" className="text-rose-400 text-xs mt-1.5">
                 {errors.nombreProducto.message}
               </p>
             )}
@@ -234,11 +325,15 @@ export default function FormularioProductoAdmin() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
+              <label
+                htmlFor="precio"
+                className="block text-sm font-semibold text-slate-300 mb-2"
+              >
                 Precio
               </label>
 
               <input
+                id="precio"
                 type="number"
                 min="0"
                 step="0.01"
@@ -248,7 +343,9 @@ export default function FormularioProductoAdmin() {
                   validate: (valor) =>
                     Number(valor) >= 0 || "El precio no puede ser negativo",
                 })}
-                className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition ${
+                aria-invalid={!!errors.precio}
+              aria-describedby={errors.precio ? "error-precio" : undefined}
+              className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition ${
                   errors.precio
                     ? "border-rose-500 focus:border-rose-500"
                     : "border-slate-800 focus:border-green-500"
@@ -256,22 +353,28 @@ export default function FormularioProductoAdmin() {
               />
 
               {errors.precio && (
-                <p className="text-rose-400 text-xs mt-1.5">
+                <p id="error-precio" role="alert" className="text-rose-400 text-xs mt-1.5">
                   {errors.precio.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
-                Categoría
+              <label
+                htmlFor="categoria"
+                className="block text-sm font-semibold text-slate-300 mb-2"
+              >
+                Categoria
               </label>
 
               <select
+                id="categoria"
                 {...register("categoria", {
                   required: "La categoría es obligatoria",
                 })}
-                className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 focus:outline-none transition ${
+                aria-invalid={!!errors.categoria}
+              aria-describedby={errors.categoria ? "error-categoria" : undefined}
+              className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 focus:outline-none transition ${
                   errors.categoria
                     ? "border-rose-500 focus:border-rose-500"
                     : "border-slate-800 focus:border-green-500"
@@ -287,7 +390,7 @@ export default function FormularioProductoAdmin() {
               </select>
 
               {errors.categoria && (
-                <p className="text-rose-400 text-xs mt-1.5">
+                <p id="error-categoria" role="alert" className="text-rose-400 text-xs mt-1.5">
                   {errors.categoria.message}
                 </p>
               )}
@@ -295,14 +398,20 @@ export default function FormularioProductoAdmin() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label
+              htmlFor="imagenProducto"
+              className="block text-sm font-semibold text-slate-300 mb-2"
+            >
               Imagen del producto
             </label>
 
             <input
+              id="imagenProducto"
               type="file"
               accept="image/jpeg,image/png,image/webp"
               onChange={manejarImagen}
+              aria-invalid={!!errors.imagen}
+              aria-describedby={errors.imagen ? "ayuda-imagen error-imagen" : "ayuda-imagen"}
               className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-500 file:text-slate-950 file:font-semibold hover:file:bg-green-400 focus:outline-none transition ${
                 errors.imagen
                   ? "border-rose-500 focus:border-rose-500"
@@ -310,12 +419,12 @@ export default function FormularioProductoAdmin() {
               }`}
             />
 
-            <p className="text-xs text-slate-500 mt-2">
+            <p id="ayuda-imagen" className="text-xs text-slate-500 mt-2">
               Formatos permitidos: JPG, PNG o WEBP. Máximo 2 MB.
             </p>
 
             {errors.imagen && (
-              <p className="text-rose-400 text-xs mt-1.5">
+              <p id="error-imagen" role="alert" className="text-rose-400 text-xs mt-1.5">
                 {errors.imagen.message}
               </p>
             )}
@@ -336,11 +445,15 @@ export default function FormularioProductoAdmin() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label
+              htmlFor="descripcion"
+              className="block text-sm font-semibold text-slate-300 mb-2"
+            >
               Descripción
             </label>
 
             <textarea
+              id="descripcion"
               rows={4}
               placeholder="Descripción del producto..."
               {...register("descripcion", {
@@ -354,6 +467,8 @@ export default function FormularioProductoAdmin() {
                   message: "La descripción no puede superar los 500 caracteres",
                 },
               })}
+              aria-invalid={!!errors.descripcion}
+              aria-describedby={errors.descripcion ? "error-descripcion" : undefined}
               className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 placeholder:text-slate-600 focus:outline-none transition resize-none ${
                 errors.descripcion
                   ? "border-rose-500 focus:border-rose-500"
@@ -362,7 +477,7 @@ export default function FormularioProductoAdmin() {
             />
 
             {errors.descripcion && (
-              <p className="text-rose-400 text-xs mt-1.5">
+              <p id="error-descripcion" role="alert" className="text-rose-400 text-xs mt-1.5">
                 {errors.descripcion.message}
               </p>
             )}
@@ -373,7 +488,7 @@ export default function FormularioProductoAdmin() {
               type="button"
               onClick={cerrarModal}
               disabled={guardando}
-              className="flex-1 px-5 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-5 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400"
             >
               Cancelar
             </button>
@@ -381,7 +496,7 @@ export default function FormularioProductoAdmin() {
             <button
               type="submit"
               disabled={guardando}
-              className="flex-1 px-5 py-3 rounded-xl bg-linear-to-r from-green-500 to-emerald-500 text-slate-950 font-bold hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-5 py-3 rounded-xl bg-linear-to-r from-green-500 to-emerald-500 text-slate-950 font-bold hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400"
             >
               {guardando
                 ? "Guardando..."

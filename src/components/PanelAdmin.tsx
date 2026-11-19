@@ -69,6 +69,9 @@ interface DatosDashboard {
 export default function PanelAdmin() {
   const { cerrarSesion } = useAuth();
   const controllerRef = useRef<AbortController | null>(null);
+  const botonMenuRef = useRef<HTMLButtonElement>(null);
+  const primerItemMenuRef = useRef<HTMLButtonElement>(null);
+  const seccionTituloRef = useRef<HTMLHeadingElement>(null);
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [seccionActiva, setSeccionActiva] = useState<Seccion>("dashboard");
@@ -267,7 +270,24 @@ export default function PanelAdmin() {
   const cambiarSeccion = (seccion: Seccion) => {
     setSeccionActiva(seccion);
     setMenuAbierto(false);
+    requestAnimationFrame(() => seccionTituloRef.current?.focus());
   };
+
+  useEffect(() => {
+    if (!menuAbierto) return;
+
+    primerItemMenuRef.current?.focus();
+
+    const manejarEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuAbierto(false);
+        botonMenuRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", manejarEscape);
+    return () => document.removeEventListener("keydown", manejarEscape);
+  }, [menuAbierto]);
 
   const menuItems = [
     {
@@ -311,6 +331,7 @@ export default function PanelAdmin() {
     <div className="min-h-screen bg-[#030712] text-white">
       <div className="flex min-h-screen">
         <aside
+          id="menu-administracion"
           className={`
             fixed left-0 top-0 z-50
             h-screen w-72
@@ -347,6 +368,7 @@ export default function PanelAdmin() {
               {menuItems.map((item) => (
                 <button
                   key={item.id}
+                  ref={item.id === "dashboard" ? primerItemMenuRef : undefined}
                   type="button"
                   onClick={() => cambiarSeccion(item.id)}
                   aria-pressed={seccionActiva === item.id}
@@ -389,7 +411,11 @@ export default function PanelAdmin() {
           <button
             type="button"
             aria-label="Cerrar menú"
-            onClick={() => setMenuAbierto(false)}
+            tabIndex={-1}
+            onClick={() => {
+              setMenuAbierto(false);
+              botonMenuRef.current?.focus();
+            }}
             className="fixed inset-0 z-40 bg-black/70 lg:hidden"
           />
         )}
@@ -398,6 +424,7 @@ export default function PanelAdmin() {
           <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-800 bg-[#030712]/90 px-5 backdrop-blur-xl lg:px-8">
             <div className="flex items-center gap-3">
               <button
+                ref={botonMenuRef}
                 type="button"
                 onClick={() => setMenuAbierto(!menuAbierto)}
                 aria-label={
@@ -406,6 +433,7 @@ export default function PanelAdmin() {
                     : "Abrir menú de administración"
                 }
                 aria-expanded={menuAbierto}
+                aria-controls="menu-administracion"
                 className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-lg lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 ☰
@@ -416,7 +444,7 @@ export default function PanelAdmin() {
                   Panel de administración
                 </p>
 
-                <h2 className="font-bold">
+                <h2 ref={seccionTituloRef} tabIndex={-1} className="font-bold focus:outline-none">
                   {menuItems.find((item) => item.id === seccionActiva)
                     ?.nombre || "Dashboard"}
                 </h2>
@@ -452,7 +480,7 @@ export default function PanelAdmin() {
                 </div>
 
                 {errorDashboard && (
-                  <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-5">
+                  <div role="alert" className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-5">
                     <p className="font-semibold text-rose-400">
                       No se pudieron cargar los datos.
                     </p>
@@ -468,7 +496,7 @@ export default function PanelAdmin() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div aria-busy={cargandoDashboard} className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-green-500/20 to-emerald-500/5 p-6 shadow-xl shadow-black/30">
                     <div className="flex items-start justify-between">
                       <div>
@@ -568,7 +596,7 @@ export default function PanelAdmin() {
                       </span>
                     </div>
 
-                    <div className="mt-8 flex h-64 items-end justify-between gap-3">
+                    <div role="img" aria-label={`Reservas de los últimos 7 días: ${datosSemana.map((dia) => `${dia.nombre}: ${dia.cantidad}`).join(", ")}`} className="mt-8 flex h-64 items-end justify-between gap-3">
                       {datosSemana.map((dia) => {
                         const altura =
                           dia.cantidad === 0
@@ -612,7 +640,7 @@ export default function PanelAdmin() {
                       Distribución actual.
                     </p>
 
-                    <div className="mt-8 space-y-6">
+                    <div role="group" aria-label="Distribución por estado de las reservas" className="mt-8 space-y-6">
                       <div>
                         <div className="mb-2 flex justify-between">
                           <span className="text-sm text-slate-300">
@@ -716,7 +744,7 @@ export default function PanelAdmin() {
                       </button>
                     </div>
 
-                    <div className="mt-6 space-y-5">
+                    <div role="group" aria-label="Estado de las cuentas de usuarios" className="mt-6 space-y-5">
                       <div>
                         <div className="mb-2 flex justify-between">
                           <span className="text-sm text-slate-300">
@@ -891,27 +919,28 @@ export default function PanelAdmin() {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto" role="region" aria-label="Tabla de últimas reservas" tabIndex={0}>
                       <table className="w-full min-w-187.5 text-left">
+                        <caption className="sr-only">Últimas cinco reservas registradas</caption>
                         <thead className="border-b border-slate-800">
                           <tr>
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                               Usuario
                             </th>
 
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                               Cancha
                             </th>
 
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                               Fecha
                             </th>
 
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                               Horario
                             </th>
 
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                               Estado
                             </th>
                           </tr>

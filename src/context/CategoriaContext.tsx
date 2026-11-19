@@ -7,9 +7,8 @@ import {
 } from "react";
 import { useTabla } from "../context/TablaContext";
 import { usePaginacionBackend } from "../context/PaginacionContext";
-
 import Swal from "sweetalert2";
-import { apiFetch } from "../services/api";
+import { obtenerCategoriasPaginadasService,obtenerTodasLasCategoriasService,actualizarCategoriaService,crearCategoriaService,eliminarCategoriaService } from "../services/categorias.service";
 
 export interface Categoria {
   _id: string;
@@ -54,15 +53,10 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
       const numeroPagina = pagina || 1;
 
-      const datos = await apiFetch<{
-        categorias: Categoria[];
-        paginacion?: {
-          totalItems?: number;
-          totalPages?: number;
-        };
-      }>(`/api/categorias?page=${numeroPagina}&limit=${limiteCategorias}`, {
-        method: "GET",
-      });
+    const datos = await obtenerCategoriasPaginadasService(
+  numeroPagina,
+  limiteCategorias,
+);
 
       setCategorias(datos.categorias || []);
 
@@ -84,11 +78,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   };
  const obtenerTodasLasCategorias = useCallback(async () => {
   try {
-    const datos = await apiFetch<{ categorias: Categoria[] }>(
-      "/api/categorias/todas",
-      { method: "GET" }
-    );
-
+    const datos = await obtenerTodasLasCategoriasService();
     setTodasLasCategorias(datos.categorias || []);
   } catch (error) {
     console.error("Error al cargar todas las categorías:", error);
@@ -120,22 +110,13 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       setGuardando(true);
 
       if (categoriaSeleccionada) {
-        await apiFetch<void>(`/api/categorias/${categoriaSeleccionada._id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ nombreCategoria }),
-        });
-      } else {
-        await apiFetch<void>("/api/categorias", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ nombreCategoria }),
-        });
-      }
+  await actualizarCategoriaService(
+    categoriaSeleccionada._id,
+    nombreCategoria,
+  );
+} else {
+  await crearCategoriaService(nombreCategoria);
+}
 
       await obtenerCategorias();
       await obtenerTodasLasCategorias();
@@ -177,9 +158,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     if (!confirmar.isConfirmed) return;
 
     try {
-      await apiFetch<void>(`/api/categorias/${id}`, {
-        method: "DELETE",
-      });
+     await eliminarCategoriaService(id);
 
       await obtenerCategorias();
       await obtenerTodasLasCategorias();

@@ -5,23 +5,19 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { apiFetch, ApiError } from "../services/api";
+import { ApiError } from "../services/api";
+import {
+  obtenerUsuarioActualService,
+  cerrarSesionService,
+  type UsuarioAuthDTO,
+} from "../services/auth.service";
 
-interface Usuario {
-  _id: string;
-  nombre: string;
-  apellido: string;
-  email: string;
-  rol: "usuario" | "admin";
-  activo: boolean;
-  emailVerificado: boolean;
-}
 
 interface AuthContextType {
-  usuario: Usuario | null;
+  usuario: UsuarioAuthDTO | null;
   cargando: boolean;
   cerrarSesion: () => Promise<void>;
-  cargarUsuario: () => Promise<Usuario | null>;
+  cargarUsuario: () => Promise<UsuarioAuthDTO | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,21 +27,16 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [usuario, setUsuario] = useState<UsuarioAuthDTO | null>(null);
   const [cargando, setCargando] = useState(true);
 
-  const cargarUsuario = async (): Promise<Usuario | null> => {
+  const cargarUsuario = async (): Promise<UsuarioAuthDTO | null> => {
     try {
-      const resultado = await apiFetch<{ usuario: Usuario }>(
-        "/api/usuario/me",
-        {
-          method: "GET",
-        },
-      );
+      const resultado = await obtenerUsuarioActualService();
+setUsuario(resultado.usuario);
+return resultado.usuario;
 
-      setUsuario(resultado.usuario);
-
-      return resultado.usuario;
+    
     } catch (error) {
       if (!(error instanceof ApiError && error.status === 401)) {
         console.error("Error al obtener usuario:", error);
@@ -59,11 +50,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
   const cerrarSesion = async () => {
     try {
-      await apiFetch<void>("/api/usuario/logout", {
-        method: "POST",
-      });
-
-      setUsuario(null);
+     await cerrarSesionService();
+setUsuario(null);
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }

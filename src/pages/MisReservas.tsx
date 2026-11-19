@@ -1,62 +1,50 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { apiFetch } from "../services/api";
+import {
+  cancelarReservaService,
+  crearPreferenciaPagoReservaService,
+  obtenerMisReservasService,
+  type EstadoReserva,
+  type ReservaDTO,
+} from "../services/reservas.service";
 
-interface Usuario {
-  _id: string;
-  nombre: string;
-  apellido: string;
-  email: string;
-}
-
-interface Cancha {
-  _id: string;
-  nombre: string;
-  tipo: string;
-  precio: number;
-}
-
-interface Reserva {
-  _id: string;
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-  precio: number;
-  estado: "pendiente" | "confirmada" | "cancelada";
-  usuario: Usuario;
-  cancha: Cancha;
+interface EstadoProcesando {
+  id: string;
+  accion: "pagar" | "cancelar";
 }
 
 export default function MisReservas() {
   const navigate = useNavigate();
 
-  const [reservas, setReservas] = useState<Reserva[]>([]);
+  const [reservas, setReservas] = useState<ReservaDTO[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
-  const [procesando, setProcesando] = useState<string | null>(null);
+  const [procesando, setProcesando] = useState<EstadoProcesando | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const [cantidadReservas, setCantidadReservas] = useState(0);
   const reservasPorPagina = 6;
 
-  const cantidadPaginas = Math.ceil(cantidadReservas / reservasPorPagina);
+  const cantidadPaginas = Math.max(
+    1,
+    Math.ceil(cantidadReservas / reservasPorPagina),
+  );
 
-  const cargarReservas = async (signal: AbortSignal) => {
+  const cargarReservas = async (signal?: AbortSignal) => {
     try {
       setCargando(true);
 
-      const resultado = await apiFetch<{
-        reservas: Reserva[];
-        cantidadReservas: number;
-      }>(`/api/reservas?pagina=${paginaActual}&limite=${reservasPorPagina}`, {
+      const resultado = await obtenerMisReservasService(
+        paginaActual,
+        reservasPorPagina,
         signal,
-      });
+      );
 
-      if (signal.aborted) return;
+      if (signal?.aborted) return;
 
       setReservas(resultado.reservas || []);
       setCantidadReservas(resultado.cantidadReservas || 0);
     } catch (error) {
-      if (signal.aborted) return;
+      if (signal?.aborted) return;
 
       console.error("Error al obtener reservas:", error);
 
@@ -73,7 +61,7 @@ export default function MisReservas() {
         color: "#f8fafc",
       });
     } finally {
-      if (!signal.aborted) {
+      if (!signal?.aborted) {
         setCargando(false);
       }
     }
@@ -90,7 +78,16 @@ export default function MisReservas() {
   }, [paginaActual]);
 
   const formatearFecha = (fecha: string) => {
+    if (!fecha) return "-";
+
+    const soloFechaMatch = fecha.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (soloFechaMatch) {
+      const [, anio, mes, dia] = soloFechaMatch;
+      return `${dia}/${mes}/${anio}`;
+    }
+
     const fechaFormateada = new Date(fecha);
+    if (Number.isNaN(fechaFormateada.getTime())) return fecha;
 
     return fechaFormateada.toLocaleDateString("es-AR", {
       day: "2-digit",
@@ -99,7 +96,7 @@ export default function MisReservas() {
     });
   };
 
-  const cancelarReserva = async (reserva: Reserva) => {
+  const cancelarReserva = async (reserva: ReservaDTO) => {
     const confirmacion = await Swal.fire({
       icon: "warning",
       title: "¿Cancelar reserva?",
@@ -129,11 +126,9 @@ export default function MisReservas() {
     if (!confirmacion.isConfirmed) return;
 
     try {
-      setProcesando(reserva._id);
+      setProcesando({ id: reserva._id, accion: "cancelar" });
 
-      await apiFetch(`/api/reservas/${reserva._id}`, {
-        method: "DELETE",
-      });
+      await cancelarReservaService(reserva._id);
 
       setReservas((reservasActuales) =>
         reservasActuales.map((reservaActual) =>
@@ -175,21 +170,11 @@ export default function MisReservas() {
     }
   };
 
-  const pagarReserva = async (reserva: Reserva) => {
+  const pagarReserva = async (reserva: ReservaDTO) => {
     try {
-      setProcesando(reserva._id);
+      setProcesando({ id: reserva._id, accion: "pagar" });
 
-      const resultado = await apiFetch<{
-        init_point: string;
-      }>("/api/pago/crear-preferencia-reserva", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reservaId: reserva._id,
-        }),
-      });
+      const resultado = await crearPreferenciaPagoReservaService(reserva._id);
 
       if (!resultado.init_point) {
         throw new Error("Mercado Pago no devolvió el enlace de pago.");
@@ -216,33 +201,27 @@ export default function MisReservas() {
     }
   };
 
-  const obtenerClaseEstado = (estado: Reserva["estado"]) => {
+  const obtenerClaseEstado = (estado: EstadoReserva) => {
     switch (estado) {
       case "confirmada":
         return "bg-green-500/10 text-green-400 border-green-500/20";
-
       case "pendiente":
         return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
-
       case "cancelada":
         return "bg-red-500/10 text-red-400 border-red-500/20";
-
       default:
         return "bg-slate-500/10 text-slate-400 border-slate-500/20";
     }
   };
 
-  const obtenerTextoEstado = (estado: Reserva["estado"]) => {
+  const obtenerTextoEstado = (estado: EstadoReserva) => {
     switch (estado) {
       case "confirmada":
         return "Confirmada";
-
       case "pendiente":
         return "Pendiente";
-
       case "cancelada":
         return "Cancelada";
-
       default:
         return estado;
     }
@@ -269,7 +248,6 @@ export default function MisReservas() {
   return (
     <div className="min-h-screen bg-[#0b132b] text-slate-100 p-6 md:p-12 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* ENCABEZADO */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-white">
@@ -314,35 +292,28 @@ export default function MisReservas() {
           </div>
         ) : (
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-            {/* Scroll horizontal para celulares */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-225 text-sm">
+              <table className="w-full min-w-205 text-sm">
                 <thead className="bg-[#16213d] border-b border-slate-800">
                   <tr>
                     <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Cancha
                     </th>
-
                     <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Tipo
                     </th>
-
                     <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Fecha
                     </th>
-
                     <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Horario
                     </th>
-
                     <th className="px-5 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Total
                     </th>
-
                     <th className="px-5 py-4 text-center text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Estado
                     </th>
-
                     <th className="px-5 py-4 text-center text-[10px] uppercase tracking-widest font-black text-slate-500">
                       Acciones
                     </th>
@@ -350,101 +321,106 @@ export default function MisReservas() {
                 </thead>
 
                 <tbody className="divide-y divide-slate-800">
-                  {reservas.map((reserva) => (
-                    <tr
-                      key={reserva._id}
-                      className="hover:bg-slate-800/40 transition-colors"
-                    >
-                      <td className="px-5 py-5">
-                        <p className="font-bold text-white">
-                          {reserva.cancha?.nombre || "Cancha"}
-                        </p>
-                      </td>
+                  {reservas.map((reserva) => {
+                    const estaProcesandoFila = procesando?.id === reserva._id;
+                    const pagandoEsta =
+                      estaProcesandoFila && procesando?.accion === "pagar";
+                    const cancelandoEsta =
+                      estaProcesandoFila && procesando?.accion === "cancelar";
 
-                      <td className="px-5 py-5">
-                        <span className="text-xs text-slate-400">
-                          {reserva.cancha?.tipo || "-"}
-                        </span>
-                      </td>
+                    return (
+                      <tr
+                        key={reserva._id}
+                        className="hover:bg-slate-800/40 transition-colors"
+                      >
+                        <td className="px-5 py-5">
+                          <p className="font-bold text-white">
+                            {reserva.cancha?.nombre || "Cancha"}
+                          </p>
+                        </td>
 
-                      <td className="px-5 py-5">
-                        <span className="text-sm text-slate-200 font-medium">
-                          {formatearFecha(reserva.fecha)}
-                        </span>
-                      </td>
+                        <td className="px-5 py-5">
+                          <span className="text-xs text-slate-400">
+                            {reserva.cancha?.tipo || "-"}
+                          </span>
+                        </td>
 
-                      <td className="px-5 py-5">
-                        <span className="text-sm text-slate-200 font-medium">
-                          {reserva.horaInicio} - {reserva.horaFin}
-                        </span>
-                      </td>
+                        <td className="px-5 py-5">
+                          <span className="text-sm text-slate-200 font-medium">
+                            {formatearFecha(reserva.fecha)}
+                          </span>
+                        </td>
 
-                      <td className="px-5 py-5">
-                        <span className="text-sm font-black text-green-400">
-                          ${reserva.precio.toLocaleString("es-AR")}
-                        </span>
-                      </td>
+                        <td className="px-5 py-5">
+                          <span className="text-sm text-slate-200 font-medium">
+                            {reserva.horaInicio} - {reserva.horaFin}
+                          </span>
+                        </td>
 
-                      <td className="px-5 py-5 text-center">
-                        <span
-                          className={`inline-flex px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${obtenerClaseEstado(
-                            reserva.estado,
-                          )}`}
-                        >
-                          {obtenerTextoEstado(reserva.estado)}
-                        </span>
-                      </td>
+                        <td className="px-5 py-5">
+                          <span className="text-sm font-black text-green-400">
+                            ${reserva.precio.toLocaleString("es-AR")}
+                          </span>
+                        </td>
 
-                      <td className="px-5 py-5">
-                        {reserva.estado === "cancelada" ? (
-                          <div className="text-center">
-                            <span className="text-xs text-red-400 font-medium">
-                              Cancelada
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center gap-2">
-                            {reserva.estado === "pendiente" && (
+                        <td className="px-5 py-5 text-center">
+                          <span
+                            className={`inline-flex px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${obtenerClaseEstado(
+                              reserva.estado,
+                            )}`}
+                          >
+                            {obtenerTextoEstado(reserva.estado)}
+                          </span>
+                        </td>
+
+                        <td className="px-5 py-5">
+                          {reserva.estado === "cancelada" ? (
+                            <div className="text-center">
+                              <span className="text-xs text-red-400 font-medium">
+                                Cancelada
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center gap-2">
+                              {reserva.estado === "pendiente" && (
+                                <button
+                                  type="button"
+                                  disabled={estaProcesandoFila}
+                                  onClick={() => pagarReserva(reserva)}
+                                  aria-label={
+                                    pagandoEsta
+                                      ? `Generando pago de ${reserva.cancha?.nombre || "cancha"}`
+                                      : `Pagar reserva de ${reserva.cancha?.nombre || "cancha"} del ${formatearFecha(reserva.fecha)}`
+                                  }
+                                  className="bg-green-500 text-slate-950 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                                >
+                                  {pagandoEsta ? "Redirigiendo..." : "💳 Pagar"}
+                                </button>
+                              )}
+
                               <button
                                 type="button"
-                                disabled={procesando === reserva._id}
-                                onClick={() => pagarReserva(reserva)}
+                                disabled={estaProcesandoFila}
+                                onClick={() => cancelarReserva(reserva)}
                                 aria-label={
-                                  procesando === reserva._id
-                                    ? `Procesando pago de ${reserva.cancha?.nombre || "cancha"}`
-                                    : `Pagar reserva de ${reserva.cancha?.nombre || "cancha"} del ${formatearFecha(reserva.fecha)}`
+                                  cancelandoEsta
+                                    ? `Cancelando reserva de ${reserva.cancha?.nombre || "cancha"}`
+                                    : `Cancelar reserva de ${reserva.cancha?.nombre || "cancha"} del ${formatearFecha(reserva.fecha)}`
                                 }
-                                className="bg-green-500 text-slate-950 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                                className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide hover:bg-red-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                               >
-                                {procesando === reserva._id
-                                  ? "Procesando..."
-                                  : "💳 Pagar"}
+                                {cancelandoEsta ? "Cancelando..." : "✕ Cancelar"}
                               </button>
-                            )}
-
-                            <button
-                              type="button"
-                              disabled={procesando === reserva._id}
-                              onClick={() => cancelarReserva(reserva)}
-                              aria-label={
-                                procesando === reserva._id
-                                  ? `Procesando reserva de ${reserva.cancha?.nombre || "cancha"}`
-                                  : `Cancelar reserva de ${reserva.cancha?.nombre || "cancha"} del ${formatearFecha(reserva.fecha)}`
-                              }
-                              className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide hover:bg-red-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                            >
-                              {procesando === reserva._id
-                                ? "Procesando..."
-                                : "✕ Cancelar"}
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-              {cantidadPaginas > 1 && (
+
+              {cantidadReservas > reservasPorPagina && (
                 <div className="flex items-center justify-center gap-2 p-5 border-t border-slate-800">
                   <button
                     type="button"

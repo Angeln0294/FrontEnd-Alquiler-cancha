@@ -34,7 +34,29 @@ export interface RespuestaReservasPaginadas {
   cantidadReservas?: number;
 }
 
+export interface RespuestaPreferenciaPago {
+  init_point: string;
+}
+
+const jsonHeaders = {
+  "Content-Type": "application/json",
+};
+
 export const obtenerReservasAdminService = (
+  pagina: number,
+  limite: number,
+  signal?: AbortSignal,
+) => {
+  return apiFetch<RespuestaReservasPaginadas>(
+    `/api/reservas?pagina=${pagina}&limite=${limite}`,
+    {
+      method: "GET",
+      signal,
+    },
+  );
+};
+
+export const obtenerMisReservasService = (
   pagina: number,
   limite: number,
   signal?: AbortSignal,
@@ -54,6 +76,24 @@ export const actualizarEstadoReservaService = (
 ) => {
   return apiFetch<{ mensaje?: string }>(`/api/reservas/${reservaId}`, {
     method: "PATCH",
+    headers: jsonHeaders,
     body: JSON.stringify({ estado }),
   });
+};
+
+export const cancelarReservaService = (reservaId: string) => {
+  return apiFetch<{ mensaje?: string }>(`/api/reservas/${reservaId}`, {
+    method: "DELETE",
+  });
+};
+
+export const crearPreferenciaPagoReservaService = (reservaId: string) => {
+  return apiFetch<RespuestaPreferenciaPago>(
+    "/api/pago/crear-preferencia-reserva",
+    {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ reservaId }),
+    },
+  );
 };

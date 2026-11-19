@@ -142,3 +142,9 @@ export const crearReservaService = (payload: CrearReservaPayload) => {
     body: JSON.stringify(payload),
   });
 };
+export const obtenerReservasService = (signal?: AbortSignal) => {
+  return apiFetch<RespuestaReservasPaginadas>("/api/reservas", {
+    method: "GET",
+    signal,
+  });
+};

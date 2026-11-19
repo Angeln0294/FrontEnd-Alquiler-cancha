@@ -55,3 +55,9 @@ export const eliminarUsuarioService = (usuarioId: string) => {
     method: "DELETE",
   });
 };
+export const obtenerUsuariosService = (signal?: AbortSignal) => {
+  return apiFetch<UsuarioDTO[]>("/api/usuario", {
+    method: "GET",
+    signal,
+  });
+};

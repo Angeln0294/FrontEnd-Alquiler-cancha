@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { apiFetch } from "../services/api";
 import AdminUsuarios from "../components/panelAdmin/usuarios/AdminUsuarios";
 import AdminCanchas from "../components/panelAdmin/canchas/AdminCanchas";
 import AdminReservas from "../components/panelAdmin/reservas/AdminReservas";
@@ -8,6 +7,18 @@ import AdminProductos from "../components/panelAdmin/productos/AdminProductos";
 
 import { CategoriaProvider } from "../context/CategoriaContext";
 import { useAuth } from "../context/AuthContext";
+import {
+  obtenerUsuariosService,
+  type UsuarioDTO,
+} from "../services/usuarios.service";
+import {
+  obtenerCanchasService,
+  type CanchaDTO,
+} from "../services/canchas.service";
+import {
+  obtenerReservasService,
+  type ReservaDTO,
+} from "../services/reservas.service";
 
 type Seccion =
   | "dashboard"
@@ -18,52 +29,10 @@ type Seccion =
   | "reservas"
   | "configuracion";
 
-interface Usuario {
-  _id: string;
-  nombre: string;
-  apellido: string;
-  email: string;
-  rol: "usuario" | "admin";
-  activo: boolean;
-  emailVerificado: boolean;
-}
-
-interface Cancha {
-  _id: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  imagen: string;
-  tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
-  disponible: boolean;
-}
-
-interface Reserva {
-  _id: string;
-  usuario: {
-    _id: string;
-    nombre: string;
-    apellido: string;
-    email: string;
-  };
-  cancha: {
-    _id: string;
-    nombre: string;
-    tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
-    precio: number;
-  };
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-  precio: number;
-  estado: "pendiente" | "confirmada" | "cancelada";
-  createdAt?: string;
-}
-
 interface DatosDashboard {
-  usuarios: Usuario[];
-  canchas: Cancha[];
-  reservas: Reserva[];
+  usuarios: UsuarioDTO[];
+  canchas: CanchaDTO[];
+  reservas: ReservaDTO[];
 }
 
 export default function PanelAdmin() {
@@ -91,18 +60,19 @@ export default function PanelAdmin() {
     const controller = new AbortController();
     controllerRef.current = controller;
     const signal = controller.signal;
+
     try {
       setCargandoDashboard(true);
       setErrorDashboard(false);
 
       const [resultadoUsuarios, resultadoCanchas, resultadoReservas] =
         await Promise.all([
-          apiFetch<Usuario[]>("/api/usuario", { signal }),
-          apiFetch<{ canchas: Cancha[] }>("/api/canchas", { signal }),
-          apiFetch<{ reservas: Reserva[] }>("/api/reservas", { signal }),
+          obtenerUsuariosService(signal),
+          obtenerCanchasService(undefined, undefined, signal),
+          obtenerReservasService(signal),
         ]);
 
-      if (signal?.aborted) return;
+      if (signal.aborted) return;
 
       setDatos({
         usuarios: Array.isArray(resultadoUsuarios) ? resultadoUsuarios : [],
@@ -110,12 +80,12 @@ export default function PanelAdmin() {
         reservas: resultadoReservas.reservas || [],
       });
     } catch (error) {
-      if (signal?.aborted) return;
+      if (signal.aborted) return;
 
       console.error("Error al cargar datos del dashboard:", error);
       setErrorDashboard(true);
     } finally {
-      if (!signal?.aborted) {
+      if (!signal.aborted) {
         setCargandoDashboard(false);
       }
     }
@@ -254,7 +224,7 @@ export default function PanelAdmin() {
     });
   };
 
-  const obtenerClaseEstado = (estado: Reserva["estado"]) => {
+  const obtenerClaseEstado = (estado: ReservaDTO["estado"]) => {
     switch (estado) {
       case "confirmada":
         return "bg-green-500/10 border-green-500/20 text-green-400";
@@ -444,7 +414,11 @@ export default function PanelAdmin() {
                   Panel de administración
                 </p>
 
-                <h2 ref={seccionTituloRef} tabIndex={-1} className="font-bold focus:outline-none">
+                <h2
+                  ref={seccionTituloRef}
+                  tabIndex={-1}
+                  className="font-bold focus:outline-none"
+                >
                   {menuItems.find((item) => item.id === seccionActiva)
                     ?.nombre || "Dashboard"}
                 </h2>
@@ -480,7 +454,10 @@ export default function PanelAdmin() {
                 </div>
 
                 {errorDashboard && (
-                  <div role="alert" className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-5">
+                  <div
+                    role="alert"
+                    className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-5"
+                  >
                     <p className="font-semibold text-rose-400">
                       No se pudieron cargar los datos.
                     </p>
@@ -496,7 +473,10 @@ export default function PanelAdmin() {
                   </div>
                 )}
 
-                <div aria-busy={cargandoDashboard} className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div
+                  aria-busy={cargandoDashboard}
+                  className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4"
+                >
                   <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-green-500/20 to-emerald-500/5 p-6 shadow-xl shadow-black/30">
                     <div className="flex items-start justify-between">
                       <div>
@@ -596,7 +576,11 @@ export default function PanelAdmin() {
                       </span>
                     </div>
 
-                    <div role="img" aria-label={`Reservas de los últimos 7 días: ${datosSemana.map((dia) => `${dia.nombre}: ${dia.cantidad}`).join(", ")}`} className="mt-8 flex h-64 items-end justify-between gap-3">
+                    <div
+                      role="img"
+                      aria-label={`Reservas de los últimos 7 días: ${datosSemana.map((dia) => `${dia.nombre}: ${dia.cantidad}`).join(", ")}`}
+                      className="mt-8 flex h-64 items-end justify-between gap-3"
+                    >
                       {datosSemana.map((dia) => {
                         const altura =
                           dia.cantidad === 0
@@ -640,7 +624,11 @@ export default function PanelAdmin() {
                       Distribución actual.
                     </p>
 
-                    <div role="group" aria-label="Distribución por estado de las reservas" className="mt-8 space-y-6">
+                    <div
+                      role="group"
+                      aria-label="Distribución por estado de las reservas"
+                      className="mt-8 space-y-6"
+                    >
                       <div>
                         <div className="mb-2 flex justify-between">
                           <span className="text-sm text-slate-300">
@@ -744,7 +732,11 @@ export default function PanelAdmin() {
                       </button>
                     </div>
 
-                    <div role="group" aria-label="Estado de las cuentas de usuarios" className="mt-6 space-y-5">
+                    <div
+                      role="group"
+                      aria-label="Estado de las cuentas de usuarios"
+                      className="mt-6 space-y-5"
+                    >
                       <div>
                         <div className="mb-2 flex justify-between">
                           <span className="text-sm text-slate-300">
@@ -919,28 +911,50 @@ export default function PanelAdmin() {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto" role="region" aria-label="Tabla de últimas reservas" tabIndex={0}>
+                    <div
+                      className="overflow-x-auto"
+                      role="region"
+                      aria-label="Tabla de últimas reservas"
+                      tabIndex={0}
+                    >
                       <table className="w-full min-w-187.5 text-left">
-                        <caption className="sr-only">Últimas cinco reservas registradas</caption>
+                        <caption className="sr-only">
+                          Últimas cinco reservas registradas
+                        </caption>
                         <thead className="border-b border-slate-800">
                           <tr>
-                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Usuario
                             </th>
 
-                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Cancha
                             </th>
 
-                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Fecha
                             </th>
 
-                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Horario
                             </th>
 
-                            <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Estado
                             </th>
                           </tr>

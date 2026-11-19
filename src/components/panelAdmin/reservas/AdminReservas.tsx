@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { apiFetch } from "../../../services/api";
-
 import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
 import { TablaGenerica, type Columna } from "../../ui/TablaGenerica";
 import { useTabla } from "../../../context/TablaContext";
+import { obtenerReservasAdminService ,actualizarEstadoReservaService} from "../../../services/reservas.service";
 
 interface UsuarioReserva {
   _id: string;
@@ -70,14 +69,11 @@ export default function AdminReservas() {
     try {
       setTablaCargando(true);
 
-      const resultado = await apiFetch<{
-        reservas: Reserva[];
-        totalPaginas?: number;
-        cantidadReservas?: number;
-      }>(`/api/reservas?pagina=${paginaActual}&limite=${reservasPorPagina}`, {
-        method: "GET",
-        signal,
-      });
+      const resultado = await obtenerReservasAdminService(
+  paginaActual,
+  reservasPorPagina,
+  signal,
+);
 
       setReservas(resultado.reservas || []);
 
@@ -150,19 +146,10 @@ export default function AdminReservas() {
     }
 
     try {
-      const resultado = await apiFetch<{ mensaje?: string }>(
-        `/api/reservas/${reserva._id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            estado: nuevoEstado,
-          }),
-        },
-      );
-
+      const resultado = await actualizarEstadoReservaService(
+  reserva._id,
+  nuevoEstado,
+);
       setReservas((reservasActuales) =>
         reservasActuales.map((r) =>
           r._id === reserva._id

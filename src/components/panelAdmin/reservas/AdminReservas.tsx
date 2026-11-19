@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { apiFetch } from "../../../services/api";
 
-import { PaginadorBackend } from "../../Paginador";
+import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
-import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { TablaGenerica, type Columna } from "../../ui/TablaGenerica";
 import { useTabla } from "../../../context/TablaContext";
 
 interface UsuarioReserva {

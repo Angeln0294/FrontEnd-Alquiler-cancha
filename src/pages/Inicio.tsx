@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useProductos } from "../context/ProductoContext";
 import { useCarrito } from "../context/CarritoContext";
-import { CanchaCard } from "../components/NuestrasCanchas/CanchasCard";
+import { CanchaCard } from "../components/ui/CanchasCard";
 import Swal from "sweetalert2";
-import { ProductoCard } from "../components/ProductoCard";
+import { ProductoCard } from "../components/ui/ProductoCard";
 
 interface Anuncio {
   id: number;

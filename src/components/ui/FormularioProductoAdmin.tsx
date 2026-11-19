@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm, type FieldErrors } from "react-hook-form";
 import Swal from "sweetalert2";
-import { useProductos } from "../context/ProductoContext";
-import { useCategorias } from "../context/CategoriaContext";
+import { useProductos } from "../../context/ProductoContext";
+import { useCategorias } from "../../context/CategoriaContext";
 
 interface FormularioProducto {
   nombreProducto: string;

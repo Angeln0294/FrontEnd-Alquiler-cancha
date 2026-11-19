@@ -1,5 +1,5 @@
 import React from "react";
-import { usePaginacionBackend } from "../context/PaginacionContext";
+import { usePaginacionBackend } from "../../context/PaginacionContext";
 
 interface PaginadorBackendProps {
   seccion: "canchas" | "productos" | "usuarios" | "reservas" | "categorias";

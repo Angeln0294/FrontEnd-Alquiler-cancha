@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../services/api";
-import { PaginadorBackend } from "../Paginador";
+import { PaginadorBackend } from "./Paginador";
 import { usePaginacionBackend } from "../../context/PaginacionContext";
 import { CanchaCard } from "./CanchasCard";
 import Swal from "sweetalert2";

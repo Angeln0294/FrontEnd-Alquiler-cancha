@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import { CanchaCard } from "./CanchasCardAdmin";
 import CanchasContext from "../../../context/CanchasContext";
-import { PaginadorBackend } from "../../Paginador";
+import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
 import { apiFetch } from "../../../services/api";
 

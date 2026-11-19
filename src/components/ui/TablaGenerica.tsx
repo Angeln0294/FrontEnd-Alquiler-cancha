@@ -1,5 +1,5 @@
 import React from "react";
-import { useTabla } from "../context/TablaContext";
+import { useTabla } from "../../context/TablaContext";
 
 export interface Columna {
   id: string;

@@ -5,7 +5,8 @@ import { CanchaCard } from "./CanchasCardAdmin";
 import CanchasContext from "../../../context/CanchasContext";
 import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
-import { apiFetch } from "../../../services/api";
+import { obtenerCanchasAdminService,actualizarCanchaService,crearCanchaService,eliminarCanchaService } from "../../../services/canchas.service";
+
 
 interface Cancha {
   _id: string;
@@ -60,14 +61,11 @@ export default function AdminCanchas() {
     try {
       setCargando(true);
 
-      const resultado = await apiFetch<{
-        canchas: Cancha[];
-        cantidadCanchas: number;
-        totalPaginas?: number;
-      }>(`/api/canchas?pagina=${paginaActual}&limite=${limiteCanchas}`, {
-        method: "GET",
-        signal,
-      });
+      const resultado = await obtenerCanchasAdminService(
+  paginaActual,
+  limiteCanchas,
+  signal,
+);
 
       setCanchas(resultado.canchas || []);
       setCantidadCanchas(resultado.cantidadCanchas || 0);
@@ -146,25 +144,11 @@ export default function AdminCanchas() {
     try {
       setGuardando(true);
 
-      const formData = new FormData();
-
-      formData.append("nombre", datos.nombre);
-      formData.append("descripcion", datos.descripcion);
-      formData.append("precio", datos.precio.toString());
-      formData.append("tipo", datos.tipo);
-      formData.append("disponible", datos.disponible.toString());
-
-      if (datos.imagen && datos.imagen.length > 0) {
-        formData.append("imagen", datos.imagen[0]);
-      }
-
-      await apiFetch(
-        editando ? `/api/canchas/${editando._id}` : "/api/canchas",
-        {
-          method: editando ? "PUT" : "POST",
-          body: formData,
-        },
-      );
+            if (editando) {
+  await actualizarCanchaService(editando._id, datos);
+} else {
+  await crearCanchaService(datos);
+}
 
       await Swal.fire({
         icon: "success",
@@ -217,9 +201,7 @@ export default function AdminCanchas() {
     }
 
     try {
-      await apiFetch(`/api/canchas/${cancha._id}`, {
-        method: "DELETE",
-      });
+      await eliminarCanchaService(cancha._id);
 
       await Swal.fire({
         icon: "success",

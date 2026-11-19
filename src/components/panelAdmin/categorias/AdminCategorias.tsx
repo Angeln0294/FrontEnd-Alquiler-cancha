@@ -1,5 +1,5 @@
 import { useCategorias } from "../../../context/CategoriaContext";
-import FormularioCategoriaAdmin from "../../ui/FormularioCategoriaAdmin";
+import FormularioCategoriaAdmin from "./FormularioCategoriaAdmin";
 import { TablaGenerica, type Columna } from "../../ui/TablaGenerica";
 import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";

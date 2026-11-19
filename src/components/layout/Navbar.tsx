@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext"
 
 export default function Navbar(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState<boolean>(false);

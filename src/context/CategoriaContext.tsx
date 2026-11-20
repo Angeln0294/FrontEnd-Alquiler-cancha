@@ -7,8 +7,8 @@ import {
 } from "react";
 import { useTabla } from "../context/TablaContext";
 import { usePaginacionBackend } from "../context/PaginacionContext";
-
 import Swal from "sweetalert2";
+import { obtenerCategoriasPaginadasService,obtenerTodasLasCategoriasService,actualizarCategoriaService,crearCategoriaService,eliminarCategoriaService } from "../services/categorias.service";
 
 export interface Categoria {
   _id: string;
@@ -16,6 +16,7 @@ export interface Categoria {
 }
 
 interface CategoriaContextType {
+  todasLasCategorias: Categoria[];
   categorias: Categoria[];
   categoriaSeleccionada: Categoria | null;
   modalAbierto: boolean;
@@ -34,6 +35,7 @@ const CategoriaContext = createContext<CategoriaContextType | undefined>(
 );
 export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [todasLasCategorias, setTodasLasCategorias] = useState<Categoria[]>([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] =
     useState<Categoria | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -51,17 +53,10 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
 
       const numeroPagina = pagina || 1;
 
-      const url =
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias` +
-        `?page=${numeroPagina}&limit=${limiteCategorias}`;
-
-      const respuesta = await fetch(url);
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudieron obtener las categorías");
-      }
-
-      const datos = await respuesta.json();
+    const datos = await obtenerCategoriasPaginadasService(
+  numeroPagina,
+  limiteCategorias,
+);
 
       setCategorias(datos.categorias || []);
 
@@ -81,24 +76,15 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
       setTablaCargando(false);
     }
   };
-  const obtenerTodasLasCategorias = useCallback(async () => {
-    try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias?limit=1000`,
-      );
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudieron obtener todas las categorías");
-      }
-
-      const datos = await respuesta.json();
-
-      setCategorias(datos.categorias || []);
-    } catch (error) {
-      console.error("Error al cargar todas las categorías:", error);
-      setCategorias([]);
-    }
-  }, []);
+ const obtenerTodasLasCategorias = useCallback(async () => {
+  try {
+    const datos = await obtenerTodasLasCategoriasService();
+    setTodasLasCategorias(datos.categorias || []);
+  } catch (error) {
+    console.error("Error al cargar todas las categorías:", error);
+    setTodasLasCategorias([]);
+  }
+}, []);
 
   useEffect(() => {
     obtenerCategorias(1);
@@ -122,46 +108,18 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
   const guardarCategoria = async (nombreCategoria: string) => {
     try {
       setGuardando(true);
-      let respuesta;
 
       if (categoriaSeleccionada) {
-        respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/categorias/${categoriaSeleccionada._id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ nombreCategoria }),
-          },
-        );
-      } else {
-        respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/categorias`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ nombreCategoria }),
-          },
-        );
-      }
-
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => null);
-        console.log("ERROR DEL BACKEND:", error);
-        throw new Error(
-          error?.message ||
-            error?.mensaje ||
-            error?.errors?.[0]?.msg ||
-            "No se pudo guardar la categoría",
-        );
-      }
+  await actualizarCategoriaService(
+    categoriaSeleccionada._id,
+    nombreCategoria,
+  );
+} else {
+  await crearCategoriaService(nombreCategoria);
+}
 
       await obtenerCategorias();
+      await obtenerTodasLasCategorias();
       cerrarModal();
     } catch (error) {
       console.error("Error al guardar categoría:", error);
@@ -200,24 +158,10 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     if (!confirmar.isConfirmed) return;
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => null);
-        throw new Error(
-          error?.message ||
-            error?.mensaje ||
-            "No se pudo eliminar la categoría",
-        );
-      }
+     await eliminarCategoriaService(id);
 
       await obtenerCategorias();
+      await obtenerTodasLasCategorias();
     } catch (error) {
       console.error("Error al eliminar categoría:", error);
       await Swal.fire({
@@ -239,6 +183,7 @@ export function CategoriaProvider({ children }: { children: React.ReactNode }) {
     <CategoriaContext.Provider
       value={{
         categorias,
+        todasLasCategorias,
         categoriaSeleccionada,
         modalAbierto,
         guardando,

@@ -5,22 +5,19 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { ApiError } from "../services/api";
+import {
+  obtenerUsuarioActualService,
+  cerrarSesionService,
+  type UsuarioAuthDTO,
+} from "../services/auth.service";
 
-interface Usuario {
-  _id: string;
-  nombre: string;
-  apellido: string;
-  email: string;
-  rol: "usuario" | "admin";
-  activo: boolean;
-  emailVerificado: boolean;
-}
 
 interface AuthContextType {
-  usuario: Usuario | null;
+  usuario: UsuarioAuthDTO | null;
   cargando: boolean;
   cerrarSesion: () => Promise<void>;
-  cargarUsuario: () => Promise<Usuario | null>;
+  cargarUsuario: () => Promise<UsuarioAuthDTO | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,30 +27,21 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [usuario, setUsuario] = useState<UsuarioAuthDTO | null>(null);
   const [cargando, setCargando] = useState(true);
 
-  const cargarUsuario = async (): Promise<Usuario | null> => {
+  const cargarUsuario = async (): Promise<UsuarioAuthDTO | null> => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/me`,
-        {
-          credentials: "include",
-        },
-      );
+      const resultado = await obtenerUsuarioActualService();
+setUsuario(resultado.usuario);
+return resultado.usuario;
 
-      if (!respuesta.ok) {
-        setUsuario(null);
-        return null;
+    
+    } catch (error) {
+      if (!(error instanceof ApiError && error.status === 401)) {
+        console.error("Error al obtener usuario:", error);
       }
 
-      const resultado = await respuesta.json();
-
-      setUsuario(resultado.usuario);
-
-      return resultado.usuario;
-    } catch (error) {
-      console.error("Error al obtener usuario:", error);
       setUsuario(null);
       return null;
     } finally {
@@ -62,12 +50,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
   const cerrarSesion = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      setUsuario(null);
+     await cerrarSesionService();
+setUsuario(null);
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }

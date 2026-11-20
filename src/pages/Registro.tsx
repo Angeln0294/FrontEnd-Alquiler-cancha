@@ -2,6 +2,8 @@ import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { ApiError } from "../services/api";
+import { registrarUsuarioService } from "../services/auth.service";
 
 interface FormValores {
   nombre: string;
@@ -26,73 +28,51 @@ export default function Registro() {
   const contraseniaValue = watch("contrasenia");
 
   const alEnviar: SubmitHandler<FormValores> = async (datos) => {
-    try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/registro`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nombre: datos.nombre,
-            apellido: datos.apellido,
-            email: datos.email,
-            password: datos.contrasenia,
-          }),
-        },
-      );
+  try {
+    const resultado = await registrarUsuarioService({
+      nombre: datos.nombre,
+      apellido: datos.apellido,
+      email: datos.email,
+      password: datos.contrasenia,
+    });
 
-      const resultado = await respuesta.json();
+    console.log("Usuario registrado:", resultado);
 
-      if (!respuesta.ok) {
-        await Swal.fire({
-          icon: "error",
-          title: "No se pudo registrar",
-          text: resultado.mensaje || "Error al registrar usuario.",
-          confirmButtonText: "Entendido",
-          background: "#0b132b",
-          color: "#ffffff",
-          confirmButtonColor: "#22c55e",
-          iconColor: "#ef4444",
-        });
+    await Swal.fire({
+      icon: "success",
+      title: "¡Registro exitoso!",
+      text: resultado.mensaje || "Revisá tu email para verificar tu cuenta.",
+      confirmButtonText: "Continuar",
+      background: "#0b132b",
+      color: "#ffffff",
+      confirmButtonColor: "#22c55e",
+      iconColor: "#22c55e",
+    });
 
-        return;
-      }
+    navigate("/verificar-email", {
+      state: {
+        email: datos.email,
+      },
+    });
+  } catch (error) {
+    console.error("Error al registrar usuario:", error);
 
-      console.log("Usuario registrado:", resultado);
+    const esErrorHTTP = error instanceof ApiError;
 
-      await Swal.fire({
-        icon: "success",
-        title: "¡Registro exitoso!",
-        text: resultado.mensaje || "Revisá tu email para verificar tu cuenta.",
-        confirmButtonText: "Continuar",
-        background: "#0b132b",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        iconColor: "#22c55e",
-      });
-
-      navigate("/verificar-email", {
-        state: {
-          email: datos.email,
-        },
-      });
-    } catch (error) {
-      console.error("Error al conectar con el servidor:", error);
-
-      await Swal.fire({
-        icon: "error",
-        title: "Error de conexión",
-        text: "No se pudo conectar con el servidor.",
-        confirmButtonText: "Entendido",
-        background: "#0b132b",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        iconColor: "#ef4444",
-      });
-    }
-  };
+    await Swal.fire({
+      icon: "error",
+      title: esErrorHTTP ? "No se pudo registrar" : "Error de conexión",
+      text: esErrorHTTP
+        ? error.message
+        : "No se pudo conectar con el servidor.",
+      confirmButtonText: "Entendido",
+      background: "#0b132b",
+      color: "#ffffff",
+      confirmButtonColor: "#22c55e",
+      iconColor: "#ef4444",
+    });
+  }
+};
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-white">
       <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-md">
@@ -106,12 +86,21 @@ export default function Registro() {
           noValidate
         >
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
-              Nombre Completo
+            <label
+              htmlFor="registro-nombre"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
+              Nombre
             </label>
             <input
+              id="registro-nombre"
+              autoComplete="given-name"
+              aria-invalid={!!errors.nombre}
+              aria-describedby={
+                errors.nombre ? "registro-nombre-error" : undefined
+              }
               type="text"
-              placeholder="Juan Pérez"
+              placeholder="Juan"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.nombre ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
               {...register("nombre", {
                 required: "El nombre es obligatorio.",
@@ -122,17 +111,29 @@ export default function Registro() {
               })}
             />
             {errors.nombre && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-nombre-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.nombre.message}
               </p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-apellido"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Apellido
             </label>
 
             <input
+              id="registro-apellido"
+              autoComplete="family-name"
+              aria-invalid={!!errors.apellido}
+              aria-describedby={
+                errors.apellido ? "registro-apellido-error" : undefined
+              }
               type="text"
               placeholder="Pérez"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${
@@ -150,17 +151,29 @@ export default function Registro() {
             />
 
             {errors.apellido && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-apellido-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.apellido.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-email"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Correo Electrónico
             </label>
             <input
+              id="registro-email"
+              autoComplete="email"
+              aria-invalid={!!errors.email}
+              aria-describedby={
+                errors.email ? "registro-email-error" : undefined
+              }
               type="email"
               placeholder="correo@ejemplo.com"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.email ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
@@ -173,17 +186,29 @@ export default function Registro() {
               })}
             />
             {errors.email && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-email-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.email.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-contrasenia"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Contraseña
             </label>
             <input
+              id="registro-contrasenia"
+              autoComplete="new-password"
+              aria-invalid={!!errors.contrasenia}
+              aria-describedby={
+                errors.contrasenia ? "registro-contrasenia-error" : undefined
+              }
               type="password"
               placeholder="••••••••"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.contrasenia ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
@@ -193,17 +218,31 @@ export default function Registro() {
               })}
             />
             {errors.contrasenia && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-contrasenia-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.contrasenia.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="registro-confirmar-contrasenia"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Confirmar Contraseña
             </label>
             <input
+              id="registro-confirmar-contrasenia"
+              autoComplete="new-password"
+              aria-invalid={!!errors.confirmarContrasenia}
+              aria-describedby={
+                errors.confirmarContrasenia
+                  ? "registro-confirmar-contrasenia-error"
+                  : undefined
+              }
               type="password"
               placeholder="••••••••"
               className={`w-full p-3 rounded-lg bg-slate-800 border ${errors.confirmarContrasenia ? "border-red-500" : "border-slate-700 focus:ring-green-500"} focus:outline-none focus:ring-2`}
@@ -214,7 +253,10 @@ export default function Registro() {
               })}
             />
             {errors.confirmarContrasenia && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="registro-confirmar-contrasenia-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.confirmarContrasenia.message}
               </p>
             )}

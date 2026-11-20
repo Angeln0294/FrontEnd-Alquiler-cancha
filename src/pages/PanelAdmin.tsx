@@ -1,13 +1,24 @@
-import { useEffect, useState } from "react";
-
-import AdminUsuarios from "./panelAdmin/usuarios/AdminUsuarios";
-import AdminCanchas from "./panelAdmin/canchas/AdminCanchas";
-import AdminReservas from "./panelAdmin/reservas/AdminReservas";
-import AdminCategorias from "./panelAdmin/categorias/AdminCategorias";
-import AdminProductos from "./panelAdmin/productos/AdminProductos";
+import { useEffect, useRef, useState } from "react";
+import AdminUsuarios from "../components/panelAdmin/usuarios/AdminUsuarios";
+import AdminCanchas from "../components/panelAdmin/canchas/AdminCanchas";
+import AdminReservas from "../components/panelAdmin/reservas/AdminReservas";
+import AdminCategorias from "../components/panelAdmin/categorias/AdminCategorias";
+import AdminProductos from "../components/panelAdmin/productos/AdminProductos";
 
 import { CategoriaProvider } from "../context/CategoriaContext";
 import { useAuth } from "../context/AuthContext";
+import {
+  obtenerUsuariosService,
+  type UsuarioDTO,
+} from "../services/usuarios.service";
+import {
+  obtenerCanchasService,
+  type CanchaDTO,
+} from "../services/canchas.service";
+import {
+  obtenerReservasService,
+  type ReservaDTO,
+} from "../services/reservas.service";
 
 type Seccion =
   | "dashboard"
@@ -18,56 +29,18 @@ type Seccion =
   | "reservas"
   | "configuracion";
 
-interface Usuario {
-  _id: string;
-  nombre: string;
-  apellido: string;
-  email: string;
-  rol: "usuario" | "admin";
-  activo: boolean;
-  emailVerificado: boolean;
-}
-
-interface Cancha {
-  _id: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  imagen: string;
-  tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
-  disponible: boolean;
-}
-
-interface Reserva {
-  _id: string;
-  usuario: {
-    _id: string;
-    nombre: string;
-    apellido: string;
-    email: string;
-  };
-  cancha: {
-    _id: string;
-    nombre: string;
-    tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
-    precio: number;
-  };
-  fecha: string;
-  horaInicio: string;
-  horaFin: string;
-  precio: number;
-  estado: "pendiente" | "confirmada" | "cancelada";
-  createdAt?: string;
-}
-
 interface DatosDashboard {
-  usuarios: Usuario[];
-  canchas: Cancha[];
-  reservas: Reserva[];
+  usuarios: UsuarioDTO[];
+  canchas: CanchaDTO[];
+  reservas: ReservaDTO[];
 }
 
 export default function PanelAdmin() {
   const { cerrarSesion } = useAuth();
+  const controllerRef = useRef<AbortController | null>(null);
+  const botonMenuRef = useRef<HTMLButtonElement>(null);
+  const primerItemMenuRef = useRef<HTMLButtonElement>(null);
+  const seccionTituloRef = useRef<HTMLHeadingElement>(null);
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [seccionActiva, setSeccionActiva] = useState<Seccion>("dashboard");
@@ -82,55 +55,48 @@ export default function PanelAdmin() {
   const [errorDashboard, setErrorDashboard] = useState(false);
 
   const cargarDatosDashboard = async () => {
+    controllerRef.current?.abort();
+
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const signal = controller.signal;
+
     try {
       setCargandoDashboard(true);
       setErrorDashboard(false);
 
-      const [respuestaUsuarios, respuestaCanchas, respuestaReservas] =
+      const [resultadoUsuarios, resultadoCanchas, resultadoReservas] =
         await Promise.all([
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/usuario`, {
-            credentials: "include",
-          }),
-
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/canchas`, {
-            credentials: "include",
-          }),
-
-          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reservas`, {
-            credentials: "include",
-          }),
+          obtenerUsuariosService(signal),
+          obtenerCanchasService(undefined, undefined, signal),
+          obtenerReservasService(signal),
         ]);
 
-      if (
-        !respuestaUsuarios.ok ||
-        !respuestaCanchas.ok ||
-        !respuestaReservas.ok
-      ) {
-        throw new Error("No se pudieron obtener los datos del dashboard");
-      }
-
-      const resultadoUsuarios = await respuestaUsuarios.json();
-      const resultadoCanchas = await respuestaCanchas.json();
-      const resultadoReservas = await respuestaReservas.json();
+      if (signal.aborted) return;
 
       setDatos({
         usuarios: Array.isArray(resultadoUsuarios) ? resultadoUsuarios : [],
-
         canchas: resultadoCanchas.canchas || [],
-
         reservas: resultadoReservas.reservas || [],
       });
     } catch (error) {
-      console.error("Error al cargar datos del dashboard:", error);
+      if (signal.aborted) return;
 
+      console.error("Error al cargar datos del dashboard:", error);
       setErrorDashboard(true);
     } finally {
-      setCargandoDashboard(false);
+      if (!signal.aborted) {
+        setCargandoDashboard(false);
+      }
     }
   };
 
   useEffect(() => {
     cargarDatosDashboard();
+
+    return () => {
+      controllerRef.current?.abort();
+    };
   }, []);
 
   const totalUsuarios = datos.usuarios.length;
@@ -258,7 +224,7 @@ export default function PanelAdmin() {
     });
   };
 
-  const obtenerClaseEstado = (estado: Reserva["estado"]) => {
+  const obtenerClaseEstado = (estado: ReservaDTO["estado"]) => {
     switch (estado) {
       case "confirmada":
         return "bg-green-500/10 border-green-500/20 text-green-400";
@@ -274,7 +240,24 @@ export default function PanelAdmin() {
   const cambiarSeccion = (seccion: Seccion) => {
     setSeccionActiva(seccion);
     setMenuAbierto(false);
+    requestAnimationFrame(() => seccionTituloRef.current?.focus());
   };
+
+  useEffect(() => {
+    if (!menuAbierto) return;
+
+    primerItemMenuRef.current?.focus();
+
+    const manejarEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuAbierto(false);
+        botonMenuRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", manejarEscape);
+    return () => document.removeEventListener("keydown", manejarEscape);
+  }, [menuAbierto]);
 
   const menuItems = [
     {
@@ -318,6 +301,7 @@ export default function PanelAdmin() {
     <div className="min-h-screen bg-[#030712] text-white">
       <div className="flex min-h-screen">
         <aside
+          id="menu-administracion"
           className={`
             fixed left-0 top-0 z-50
             h-screen w-72
@@ -325,7 +309,11 @@ export default function PanelAdmin() {
             bg-[#0b0f19]
             transition-transform duration-300
             lg:translate-x-0
-            ${menuAbierto ? "translate-x-0" : "-translate-x-full"}
+            ${
+              menuAbierto
+                ? "translate-x-0 visible"
+                : "-translate-x-full invisible lg:visible"
+            }
           `}
         >
           <div className="flex h-20 items-center border-b border-slate-800 px-6">
@@ -338,7 +326,10 @@ export default function PanelAdmin() {
             </div>
           </div>
 
-          <nav className="p-4">
+          <nav
+            aria-label="Navegación del panel de administración"
+            className="p-4"
+          >
             <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
               Administración
             </p>
@@ -347,13 +338,16 @@ export default function PanelAdmin() {
               {menuItems.map((item) => (
                 <button
                   key={item.id}
+                  ref={item.id === "dashboard" ? primerItemMenuRef : undefined}
                   type="button"
                   onClick={() => cambiarSeccion(item.id)}
+                  aria-pressed={seccionActiva === item.id}
                   className={`
                     flex w-full items-center gap-3
                     rounded-xl px-4 py-3
                     text-sm font-medium
                     transition
+                    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white
                     ${
                       seccionActiva === item.id
                         ? "bg-green-500/10 text-green-400 border border-green-500/20"
@@ -361,7 +355,9 @@ export default function PanelAdmin() {
                     }
                   `}
                 >
-                  <span className="text-lg">{item.icono}</span>
+                  <span aria-hidden="true" className="text-lg">
+                    {item.icono}
+                  </span>
 
                   {item.nombre}
                 </button>
@@ -373,9 +369,9 @@ export default function PanelAdmin() {
             <button
               type="button"
               onClick={cerrarSesion}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-400"
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              <span>🚪</span>
+              <span aria-hidden="true">🚪</span>
               Cerrar sesión
             </button>
           </div>
@@ -385,7 +381,11 @@ export default function PanelAdmin() {
           <button
             type="button"
             aria-label="Cerrar menú"
-            onClick={() => setMenuAbierto(false)}
+            tabIndex={-1}
+            onClick={() => {
+              setMenuAbierto(false);
+              botonMenuRef.current?.focus();
+            }}
             className="fixed inset-0 z-40 bg-black/70 lg:hidden"
           />
         )}
@@ -394,9 +394,17 @@ export default function PanelAdmin() {
           <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-800 bg-[#030712]/90 px-5 backdrop-blur-xl lg:px-8">
             <div className="flex items-center gap-3">
               <button
+                ref={botonMenuRef}
                 type="button"
                 onClick={() => setMenuAbierto(!menuAbierto)}
-                className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-lg lg:hidden"
+                aria-label={
+                  menuAbierto
+                    ? "Cerrar menú de administración"
+                    : "Abrir menú de administración"
+                }
+                aria-expanded={menuAbierto}
+                aria-controls="menu-administracion"
+                className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-lg lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 ☰
               </button>
@@ -406,7 +414,11 @@ export default function PanelAdmin() {
                   Panel de administración
                 </p>
 
-                <h2 className="font-bold">
+                <h2
+                  ref={seccionTituloRef}
+                  tabIndex={-1}
+                  className="font-bold focus:outline-none"
+                >
                   {menuItems.find((item) => item.id === seccionActiva)
                     ?.nombre || "Dashboard"}
                 </h2>
@@ -415,8 +427,9 @@ export default function PanelAdmin() {
 
             <button
               type="button"
-              onClick={cargarDatosDashboard}
-              className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-300 transition hover:border-green-500/30 hover:text-green-400"
+              onClick={() => cargarDatosDashboard()}
+              aria-label="Actualizar datos del panel de administración"
+              className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-300 transition hover:border-green-500/30 hover:text-green-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               🔄 Actualizar
             </button>
@@ -441,22 +454,29 @@ export default function PanelAdmin() {
                 </div>
 
                 {errorDashboard && (
-                  <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-5">
+                  <div
+                    role="alert"
+                    className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-5"
+                  >
                     <p className="font-semibold text-rose-400">
                       No se pudieron cargar los datos.
                     </p>
 
                     <button
                       type="button"
-                      onClick={cargarDatosDashboard}
-                      className="mt-3 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400"
+                      aria-label="Reintentar la carga de datos del panel"
+                      onClick={() => cargarDatosDashboard()}
+                      className="mt-3 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                     >
                       Reintentar
                     </button>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div
+                  aria-busy={cargandoDashboard}
+                  className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4"
+                >
                   <div className="rounded-3xl border border-slate-800/80 bg-linear-to-b from-green-500/20 to-emerald-500/5 p-6 shadow-xl shadow-black/30">
                     <div className="flex items-start justify-between">
                       <div>
@@ -556,7 +576,11 @@ export default function PanelAdmin() {
                       </span>
                     </div>
 
-                    <div className="mt-8 flex h-64 items-end justify-between gap-3">
+                    <div
+                      role="img"
+                      aria-label={`Reservas de los últimos 7 días: ${datosSemana.map((dia) => `${dia.nombre}: ${dia.cantidad}`).join(", ")}`}
+                      className="mt-8 flex h-64 items-end justify-between gap-3"
+                    >
                       {datosSemana.map((dia) => {
                         const altura =
                           dia.cantidad === 0
@@ -600,7 +624,11 @@ export default function PanelAdmin() {
                       Distribución actual.
                     </p>
 
-                    <div className="mt-8 space-y-6">
+                    <div
+                      role="group"
+                      aria-label="Distribución por estado de las reservas"
+                      className="mt-8 space-y-6"
+                    >
                       <div>
                         <div className="mb-2 flex justify-between">
                           <span className="text-sm text-slate-300">
@@ -697,13 +725,18 @@ export default function PanelAdmin() {
                       <button
                         type="button"
                         onClick={() => cambiarSeccion("usuarios")}
-                        className="text-xs font-semibold text-green-400 hover:text-green-300"
+                        aria-label="Ir a la administración de usuarios"
+                        className="text-xs font-semibold text-green-400 hover:text-green-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       >
                         Ver usuarios →
                       </button>
                     </div>
 
-                    <div className="mt-6 space-y-5">
+                    <div
+                      role="group"
+                      aria-label="Estado de las cuentas de usuarios"
+                      className="mt-6 space-y-5"
+                    >
                       <div>
                         <div className="mb-2 flex justify-between">
                           <span className="text-sm text-slate-300">
@@ -791,8 +824,9 @@ export default function PanelAdmin() {
 
                       <button
                         type="button"
+                        aria-label="Ir a la administración de canchas"
                         onClick={() => cambiarSeccion("canchas")}
-                        className="text-xs font-semibold text-green-400 hover:text-green-300"
+                        className="text-xs font-semibold text-green-400 hover:text-green-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       >
                         Ver canchas →
                       </button>
@@ -856,8 +890,9 @@ export default function PanelAdmin() {
 
                     <button
                       type="button"
+                      aria-label="Ver todas las reservas"
                       onClick={() => cambiarSeccion("reservas")}
-                      className="text-sm font-semibold text-green-400 hover:text-green-300"
+                      className="text-sm font-semibold text-green-400 hover:text-green-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                     >
                       Ver todas →
                     </button>
@@ -876,27 +911,50 @@ export default function PanelAdmin() {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
+                    <div
+                      className="overflow-x-auto"
+                      role="region"
+                      aria-label="Tabla de últimas reservas"
+                      tabIndex={0}
+                    >
                       <table className="w-full min-w-187.5 text-left">
+                        <caption className="sr-only">
+                          Últimas cinco reservas registradas
+                        </caption>
                         <thead className="border-b border-slate-800">
                           <tr>
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Usuario
                             </th>
 
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Cancha
                             </th>
 
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Fecha
                             </th>
 
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Horario
                             </th>
 
-                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <th
+                              scope="col"
+                              className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                               Estado
                             </th>
                           </tr>

@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-
 import type { SubmitHandler } from "react-hook-form";
-
 import Swal from "sweetalert2";
-import { PaginadorBackend } from "../../Paginador";
+import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
-import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { TablaGenerica, type Columna } from "../../ui/TablaGenerica";
 import { useTabla } from "../../../context/TablaContext";
+import { obtenerUsuariosAdminService, actualizarUsuarioService , eliminarUsuarioService} from "../../../services/usuarios.service";
+
 interface Usuario {
   _id: string;
   nombre: string;
@@ -53,6 +52,8 @@ export default function AdminUsuarios() {
   const { setTablaCargando } = useTabla();
 
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const botonEditarRef = useRef<HTMLButtonElement | null>(null);
 
   const usuariosPorPagina = 6;
   const { paginaActual, setCantidadPaginas } = usePaginacionBackend("usuarios");
@@ -61,6 +62,7 @@ export default function AdminUsuarios() {
     register,
     handleSubmit,
     reset,
+    setFocus,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormularioUsuario>({
@@ -71,24 +73,16 @@ export default function AdminUsuarios() {
   const apellidoActual = watch("apellido", "");
   const emailActual = watch("email", "");
 
-  const cargarUsuarios = async () => {
+  const cargarUsuarios = async (signal?: AbortSignal) => {
+    if (signal?.aborted) return;
     try {
       setTablaCargando(true);
 
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario?pagina=${paginaActual}&limite=${usuariosPorPagina}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudieron obtener los usuarios",
-        );
-      }
+      const resultado = await obtenerUsuariosAdminService(
+  paginaActual,
+  usuariosPorPagina,
+  signal,
+);
 
       setUsuarios(resultado.usuarios || []);
       setCantidadPaginas(
@@ -96,6 +90,7 @@ export default function AdminUsuarios() {
           Math.ceil((resultado.cantidadUsuarios || 0) / usuariosPorPagina),
       );
     } catch (error) {
+      if (signal?.aborted) return;
       console.error("Error al cargar usuarios:", error);
 
       await swalTema.fire({
@@ -106,15 +101,28 @@ export default function AdminUsuarios() {
         iconColor: "#ef4444",
       });
     } finally {
-      setTablaCargando(false);
+      if (!signal?.aborted) {
+        setTablaCargando(false);
+      }
     }
   };
 
   useEffect(() => {
-    cargarUsuarios();
+    const controller = new AbortController();
+
+    cargarUsuarios(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [paginaActual]);
 
   const abrirEditar = (usuario: Usuario) => {
+    botonEditarRef.current =
+      document.activeElement instanceof HTMLButtonElement
+        ? document.activeElement
+        : null;
+
     setUsuarioEditando(usuario);
 
     reset({
@@ -126,40 +134,74 @@ export default function AdminUsuarios() {
     });
   };
 
+  useEffect(() => {
+    if (usuarioEditando) {
+      setFocus("nombre");
+    }
+  }, [usuarioEditando, setFocus]);
+
+  useEffect(() => {
+    if (!usuarioEditando) return;
+
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const manejarTeclado = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cerrarModal();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const elementos = Array.from(
+        modal.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((elemento) => elemento.getClientRects().length > 0);
+
+      if (elementos.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const primero = elementos[0];
+      const ultimo = elementos[elementos.length - 1];
+
+      if (event.shiftKey && document.activeElement === primero) {
+        event.preventDefault();
+        ultimo.focus();
+      } else if (!event.shiftKey && document.activeElement === ultimo) {
+        event.preventDefault();
+        primero.focus();
+      } else if (!modal.contains(document.activeElement)) {
+        event.preventDefault();
+        primero.focus();
+      }
+    };
+
+    document.addEventListener("keydown", manejarTeclado);
+
+    return () => {
+      document.removeEventListener("keydown", manejarTeclado);
+    };
+  }, [usuarioEditando]);
+
   const cerrarModal = () => {
     setUsuarioEditando(null);
     reset();
+
+    requestAnimationFrame(() => {
+      botonEditarRef.current?.focus();
+    });
   };
 
   const guardarCambios: SubmitHandler<FormularioUsuario> = async (datos) => {
     if (!usuarioEditando) return;
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuarioEditando._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(datos),
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        await swalTema.fire({
-          icon: "error",
-          title: "No se pudieron guardar los cambios",
-          text: resultado.mensaje || "Ocurrió un error.",
-          confirmButtonText: "Entendido",
-          iconColor: "#ef4444",
-        });
-
-        return;
-      }
+      const resultado = await actualizarUsuarioService(usuarioEditando._id, datos);
 
       await swalTema.fire({
         icon: "success",
@@ -176,8 +218,11 @@ export default function AdminUsuarios() {
 
       await swalTema.fire({
         icon: "error",
-        title: "Error de conexión",
-        text: "No se pudo conectar con el servidor.",
+        title: "No se pudieron guardar los cambios",
+        text:
+          error instanceof Error
+            ? error.message
+            : "No se pudo actualizar el usuario.",
         confirmButtonText: "Entendido",
         iconColor: "#ef4444",
       });
@@ -205,25 +250,7 @@ export default function AdminUsuarios() {
     }
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuario._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            rol: nuevoRol,
-          }),
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo cambiar el rol");
-      }
+     await actualizarUsuarioService(usuario._id, { rol: nuevoRol });
 
       setUsuarios((usuariosActuales) =>
         usuariosActuales.map((u) =>
@@ -271,26 +298,7 @@ export default function AdminUsuarios() {
     }
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/${usuario._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            activo: nuevoEstado,
-          }),
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo cambiar el estado");
-      }
-
+      await actualizarUsuarioService(usuario._id, { activo: nuevoEstado });
       setUsuarios((usuariosActuales) =>
         usuariosActuales.map((u) =>
           u._id === usuario._id ? { ...u, activo: nuevoEstado } : u,
@@ -333,19 +341,7 @@ export default function AdminUsuarios() {
     }
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/${usuario._id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo eliminar el usuario");
-      }
+     await eliminarUsuarioService(usuario._id);
 
       await swalTema.fire({
         icon: "success",
@@ -407,11 +403,12 @@ export default function AdminUsuarios() {
 
               <td className="px-5 py-4">
                 <select
+                  aria-label={`Cambiar rol de ${usuario.nombre} ${usuario.apellido}`}
                   value={usuario.rol}
                   onChange={(e) =>
                     cambiarRol(usuario, e.target.value as "usuario" | "admin")
                   }
-                  className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                  className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   <option value="usuario">Usuario</option>
 
@@ -421,11 +418,12 @@ export default function AdminUsuarios() {
 
               <td className="px-5 py-4">
                 <select
+                  aria-label={`Cambiar estado de ${usuario.nombre} ${usuario.apellido}`}
                   value={usuario.activo ? "activo" : "inactivo"}
                   onChange={(e) =>
                     cambiarEstado(usuario, e.target.value === "activo")
                   }
-                  className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+                  className="rounded-lg border border-slate-700 bg-[#111c36] px-3 py-2 text-sm text-white outline-none focus:border-green-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   <option value="activo">Activo</option>
 
@@ -450,7 +448,8 @@ export default function AdminUsuarios() {
                   <button
                     type="button"
                     onClick={() => abrirEditar(usuario)}
-                    className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-600"
+                    aria-label={`Editar usuario ${usuario.nombre} ${usuario.apellido}`}
+                    className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
                     Editar
                   </button>
@@ -458,7 +457,8 @@ export default function AdminUsuarios() {
                   <button
                     type="button"
                     onClick={() => eliminarUsuario(usuario)}
-                    className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
+                    aria-label={`Eliminar usuario ${usuario.nombre} ${usuario.apellido}`}
+                    className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
                     Eliminar
                   </button>
@@ -475,12 +475,21 @@ export default function AdminUsuarios() {
 
       {usuarioEditando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b132b] p-6 shadow-2xl">
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-editar-usuario"
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b132b] p-6 shadow-2xl"
+          >
             {/* ENCABEZADO MODAL */}
 
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-white">
+                <h2
+                  id="titulo-editar-usuario"
+                  className="text-2xl font-bold text-white"
+                >
                   Editar usuario
                 </h2>
 
@@ -491,8 +500,9 @@ export default function AdminUsuarios() {
 
               <button
                 type="button"
+                aria-label="Cerrar edición de usuario"
                 onClick={cerrarModal}
-                className="text-2xl text-slate-400 transition hover:text-white"
+                className="text-2xl text-slate-400 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 ×
               </button>
@@ -503,7 +513,10 @@ export default function AdminUsuarios() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-white">
+                  <label
+                    htmlFor="editar-nombre"
+                    className="text-sm font-medium text-white"
+                  >
                     Nombre
                   </label>
 
@@ -515,6 +528,7 @@ export default function AdminUsuarios() {
                 </div>
 
                 <input
+                  id="editar-nombre"
                   type="text"
                   maxLength={25}
                   className={errors.nombre ? inputError : inputNormal}
@@ -540,7 +554,10 @@ export default function AdminUsuarios() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-white">
+                  <label
+                    htmlFor="editar-apellido"
+                    className="text-sm font-medium text-white"
+                  >
                     Apellido
                   </label>
 
@@ -552,6 +569,7 @@ export default function AdminUsuarios() {
                 </div>
 
                 <input
+                  id="editar-apellido"
                   type="text"
                   maxLength={25}
                   className={errors.apellido ? inputError : inputNormal}
@@ -578,7 +596,10 @@ export default function AdminUsuarios() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-white">
+                  <label
+                    htmlFor="editar-email"
+                    className="text-sm font-medium text-white"
+                  >
                     Email
                   </label>
 
@@ -590,6 +611,7 @@ export default function AdminUsuarios() {
                 </div>
 
                 <input
+                  id="editar-email"
                   type="email"
                   maxLength={50}
                   className={errors.email ? inputError : inputNormal}
@@ -615,11 +637,18 @@ export default function AdminUsuarios() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-white">
+                <label
+                  htmlFor="editar-rol"
+                  className="mb-2 block text-sm font-medium text-white"
+                >
                   Rol
                 </label>
 
-                <select className={inputNormal} {...register("rol")}>
+                <select
+                  id="editar-rol"
+                  className={inputNormal}
+                  {...register("rol")}
+                >
                   <option value="usuario">Usuario</option>
 
                   <option value="admin">Administrador</option>
@@ -627,11 +656,15 @@ export default function AdminUsuarios() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-white">
+                <label
+                  htmlFor="editar-estado"
+                  className="mb-2 block text-sm font-medium text-white"
+                >
                   Estado
                 </label>
 
                 <select
+                  id="editar-estado"
                   className={inputNormal}
                   {...register("activo", {
                     setValueAs: (value) => value === "true",
@@ -647,7 +680,7 @@ export default function AdminUsuarios() {
                 <button
                   type="button"
                   onClick={cerrarModal}
-                  className="rounded-lg bg-slate-600 px-5 py-3 font-medium text-white transition hover:bg-slate-700"
+                  className="rounded-lg bg-slate-600 px-5 py-3 font-medium text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   Cancelar
                 </button>
@@ -655,7 +688,7 @@ export default function AdminUsuarios() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-lg bg-green-500 px-5 py-3 font-medium text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg bg-green-500 px-5 py-3 font-medium text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   {isSubmitting ? "Guardando..." : "Guardar cambios"}
                 </button>

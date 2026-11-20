@@ -1,29 +1,23 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { PaginadorBackend } from "../Paginador";
-import { usePaginacionBackend } from "../../context/PaginacionContext";
-import { CanchaCard } from "./CanchasCard";
 import Swal from "sweetalert2";
+import { useAuth } from "../../context/AuthContext";
+import { usePaginacionBackend } from "../../context/PaginacionContext";
+import { PaginadorBackend } from "./Paginador";
+import { CanchaCard } from "./CanchasCard";
+import {
+  obtenerCanchasService,
+  type CanchaDTO,
+} from "../../services/canchas.service";
 
-export interface CanchaDetalle {
-  _id: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  imagen: string;
-  tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
-  disponible: boolean;
-}
+export type CanchaDetalle = CanchaDTO;
 
 export default function NuestrasCanchas() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { usuario } = useAuth();
 
-  const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/canchas`;
-
-  const [canchas, setCanchas] = useState<CanchaDetalle[]>([]);
+  const [canchas, setCanchas] = useState<CanchaDTO[]>([]);
   const [cargando, setCargando] = useState(true);
 
   const canchasPorPagina = 6;
@@ -31,26 +25,19 @@ export default function NuestrasCanchas() {
   const { paginaActual, setCantidadPaginas } = usePaginacionBackend("canchas");
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const cargarCanchas = async () => {
       try {
         setCargando(true);
 
-        const respuesta = await fetch(
-          `${API_URL}?pagina=${paginaActual}&limite=${canchasPorPagina}`,
-          {
-            credentials: "include",
-          },
+        const resultado = await obtenerCanchasService(
+          paginaActual,
+          canchasPorPagina,
+          controller.signal,
         );
 
-        const resultado = await respuesta.json();
-
-        if (!respuesta.ok) {
-          throw new Error(
-            resultado.mensaje ||
-              resultado.message ||
-              "No se pudieron cargar las canchas",
-          );
-        }
+        if (controller.signal.aborted) return;
 
         setCanchas(resultado.canchas || []);
 
@@ -59,6 +46,7 @@ export default function NuestrasCanchas() {
             Math.ceil((resultado.cantidadCanchas || 0) / canchasPorPagina),
         );
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error("Error al cargar las canchas:", error);
 
         await Swal.fire({
@@ -71,7 +59,9 @@ export default function NuestrasCanchas() {
           confirmButtonColor: "#22c55e",
         });
       } finally {
-        setCargando(false);
+        if (!controller.signal.aborted) {
+          setCargando(false);
+        }
       }
     };
 
@@ -85,12 +75,18 @@ export default function NuestrasCanchas() {
         decodeURIComponent(canchaParam),
       );
     }
-  }, [paginaActual, searchParams]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [paginaActual, searchParams, setCantidadPaginas]);
 
   if (cargando) {
     return (
       <div className="w-full bg-[#0b132b] text-white min-h-screen flex items-center justify-center">
-        <p className="text-slate-400">Cargando canchas...</p>
+        <p role="status" aria-live="polite" className="text-slate-400">
+          Cargando canchas...
+        </p>
       </div>
     );
   }
@@ -107,7 +103,7 @@ export default function NuestrasCanchas() {
             <CanchaCard
               key={cancha._id}
               cancha={cancha}
-              onReservar={(cancha) => {
+              onReservar={(canchaSeleccionada) => {
                 if (!usuario) {
                   Swal.fire({
                     icon: "warning",
@@ -127,13 +123,7 @@ export default function NuestrasCanchas() {
                 }
 
                 navigate(
-                  `/reservar-turnos?canchaId=${encodeURIComponent(
-                    cancha._id,
-                  )}&cancha=${encodeURIComponent(
-                    cancha.nombre,
-                  )}&precio=${encodeURIComponent(
-                    cancha.precio,
-                  )}&imagen=${encodeURIComponent(cancha.imagen)}`,
+                  `/reservar-turnos?canchaId=${encodeURIComponent(canchaSeleccionada._id)}`,
                 );
               }}
             />

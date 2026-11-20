@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext"
 
 export default function Navbar(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -8,6 +8,24 @@ export default function Navbar(): React.JSX.Element {
 
   const { usuario, cerrarSesion } = useAuth();
   const navigate = useNavigate();
+  const accountButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isAccountOpen) return;
+
+    const manejarEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsAccountOpen(false);
+        accountButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", manejarEscape);
+
+    return () => {
+      document.removeEventListener("keydown", manejarEscape);
+    };
+  }, [isAccountOpen]);
 
   const manejarCerrarSesion = async () => {
     setIsAccountOpen(false);
@@ -35,8 +53,14 @@ export default function Navbar(): React.JSX.Element {
       </Link>
 
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden text-white focus:outline-none cursor-pointer"
+        aria-label={
+          isOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"
+        }
+        aria-expanded={isOpen}
+        aria-controls="menu-navegacion"
+        className="md:hidden text-white cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-green-400"
       >
         <svg
           className="w-6 h-6"
@@ -63,61 +87,63 @@ export default function Navbar(): React.JSX.Element {
       </button>
 
       <div
+        id="menu-navegacion"
         className={`${
           isOpen ? "block" : "hidden"
         } w-full md:flex md:items-center md:w-auto mt-4 md:mt-0`}
       >
         <ul className="flex flex-col md:flex-row gap-6 text-sm font-medium text-gray-300 md:items-center m-0 p-0 list-none">
           <li>
-            <Link
+            <NavLink
               to="/"
+              end
               onClick={() => setIsOpen(false)}
-              className="hover:text-green-400 transition-colors no-underline text-gray-300"
+              className="hover:text-green-400 transition-colors no-underline text-gray-300 focus-visible:outline-2 focus-visible:outline-green-400"
             >
               Inicio
-            </Link>
+            </NavLink>
           </li>
 
           {!usuario && (
             <li>
-              <Link
+              <NavLink
                 to="/registro"
                 onClick={() => setIsOpen(false)}
                 className="hover:text-green-400 transition-colors no-underline text-gray-300"
               >
                 Registro
-              </Link>
+              </NavLink>
             </li>
           )}
 
           <li>
-            <Link
+            <NavLink
               to="/canchas"
               onClick={() => setIsOpen(false)}
               className="hover:text-green-400 transition-colors no-underline text-gray-300"
             >
               Nuestras Canchas
-            </Link>
+            </NavLink>
           </li>
 
           <li>
-            <Link
+            <NavLink
               to="/tienda"
               onClick={() => setIsOpen(false)}
               className="hover:text-green-400 transition-colors no-underline text-gray-300"
             >
               Tienda
-            </Link>
+            </NavLink>
           </li>
 
           <li>
-            <Link
+            <NavLink
               to="/contacto"
               onClick={() => setIsOpen(false)}
               className="hover:text-green-400 transition-colors no-underline text-gray-300"
             >
               Contacto
-            </Link>
+            </NavLink>
           </li>
         </ul>
       </div>
@@ -152,8 +178,13 @@ export default function Navbar(): React.JSX.Element {
           {usuario && (
             <div className="relative inline-block">
               <button
+                ref={accountButtonRef}
+                type="button"
                 onClick={() => setIsAccountOpen(!isAccountOpen)}
-                className="flex items-center gap-2 bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 cursor-pointer hover:bg-gray-700 transition-all text-white focus:outline-none font-medium text-sm"
+                aria-expanded={isAccountOpen}
+                aria-controls="menu-cuenta"
+                aria-label="Mi cuenta"
+                className="flex items-center gap-2 bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 cursor-pointer hover:bg-gray-700 transition-all text-white font-medium text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-400"
               >
                 <span className="text-xs text-gray-300">Mi Cuenta</span>
 
@@ -163,7 +194,10 @@ export default function Navbar(): React.JSX.Element {
               </button>
 
               {isAccountOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-2 z-50 text-left">
+                <div
+                  id="menu-cuenta"
+                  className="absolute right-0 mt-2 w-52 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-2 z-50 text-left"
+                >
                   {/* Saludo */}
                   <div className="px-4 py-3 border-b border-slate-700">
                     <p className="text-xs text-gray-400">Mi cuenta</p>
@@ -189,7 +223,11 @@ export default function Navbar(): React.JSX.Element {
                   </Link>
                   <Link
                     to="/mis-compras"
-                    className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={() => {
+                      setIsAccountOpen(false);
+                      setIsOpen(false);
+                    }}
+                    className="block px-4 py-2 hover:bg-slate-700 text-sm text-gray-200 hover:text-green-400 transition no-underline focus-visible:outline-2 focus-visible:outline-green-400"
                   >
                     🛍️ Mis compras
                   </Link>

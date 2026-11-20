@@ -1,4 +1,6 @@
 import { useForm } from "react-hook-form";
+import { ApiError } from "../services/api";
+import { iniciarSesionService } from "../services/auth.service";
 import type { SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -22,69 +24,46 @@ export default function Login() {
   });
 
   const alEnviar: SubmitHandler<LoginValores> = async (datos) => {
-    try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/usuario/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            email: datos.email,
-            password: datos.contrasenia,
-          }),
-        },
-      );
+  try {
+    const resultado = await iniciarSesionService({
+      email: datos.email,
+      password: datos.contrasenia,
+    });
 
-      const resultado = await respuesta.json();
+    console.log("Inicio de sesión exitoso:", resultado);
 
-      if (!respuesta.ok) {
-        await Swal.fire({
-          icon: "error",
-          title: "No se pudo iniciar sesión",
-          text: resultado.mensaje || "Verificá tu email y contraseña.",
-          confirmButtonText: "Entendido",
-          background: "#0b132b",
-          color: "#ffffff",
-          confirmButtonColor: "#22c55e",
-          iconColor: "#ef4444",
-        });
+    await Swal.fire({
+      icon: "success",
+      title: "¡Bienvenido!",
+      text: resultado.mensaje || "Sesión iniciada correctamente.",
+      confirmButtonText: "Continuar",
+      background: "#0b132b",
+      color: "#ffffff",
+      confirmButtonColor: "#22c55e",
+      iconColor: "#22c55e",
+    });
 
-        return;
-      }
+    await cargarUsuario();
+    navigate("/");
+  } catch (error) {
+    console.error("Error al iniciar sesión:", error);
 
-      console.log("Inicio de sesión exitoso:", resultado);
+    const esErrorHTTP = error instanceof ApiError;
 
-      await Swal.fire({
-        icon: "success",
-        title: "¡Bienvenido!",
-        text: resultado.mensaje || "Sesión iniciada correctamente.",
-        confirmButtonText: "Continuar",
-        background: "#0b132b",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        iconColor: "#22c55e",
-      });
-
-      await cargarUsuario();
-      navigate("/");
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
-
-      await Swal.fire({
-        icon: "error",
-        title: "Error de conexión",
-        text: "No se pudo conectar con el servidor.",
-        confirmButtonText: "Entendido",
-        background: "#0b132b",
-        color: "#ffffff",
-        confirmButtonColor: "#22c55e",
-        iconColor: "#ef4444",
-      });
-    }
-  };
+    await Swal.fire({
+      icon: "error",
+      title: esErrorHTTP ? "No se pudo iniciar sesión" : "Error de conexión",
+      text: esErrorHTTP
+        ? error.message
+        : "No se pudo conectar con el servidor.",
+      confirmButtonText: "Entendido",
+      background: "#0b132b",
+      color: "#ffffff",
+      confirmButtonColor: "#22c55e",
+      iconColor: "#ef4444",
+    });
+  }
+};
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#0b132b] flex items-center justify-center p-6 text-white">
       <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-md">
@@ -107,10 +86,17 @@ export default function Login() {
           noValidate
         >
           <div>
-            <label className="block text-sm font-medium mb-1 text-slate-300">
+            <label
+              htmlFor="login-email"
+              className="block text-sm font-medium mb-1 text-slate-300"
+            >
               Correo Electrónico
             </label>
             <input
+              id="login-email"
+              autoComplete="email"
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "login-email-error" : undefined}
               type="email"
               placeholder="correo@ejemplo.com"
               disabled={isSubmitting}
@@ -129,7 +115,7 @@ export default function Login() {
               })}
             />
             {errors.email && (
-              <p className="text-red-400 text-xs mt-1">
+              <p id="login-email-error" className="text-red-400 text-xs mt-1">
                 {errors.email.message}
               </p>
             )}
@@ -137,7 +123,10 @@ export default function Login() {
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-slate-300">
+              <label
+                htmlFor="login-contrasenia"
+                className="block text-sm font-medium text-slate-300"
+              >
                 Contraseña
               </label>
               <a
@@ -148,6 +137,12 @@ export default function Login() {
               </a>
             </div>
             <input
+              id="login-contrasenia"
+              autoComplete="current-password"
+              aria-invalid={!!errors.contrasenia}
+              aria-describedby={
+                errors.contrasenia ? "login-contrasenia-error" : undefined
+              }
               type="password"
               placeholder="••••••••"
               disabled={isSubmitting}
@@ -165,7 +160,10 @@ export default function Login() {
               })}
             />
             {errors.contrasenia && (
-              <p className="text-red-400 text-xs mt-1">
+              <p
+                id="login-contrasenia-error"
+                className="text-red-400 text-xs mt-1"
+              >
                 {errors.contrasenia.message}
               </p>
             )}

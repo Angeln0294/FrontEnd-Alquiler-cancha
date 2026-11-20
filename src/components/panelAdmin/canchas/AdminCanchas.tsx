@@ -3,8 +3,10 @@ import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import { CanchaCard } from "./CanchasCardAdmin";
 import CanchasContext from "../../../context/CanchasContext";
-import { PaginadorBackend } from "../../Paginador";
+import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
+import { obtenerCanchasAdminService,actualizarCanchaService,crearCanchaService,eliminarCanchaService } from "../../../services/canchas.service";
+
 
 interface Cancha {
   _id: string;
@@ -24,8 +26,6 @@ interface FormularioCancha {
   tipo: "Fútbol 5" | "Fútbol 7" | "Fútbol 11";
   disponible: boolean;
 }
-
-const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/canchas`;
 
 export default function AdminCanchas() {
   const [canchas, setCanchas] = useState<Cancha[]>([]);
@@ -56,22 +56,16 @@ export default function AdminCanchas() {
     },
   });
 
-  const cargarCanchas = async () => {
+  const cargarCanchas = async (signal?: AbortSignal) => {
+    if (signal?.aborted) return;
     try {
       setCargando(true);
 
-      const respuesta = await fetch(
-        `${API_URL}?pagina=${paginaActual}&limite=${limiteCanchas}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudieron obtener las canchas");
-      }
-
-      const resultado = await respuesta.json();
+      const resultado = await obtenerCanchasAdminService(
+  paginaActual,
+  limiteCanchas,
+  signal,
+);
 
       setCanchas(resultado.canchas || []);
       setCantidadCanchas(resultado.cantidadCanchas || 0);
@@ -81,6 +75,7 @@ export default function AdminCanchas() {
         Math.ceil((resultado.cantidadCanchas || 0) / limiteCanchas);
       setCantidadPaginas(paginasTotales);
     } catch (error) {
+      if (signal?.aborted) return;
       console.error("Error al cargar canchas:", error);
 
       Swal.fire({
@@ -92,12 +87,20 @@ export default function AdminCanchas() {
         confirmButtonColor: "#22c55e",
       });
     } finally {
-      setCargando(false);
+      if (!signal?.aborted) {
+        setCargando(false);
+      }
     }
   };
 
   useEffect(() => {
-    cargarCanchas();
+    const controller = new AbortController();
+
+    cargarCanchas(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [paginaActual]);
 
   const abrirFormularioNueva = () => {
@@ -141,34 +144,11 @@ export default function AdminCanchas() {
     try {
       setGuardando(true);
 
-      const url = editando ? `${API_URL}/${editando._id}` : API_URL;
-      const formData = new FormData();
-
-      formData.append("nombre", datos.nombre);
-      formData.append("descripcion", datos.descripcion);
-      formData.append("precio", datos.precio.toString());
-      formData.append("tipo", datos.tipo);
-      formData.append("disponible", datos.disponible.toString());
-
-      if (datos.imagen && datos.imagen.length > 0) {
-        formData.append("imagen", datos.imagen[0]);
-      }
-
-      const respuesta = await fetch(url, {
-        method: editando ? "PUT" : "POST",
-        credentials: "include",
-        body: formData,
-      });
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.message ||
-            resultado.mensaje ||
-            "No se pudo guardar la cancha",
-        );
-      }
+            if (editando) {
+  await actualizarCanchaService(editando._id, datos);
+} else {
+  await crearCanchaService(datos);
+}
 
       await Swal.fire({
         icon: "success",
@@ -221,20 +201,7 @@ export default function AdminCanchas() {
     }
 
     try {
-      const respuesta = await fetch(`${API_URL}/${cancha._id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.message ||
-            resultado.mensaje ||
-            "No se pudo eliminar la cancha",
-        );
-      }
+      await eliminarCanchaService(cancha._id);
 
       await Swal.fire({
         icon: "success",

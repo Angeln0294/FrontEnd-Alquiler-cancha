@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-
-import { PaginadorBackend } from "../../Paginador";
+import { PaginadorBackend } from "../../ui/Paginador";
 import { usePaginacionBackend } from "../../../context/PaginacionContext";
-import { TablaGenerica, type Columna } from "../../TablaGenerica";
+import { TablaGenerica, type Columna } from "../../ui/TablaGenerica";
 import { useTabla } from "../../../context/TablaContext";
+import { obtenerReservasAdminService ,actualizarEstadoReservaService} from "../../../services/reservas.service";
 
 interface UsuarioReserva {
   _id: string;
@@ -41,8 +41,6 @@ const COLUMNAS_RESERVAS: Columna[] = [
   { id: "estado", titulo: "Estado" },
 ];
 
-const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/reservas`;
-
 const swalTema = Swal.mixin({
   background: "#0b132b",
   color: "#ffffff",
@@ -66,24 +64,16 @@ export default function AdminReservas() {
 
   const { paginaActual, setCantidadPaginas } = usePaginacionBackend("reservas");
 
-  const cargarReservas = async () => {
+  const cargarReservas = async (signal?: AbortSignal) => {
+    if (signal?.aborted) return;
     try {
       setTablaCargando(true);
 
-      const respuesta = await fetch(
-        `${API_URL}?pagina=${paginaActual}&limite=${reservasPorPagina}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(
-          resultado.mensaje || "No se pudieron obtener las reservas",
-        );
-      }
+      const resultado = await obtenerReservasAdminService(
+  paginaActual,
+  reservasPorPagina,
+  signal,
+);
 
       setReservas(resultado.reservas || []);
 
@@ -92,6 +82,7 @@ export default function AdminReservas() {
           Math.ceil((resultado.cantidadReservas || 0) / reservasPorPagina),
       );
     } catch (error) {
+      if (signal?.aborted) return;
       console.error("Error al cargar reservas:", error);
 
       await swalTema.fire({
@@ -102,12 +93,20 @@ export default function AdminReservas() {
         iconColor: "#ef4444",
       });
     } finally {
-      setTablaCargando(false);
+      if (!signal?.aborted) {
+        setTablaCargando(false);
+      }
     }
   };
 
   useEffect(() => {
-    cargarReservas();
+    const controller = new AbortController();
+
+    cargarReservas(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [paginaActual]);
 
   const cambiarEstado = async (
@@ -147,23 +146,10 @@ export default function AdminReservas() {
     }
 
     try {
-      const respuesta = await fetch(`${API_URL}/${reserva._id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          estado: nuevoEstado,
-        }),
-      });
-
-      const resultado = await respuesta.json();
-
-      if (!respuesta.ok) {
-        throw new Error(resultado.mensaje || "No se pudo actualizar el estado");
-      }
-
+      const resultado = await actualizarEstadoReservaService(
+  reserva._id,
+  nuevoEstado,
+);
       setReservas((reservasActuales) =>
         reservasActuales.map((r) =>
           r._id === reserva._id

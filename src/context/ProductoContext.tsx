@@ -2,6 +2,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { useTabla } from "../context/TablaContext";
 import { usePaginacionBackend } from "../context/PaginacionContext";
+import {
+  obtenerProductosService,
+  obtenerTodasCategoriasService,
+  actualizarProductoService,
+  crearProductoService,
+  eliminarProductoService,
+} from "../services/productos.service";
 
 export interface Categoria {
   _id: string;
@@ -73,22 +80,12 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     try {
       setTablaCargando(true);
       const numeroPagina = pagina || 1;
-      let url =
-        `${import.meta.env.VITE_BACKEND_URL}/api/producto` +
-        `?pagina=${numeroPagina}` +
-        `&limite=${limite}`;
 
-      if (termino.trim() !== "") {
-        url += `&termino=${encodeURIComponent(termino)}`;
-      }
-
-      const respuesta = await fetch(url);
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudieron obtener los productos");
-      }
-
-      const datos = await respuesta.json();
+      const datos = await obtenerProductosService(
+        numeroPagina,
+        limite,
+        termino,
+      );
 
       setProductos(datos.productos || []);
       setCantidadProductos(datos.cantidadProductos || 0);
@@ -108,15 +105,9 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
 
   const cargarCategorias = async () => {
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/categorias`,
-      );
-      if (!respuesta.ok)
-        throw new Error("No se pudieron obtener las categorías");
+      const datos = await obtenerTodasCategoriasService();
 
-      const datos = await respuesta.json();
-
-      setCategorias(datos.categorias || datos);
+      setCategorias(datos.categorias || []);
     } catch (error) {
       console.error("Error al cargar categorías:", error);
       setCategorias([]);
@@ -146,56 +137,13 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     try {
       setGuardando(true);
 
-      const formulario = new FormData();
-      formulario.append("nombreProducto", datosProducto.nombreProducto);
-      formulario.append("precio", String(datosProducto.precio));
-      formulario.append("categoria", datosProducto.categoria);
-      formulario.append("descripcion", datosProducto.descripcion);
-
-      if (datosProducto.imagen) {
-        formulario.append("imagen", datosProducto.imagen);
-      }
-
-      let respuesta;
-
-      // EDITAR
       if (productoSeleccionado) {
-        respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/producto/${productoSeleccionado._id}`,
-          {
-            method: "PUT",
-            body: formulario,
-            credentials: "include",
-          },
+        await actualizarProductoService(
+          productoSeleccionado._id,
+          datosProducto,
         );
       } else {
-        respuesta = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/producto`,
-          {
-            method: "POST",
-            body: formulario,
-            credentials: "include",
-          },
-        );
-      }
-
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => null);
-        console.log("STATUS:", respuesta.status);
-        console.log("ERROR DEL BACKEND:", error);
-
-        let mensaje = `Error ${respuesta.status}`;
-
-        if (Array.isArray(error)) {
-          mensaje = error
-            .map((item) => item.msg)
-            .filter(Boolean)
-            .join("\n");
-        } else {
-          mensaje = error?.message || error?.mensaje || error?.error || mensaje;
-        }
-
-        throw new Error(mensaje);
+        await crearProductoService(datosProducto);
       }
 
       await cargarProductos();
@@ -221,17 +169,7 @@ export function ProductoProvider({ children }: { children: React.ReactNode }) {
     if (!resultado.isConfirmed) return;
 
     try {
-      const respuesta = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/producto/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      if (!respuesta.ok) {
-        throw new Error("No se pudo eliminar el producto");
-      }
+      await eliminarProductoService(id);
 
       await cargarProductos();
     } catch (error) {

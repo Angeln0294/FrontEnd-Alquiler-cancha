@@ -15,7 +15,11 @@ export default function Carrito() {
 
   if (cargando) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <div
+        role="status"
+        aria-live="polite"
+        className="min-h-screen bg-slate-950 text-white flex items-center justify-center"
+      >
         Cargando carrito...
       </div>
     );
@@ -25,7 +29,9 @@ export default function Carrito() {
     return (
       <div className="min-h-screen bg-slate-950 text-white px-6 py-10">
         <div className="max-w-5xl mx-auto text-center py-20">
-          <div className="text-6xl mb-5">🛒</div>
+          <div aria-hidden="true" className="text-6xl mb-5">
+            🛒
+          </div>
 
           <h1 className="text-3xl font-black">Tu carrito está vacío</h1>
 
@@ -108,7 +114,8 @@ export default function Carrito() {
                           <button
                             type="button"
                             onClick={() => restarCantidad(item.producto._id)}
-                            className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-white font-bold hover:bg-slate-700 transition"
+                            aria-label={`Disminuir cantidad de ${item.producto.nombreProducto}`}
+                            className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-white font-bold hover:bg-slate-700 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                           >
                             −
                           </button>
@@ -120,7 +127,8 @@ export default function Carrito() {
                           <button
                             type="button"
                             onClick={() => sumarCantidad(item.producto._id)}
-                            className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-white font-bold hover:bg-slate-700 transition"
+                            aria-label={`Aumentar cantidad de ${item.producto.nombreProducto}`}
+                            className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-white font-bold hover:bg-slate-700 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                           >
                             +
                           </button>
@@ -137,7 +145,8 @@ export default function Carrito() {
                         <button
                           type="button"
                           onClick={() => eliminarProducto(item.producto._id)}
-                          className="px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-semibold text-sm hover:bg-red-500/20 hover:text-red-300 transition"
+                          aria-label={`Eliminar ${item.producto.nombreProducto} del carrito`}
+                          className="px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-semibold text-sm hover:bg-red-500/20 hover:text-red-300 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                         >
                           Eliminar
                         </button>
@@ -169,7 +178,7 @@ export default function Carrito() {
           <button
             type="button"
             onClick={vaciarCarrito}
-            className="mt-6 px-5 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-semibold hover:bg-red-500/20 transition"
+            className="mt-6 px-5 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-semibold hover:bg-red-500/20 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             Vaciar carrito
           </button>
@@ -177,7 +186,7 @@ export default function Carrito() {
           <button
             type="button"
             onClick={pagarCarrito}
-            className="mt-4 w-full px-5 py-3 rounded-xl bg-green-500 text-slate-950 font-bold hover:bg-green-400 transition"
+            className="mt-4 w-full px-5 py-3 rounded-xl bg-green-500 text-slate-950 font-bold hover:bg-green-400 transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             Pagar con Mercado Pago 💳
           </button>
